@@ -36,6 +36,41 @@ namespace Blitz.Web.Cronjobs
                 .ToListAsync(cancellationToken);
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CronjobDetailDto>> GetCronjobDetails(Guid id, CancellationToken cancellationToken)
+        {
+            return await _db.Cronjobs
+                .OrderByDescending(p => p.CreatedAt)
+                .Include(c => c.Project)
+                .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
+                .ProjectTo<CronjobDetailDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        }
+
+
+        [HttpPatch("{id}")]
+        public async Task<ActionResult> Update(Guid id, CronjobUpdateRequest request, CancellationToken cancellationToken)
+        {
+            var existing = await _db.Cronjobs.FirstOrDefaultAsync(
+                e => e.Id == id, cancellationToken: cancellationToken
+            );
+            if (existing is null)
+            {
+                return NotFound();
+            }
+
+            // TODO: figure out how to ignore null members when mapping 
+            existing.Enabled = request.Enabled ?? existing.Enabled;
+            existing.Title = request.Title ?? existing.Title;
+            existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+
+            return NoContent();
+        }
+
         [HttpPost]
         public async Task<ActionResult<CronjobDetailDto>> Create(
             CronjobCreateDto request,
@@ -128,6 +163,7 @@ namespace Blitz.Web.Cronjobs
         public string Cron { get; set; }
         public string Url { get; set; }
         public string HttpMethod { get; set; }
+        public bool Enabled { get; set; }
         public ExecutionOverviewDto LastExecution { get; set; }
 
         [AutoMap(typeof(Execution))]
@@ -146,5 +182,13 @@ namespace Blitz.Web.Cronjobs
         public string Cron { get; set; }
         public string Url { get; set; }
         public string HttpMethod { get; set; }
+    }
+
+    [AutoMap(typeof(Cronjob), ReverseMap = true)]
+    public class CronjobUpdateRequest
+    {
+        public string Title { get; set; }
+        public string Cron { get; set; }
+        public bool? Enabled { get; set; }
     }
 }

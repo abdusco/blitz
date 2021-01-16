@@ -103,6 +103,7 @@ namespace Blitz.Web.Projects
         {
             public string Title { get; set; }
             public string Cron { get; set; }
+            public bool Enabled { get; set; }
         }
     }
 
