@@ -43,7 +43,13 @@ namespace Blitz.Web
             );
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers();
-            services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz.Web", Version = "v1"}); });
+            services.AddSwaggerGen(
+                c =>
+                {
+                    c.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
+                    c.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz.Web", Version = "v1"});
+                }
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,6 +67,7 @@ namespace Blitz.Web
             app.UseSwaggerUI(
                 c =>
                 {
+                    c.DisplayOperationId();
                     c.RoutePrefix = "";
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz.Web v1");
                 }
