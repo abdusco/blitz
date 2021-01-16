@@ -26,7 +26,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<CronjobDetailDto>>> GetAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<CronjobDetailDto>>> ListAll(CancellationToken cancellationToken)
         {
             return await _db.Cronjobs
                 .Include(c => c.Project)

@@ -25,7 +25,7 @@ namespace Blitz.Web.Projects
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ProjectListDto>>> GetAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<ProjectListDto>>> ListAll(CancellationToken cancellationToken)
         {
             return await _db.Projects
                 .OrderBy(p => p.Title)
