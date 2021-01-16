@@ -28,23 +28,23 @@ namespace Blitz.Web.Cronjobs
         [HttpGet]
         public async Task<ActionResult<List<CronjobDetailDto>>> ListAll(CancellationToken cancellationToken)
         {
-            return await _db.Cronjobs
+            var cronjobs = await _db.Cronjobs
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .OrderByDescending(p => p.CreatedAt)
-                .ProjectTo<CronjobDetailDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
+            return _mapper.Map<List<CronjobDetailDto>>(cronjobs);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<CronjobDetailDto>> GetCronjobDetails(Guid id, CancellationToken cancellationToken)
         {
-            return await _db.Cronjobs
+            var cronjob = await _db.Cronjobs
                 .OrderByDescending(p => p.CreatedAt)
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
-                .ProjectTo<CronjobDetailDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            return _mapper.Map<CronjobDetailDto>(cronjob);
         }
 
 
