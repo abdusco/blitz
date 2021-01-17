@@ -23,6 +23,25 @@ namespace Blitz.Web.Cronjobs
             _mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<List<ExecutionListDto>>> ListLatestExecutions(
+            int skip = 0,
+            int limit = 20,
+            CancellationToken cancellationToken = default
+        )
+        {
+            limit = Math.Clamp(limit, 0, 20);
+
+            var results = await _db.Executions
+                .Include(e => e.Cronjob)
+                .ThenInclude(c => c.Project)
+                .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
+                .OrderByDescending(e => e.CreatedAt)
+                .Take(limit)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<ExecutionListDto>>(results);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ExecutionDetailDto>> GetExecutionDetails(
@@ -80,10 +99,12 @@ namespace Blitz.Web.Cronjobs
     public class ExecutionListDto
     {
         public Guid Id { get; set; }
-        public Guid CronjobId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public CronjobOverviewDto Cronjob { get; set; }
         public string State { get; set; }
+        public List<ExecutionStatusListDto> Updates { get; set; }
     }
+
 
     [AutoMap(typeof(Execution))]
     public class ExecutionDetailDto
@@ -93,18 +114,15 @@ namespace Blitz.Web.Cronjobs
         public CronjobOverviewDto Cronjob { get; set; }
         public string State { get; set; }
         public List<ExecutionStatusListDto> Updates { get; set; }
-
-        [AutoMap(typeof(Cronjob))]
-        public class CronjobOverviewDto
-        {
-            public Guid Id { get; set; }
-            public Guid ProjectId { get; set; }
-            public string ProjectTitle { get; set; }
-            public string Title { get; set; }
-            public string Cron { get; set; }
-            public string Url { get; set; }
-            public string HttpMethod { get; set; }
-        }
+    }
+    
+    [AutoMap(typeof(Cronjob))]
+    public class CronjobOverviewDto
+    {
+        public Guid Id { get; set; }
+        public Guid ProjectId { get; set; }
+        public string ProjectTitle { get; set; }
+        public string Title { get; set; }
     }
 
     [AutoMap(typeof(ExecutionStatus))]

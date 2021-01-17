@@ -130,7 +130,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpGet("{id}/executions")]
-        public async Task<ActionResult<List<ExecutionListDto>>> LatestExecutions(
+        public async Task<ActionResult<List<CronjobExecutionsListDto>>> LatestExecutions(
             Guid id,
             int limit = 10,
             CancellationToken cancellationToken = default
@@ -148,10 +148,20 @@ namespace Blitz.Web.Cronjobs
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .OrderByDescending(e => e.CreatedAt)
                 .Take(limit)
-                .ProjectTo<ExecutionListDto>(_mapper.ConfigurationProvider)
+                .ProjectTo<CronjobExecutionsListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
     }
+    
+    [AutoMap(typeof(Execution))]
+    public class CronjobExecutionsListDto
+    {
+        public Guid Id { get; set; }
+        public Guid CronjobId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string State { get; set; }
+    }
+
 
     [AutoMap(typeof(Cronjob))]
     public class CronjobDetailDto
