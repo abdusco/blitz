@@ -43,7 +43,7 @@ namespace Blitz.Web.Projects
         }
 
         [HttpPost]
-        public async Task<ActionResult<ProjectListDto>> Create(
+        public async Task<ActionResult<Guid>> Create(
             ProjectCreateDto request,
             CancellationToken cancellationToken
         )
@@ -59,7 +59,7 @@ namespace Blitz.Web.Projects
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
-            return _mapper.Map<ProjectListDto>(p);
+            return p.Id;
         }
 
         [HttpDelete]
@@ -87,7 +87,7 @@ namespace Blitz.Web.Projects
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
-        public int CronJobsCount { get; set; }
+        public int CronjobsCount { get; set; }
     }
 
     [AutoMap(typeof(Project))]
