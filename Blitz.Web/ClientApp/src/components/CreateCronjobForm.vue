@@ -19,30 +19,24 @@
         </b-field>
       </div>
       <input v-else type="hidden" name="projectId" v-model="project.id">
-      
+
       <div class="column">
         <b-field label="Title" message="A short title">
           <b-input v-model="form.title" name="title" placeholder="Email reports" required></b-input>
         </b-field>
       </div>
       <div class="column is-one-quarter">
-        <b-tooltip position="is-left" class="is-flex">
+        <cron-expression :value="form.cron" :always="showCronInfo">
           <b-field label="Schedule" message="Cron expression">
-            <b-input v-model="form.cron" name="cron" placeholder="*/15 * * * *" class="is-family-monospace"
-                     required></b-input>
+            <b-input v-model="form.cron"
+                     name="cron"
+                     placeholder="*/15 * * * *"
+                     class="is-family-monospace"
+                     @focus="showCronInfo = true"
+                     @blur="showCronInfo = false"
+                     required/>
           </b-field>
-          <template v-slot:content>
-            <aside>
-              <p class="mb-2"><b>Description</b><br>Every 25 minutes</p>
-              <b>Estimated schedule</b>
-              <ul>
-                <li>2020-12-12 12:12</li>
-                <li>2020-12-12 12:12</li>
-                <li>2020-12-12 12:12</li>
-              </ul>
-            </aside>
-          </template>
-        </b-tooltip>
+        </cron-expression>
       </div>
     </div>
 
@@ -75,21 +69,29 @@
 </template>
 
 <script>
+import client from "@/api/client";
+import CronExpression from "@/components/CronExpression";
+
 export default {
   name: "CreateCronjobForm",
+  components: {CronExpression},
   props: ['project'],
   data() {
     return {
-      projects: [{id: '10', title: 'FYM'}],
+      projects: [],
       selectedProject: '',
+      showCronInfo: false,
       form: {
         projectId: this.project?.id,
         title: '',
-        cron: '',
+        cron: '0 * * * *',
         url: '',
         httpMethod: 'POST',
       }
     }
+  },
+  async mounted() {
+    this.projects = await client.listProjects();
   },
   methods: {
     onSubmit() {
@@ -97,11 +99,10 @@ export default {
       this.$emit('create', cronjob);
     },
     onSelectProject(project) {
-      console.log(project);
       this.form.projectId = project?.id;
     },
     redirectToCreateProjects() {
-      alert('redirect!');
+      this.$router.push({name: 'projects'});
     },
   },
 }

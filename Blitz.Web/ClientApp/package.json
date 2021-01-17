@@ -1,5 +1,5 @@
 {
-  "name": "ui-buefy",
+  "name": "blitz",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,8 @@
   "dependencies": {
     "buefy": "^0.9.4",
     "core-js": "^3.6.5",
+    "cronstrue": "^1.108.0",
+    "dayjs": "^1.10.3",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0"
   },
