@@ -63,19 +63,25 @@ namespace Blitz.Web
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseStaticFiles();
+
             app.UseSwagger(options => options.RouteTemplate = "/openapi/{documentName}.json");
             app.UseSwaggerUI(
                 c =>
                 {
                     c.DisplayOperationId();
-                    c.RoutePrefix = "";
+                    c.RoutePrefix = "/api";
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz.Web v1");
                 }
             );
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapFallbackToFile("ui/index.html");
+            });
         }
     }
 }
