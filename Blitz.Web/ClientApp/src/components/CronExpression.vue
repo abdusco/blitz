@@ -1,14 +1,14 @@
 ﻿<template>
-  <b-tooltip position="is-left" class="is-flex" :type="isValid ? 'is-info': 'is-warning'" :always="always">
+  <b-tooltip position="is-left" class="is-flex" :type="isValid ? 'is-white': 'is-warning'" :always="always">
     <slot/>
     <template v-slot:content>
-      <article v-if="isValid">
-        <h2 class="is-6 has-text-weight-semibold">Description</h2>
+      <article v-if="isValid" class="py-2">
+        <h2 class="is-6 has-text-weight-semibold has-text-primary">Description</h2>
         <p>{{ description }}</p>
 
-        <h2 class="is-6 has-text-weight-semibold mt-2">Estimated schedule</h2>
+        <h2 class="is-6 has-text-weight-semibold has-text-primary mt-2">Estimated schedule</h2>
         <ul v-if="nextDates.length">
-          <li v-for="(date, i) in nextDates" :key="+date">{{ formatDate(date) }}</li>
+          <li v-for="(date, i) in nextDates" :key="+date"><code>{{ formatDate(date) }}</code></li>
         </ul>
       </article>
       <span v-else>Invalid cron!</span>
