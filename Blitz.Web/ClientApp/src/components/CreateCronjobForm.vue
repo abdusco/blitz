@@ -123,7 +123,7 @@ export default {
     formValues() {
       return {
         ...this.form,
-        projectId: this.project.id,
+        projectId: this.form.projectId,
       }
     }
   }
