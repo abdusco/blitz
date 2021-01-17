@@ -10,9 +10,6 @@ const fetchJson = async (url, options = {}) => {
         body = JSON.stringify(body);
         headers['content-type'] = 'application/json'
     }
-    if (options.method !== 'GET') {
-        await sleep();
-    }
     const res = await fetch(url, {...options, body, headers});
     if (res.status === 204) {
         return
