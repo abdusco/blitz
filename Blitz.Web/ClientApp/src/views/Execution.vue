@@ -32,7 +32,7 @@
           <h2 class="title is-4 m-0 mr-4">Updates</h2>
           <span class="spacer"></span>
           <b class="is-4">Autorefresh</b>
-          <b-switch v-model="autoRefresh" left-label="refresh"></b-switch>
+          <b-switch v-model="autoRefresh"></b-switch>
         </div>
 
         <b-table :data="updates" detailed :show-detail-icon="false" detail-key="id" ref="updates" :loading="loading">
@@ -102,22 +102,24 @@ export default {
   methods: {
     flattenObject,
     initAutorefresh() {
-      requestAnimationFrame(
-          () => this._interval = setInterval(() => this.refreshUpdates(), 5000)
-      )
+      this._interval = setInterval(
+          () => !document.hidden && this.refreshUpdates(),
+          5000
+      );
     },
     async refreshUpdates() {
-      this.loading = true && this.execution.id;
+      this.loading = true && !!this.execution.id;
       const result = await client.getExecutionDetails(this.id);
       this.execution = result;
       this.cronjob = result.cronjob;
       this.updates = result.updates;
-      
+
       if (this.updates.length) {
         this.execution.state = this.updates[0].state;
       }
-      
+
       this.loading = false;
+      console.log('refreshed');
     },
     toggleRow(row) {
       this.$refs.updates.toggleDetails(row);
