@@ -123,6 +123,11 @@ export default {
       this.$router.push({name: 'projects'});
     },
   },
+  watch: {
+    project({id}) {
+      this.form.projectId = id;
+    }
+  }
 }
 </script>
 
