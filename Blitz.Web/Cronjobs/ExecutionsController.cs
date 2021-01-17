@@ -50,7 +50,7 @@ namespace Blitz.Web.Cronjobs
             CancellationToken cancellationToken = default
         )
         {
-            var existing = await _db.Executions.FirstOrDefaultAsync(
+            var existing = await _db.Executions.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken
             );
             if (existing is null)
@@ -65,7 +65,7 @@ namespace Blitz.Web.Cronjobs
                 .ThenInclude(c => c.Project)
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(limit))
                 .ProjectTo<ExecutionDetailDto>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(cancellationToken);
+                .SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
         }
 
 
