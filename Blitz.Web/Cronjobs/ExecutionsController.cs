@@ -60,12 +60,12 @@ namespace Blitz.Web.Cronjobs
 
             limit = Math.Clamp(limit, 0, 10);
 
-            return await _db.Executions
+            var result = await _db.Executions
                 .Include(e => e.Cronjob)
                 .ThenInclude(c => c.Project)
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(limit))
-                .ProjectTo<ExecutionDetailDto>(_mapper.ConfigurationProvider)
                 .SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
+            return _mapper.Map<ExecutionDetailDto>(result);
         }
 
 
@@ -115,7 +115,7 @@ namespace Blitz.Web.Cronjobs
         public string State { get; set; }
         public List<ExecutionStatusListDto> Updates { get; set; }
     }
-    
+
     [AutoMap(typeof(Cronjob))]
     public class CronjobOverviewDto
     {
