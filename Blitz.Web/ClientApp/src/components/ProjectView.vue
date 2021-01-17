@@ -15,7 +15,7 @@
     <section class="section">
       <div class="container">
         <h2 class="title is-4">Create a new trigger</h2>
-        <create-trigger-form :project="project"/>
+        <create-cronjob-form :project="project"/>
       </div>
     </section>
     <div class="section">
@@ -33,11 +33,11 @@
 </template>
 
 <script>
-import CreateTriggerForm from "@/components/CreateTriggerForm";
+import CreateCronjobForm from "@/components/CreateTriggerForm";
 
 export default {
   name: "ProjectView",
-  components: {CreateTriggerForm},
+  components: {CreateCronjobForm},
   data() {
     return {
       triggers: [],

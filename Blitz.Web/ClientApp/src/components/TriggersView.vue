@@ -10,18 +10,18 @@
     <section class="section">
       <div class="container">
         <h2 class="title">Quick create</h2>
-        <create-trigger-form/>
+        <create-cronjob-form/>
       </div>
     </section>
   </article>
 </template>
 
 <script>
-import CreateTriggerForm from "@/components/CreateTriggerForm";
+import CreateCronjobForm from "@/components/CreateTriggerForm";
 
 export default {
   name: "TriggersView",
-  components: {CreateTriggerForm}
+  components: {CreateCronjobForm}
 }
 </script>
 

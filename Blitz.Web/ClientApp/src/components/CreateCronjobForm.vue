@@ -2,7 +2,7 @@
   <form @submit.prevent="onSubmit">
     <div class="columns">
       <div class="column is-one-quarter" v-if="!project">
-        <b-field label="Project" message="Which project this trigger belong to?">
+        <b-field label="Project" message="Which project this cronjob belong to?">
           <b-autocomplete v-model="selectedProject" :data="projects" :custom-formatter="it => it.title" open-on-focus
                           clearable keep-first
                           @select="onSelectProject"
@@ -18,6 +18,8 @@
           </b-autocomplete>
         </b-field>
       </div>
+      <input v-else type="hidden" name="projectId" v-model="project.id">
+      
       <div class="column">
         <b-field label="Title" message="A short title">
           <b-input v-model="form.title" name="title" placeholder="Email reports" required></b-input>
@@ -74,7 +76,7 @@
 
 <script>
 export default {
-  name: "CreateTriggerForm",
+  name: "CreateCronjobForm",
   props: ['project'],
   data() {
     return {
@@ -91,8 +93,8 @@ export default {
   },
   methods: {
     onSubmit() {
-      let trigger = {...this.form};
-      this.$emit('create-trigger', trigger);
+      let cronjob = {...this.form};
+      this.$emit('create', cronjob);
     },
     onSelectProject(project) {
       console.log(project);

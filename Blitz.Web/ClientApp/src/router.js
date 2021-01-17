@@ -1,9 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import Home from '@/views/Home.vue'
 import Projects from "@/views/Projects";
 import Cronjobs from "@/views/Cronjobs";
-import Executions from "@/views/Executions";
+import Project from "@/views/Project";
+import Cronjob from "@/views/Cronjob";
+import Execution from "@/views/Execution";
 
 Vue.use(VueRouter)
 
@@ -19,14 +21,24 @@ const routes = [
         component: Projects
     },
     {
+        path: '/projects/:id',
+        name: 'project',
+        component: Project
+    },
+    {
         path: '/cronjobs',
         name: 'cronjobs',
         component: Cronjobs
     },
     {
-        path: '/executions',
-        name: 'executions',
-        component: Executions
+        path: '/cronjobs/:id',
+        name: 'cronjob',
+        component: Cronjob
+    },
+    {
+        path: '/executions/:id',
+        name: 'execution',
+        component: Execution
     },
 ]
 

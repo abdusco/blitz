@@ -74,3 +74,8 @@ th {
 .mini-status td, .mini-status th {
   border: 0;
 }
+
+.b-table .table tr.detail {
+  box-shadow: none;
+  background-color: transparent;
+}

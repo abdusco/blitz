@@ -1,5 +1,5 @@
 <template>
-  <main id="app">
+  <main id="app" ref="app">
     <div>
       <div class="is-flex is-align-items-center is-justify-content-space-around container">
         <h1 class="title m-0 is-4">
@@ -9,7 +9,6 @@
         <nav class="navbar">
           <nav-link to="/projects">projects</nav-link>
           <nav-link to="/cronjobs">cronjobs</nav-link>
-          <nav-link to="/executions">executions</nav-link>
         </nav>
         <span class="spacer"></span>
       </div>

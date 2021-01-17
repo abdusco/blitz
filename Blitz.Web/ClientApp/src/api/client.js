@@ -1,4 +1,5 @@
-﻿/**
+﻿const sleep = async (delay = 750) => new Promise(resolve => setTimeout(resolve, delay));
+/**
  * @param {string} url
  * @param {Partial<RequestInit>} options
  * */
@@ -9,7 +10,14 @@ const fetchJson = async (url, options = {}) => {
         body = JSON.stringify(body);
         headers['content-type'] = 'application/json'
     }
-    return fetch(url, {...options, body, headers}).then(r => r.json());
+    if (options.method !== 'GET') {
+        await sleep();
+    }
+    const res = await fetch(url, {...options, body, headers});
+    if (res.status === 204) {
+        return
+    }
+    return await res.json();
 }
 
 
@@ -20,6 +28,75 @@ class BlitzClient {
 
     async createProject(project) {
         return fetchJson('/api/projects', {method: 'POST', body: project})
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async deleteProject(id) {
+        return fetchJson(`/api/projects/${id}`, {method: 'DELETE'});
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async getProjectDetails(id) {
+        return fetchJson(`/api/projects/${id}`);
+    }
+
+    async createCronjob(cronjob) {
+        return fetchJson(`/api/cronjobs`, {method: 'POST', body: cronjob});
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async getCronjobDetails(id) {
+        return fetchJson(`/api/cronjobs/${id}`);
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async getCronjobExecutions(id) {
+        return fetchJson(`/api/cronjobs/${id}/executions`);
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async triggerCronjob(id) {
+        return fetchJson(`/api/cronjobs/${id}/trigger`, {method: 'POST'});
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async deleteCronjob(id) {
+        return fetchJson(`/api/cronjobs/${id}`, {method: 'DELETE'});
+    }
+
+    /**
+     * @param {string} id
+     * @param {Record<string, any>} patch
+     * */
+    async updateCronjob(id, patch) {
+        return fetchJson(`/api/cronjobs/${id}`, {method: 'PATCH', body: patch});
+    }
+
+    /**
+     * @param {string} id
+     * @param {boolean} enabled
+     * */
+    async toggleCronjob(id, enabled) {
+        return await this.updateCronjob(id, {enabled});
+    }
+
+    /**
+     * @param {string} id
+     * */
+    async getExecutionDetails(id) {
+        return fetchJson(`/api/executions/${id}`);
     }
 }
 

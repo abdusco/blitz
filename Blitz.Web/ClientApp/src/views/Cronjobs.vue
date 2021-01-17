@@ -1,7 +1,7 @@
 ﻿<template>
-  <div class="cronjobs">
+  <article>
     cron jobs
-  </div>
+  </article>
 </template>
 
 <script>
