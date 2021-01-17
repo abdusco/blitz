@@ -13,6 +13,8 @@ namespace Blitz.Web.Cronjobs
     {
         public string Cron { get; init; }
 
+        public override string ToString() => Cron;
+
         public CronExpression(string cron)
         {
             if (cron.Split(" ", StringSplitOptions.RemoveEmptyEntries).Length != 5)

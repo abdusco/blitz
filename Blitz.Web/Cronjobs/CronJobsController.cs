@@ -14,15 +14,22 @@ namespace Blitz.Web.Cronjobs
 {
     public class CronjobsController : ApiController
     {
+        private readonly ICronjobRegistrationService _cronjobRegistrationService;
         private readonly BlitzDbContext _db;
         private readonly IMapper _mapper;
         private readonly ICronjobTriggerer _cronjobTriggerer;
 
-        public CronjobsController(BlitzDbContext db, IMapper mapper, ICronjobTriggerer cronjobTriggerer)
+        public CronjobsController(
+            BlitzDbContext db,
+            IMapper mapper,
+            ICronjobTriggerer cronjobTriggerer,
+            ICronjobRegistrationService cronjobRegistrationService
+        )
         {
             _db = db;
             _mapper = mapper;
             _cronjobTriggerer = cronjobTriggerer;
+            _cronjobRegistrationService = cronjobRegistrationService;
         }
 
         [HttpGet]
@@ -43,7 +50,7 @@ namespace Blitz.Web.Cronjobs
                 .OrderByDescending(p => p.CreatedAt)
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
-                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+                .SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
             return _mapper.Map<CronjobDetailDto>(cronjob);
         }
 
@@ -51,7 +58,7 @@ namespace Blitz.Web.Cronjobs
         [HttpPatch("{id}")]
         public async Task<ActionResult> Update(Guid id, CronjobUpdateRequest request, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.FirstOrDefaultAsync(
+            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
             if (existing is null)
@@ -65,6 +72,7 @@ namespace Blitz.Web.Cronjobs
             existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await _cronjobRegistrationService.Add(existing);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
@@ -84,6 +92,7 @@ namespace Blitz.Web.Cronjobs
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await _cronjobRegistrationService.Add(c);
             await _db.AddAsync(c, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
@@ -94,7 +103,7 @@ namespace Blitz.Web.Cronjobs
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.FirstOrDefaultAsync(
+            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
             if (existing is null)
@@ -103,6 +112,7 @@ namespace Blitz.Web.Cronjobs
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            await _cronjobRegistrationService.Remove(existing);
             _db.Remove(existing);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
@@ -113,7 +123,7 @@ namespace Blitz.Web.Cronjobs
         [HttpPost("{id}/trigger")]
         public async Task<ActionResult<Guid>> Trigger(Guid id, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.FirstOrDefaultAsync(
+            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
             if (existing is null)
@@ -152,7 +162,7 @@ namespace Blitz.Web.Cronjobs
                 .ToListAsync(cancellationToken);
         }
     }
-    
+
     [AutoMap(typeof(Execution))]
     public class CronjobExecutionsListDto
     {

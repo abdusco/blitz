@@ -1,5 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Hangfire;
 
 namespace Blitz.Web.Cronjobs
 {
@@ -8,11 +8,19 @@ namespace Blitz.Web.Cronjobs
         Task TriggerAsync(Cronjob cronjob);
     }
 
-    public class HangfireCronjobTriggerer: ICronjobTriggerer
+    public class HangfireCronjobTriggerer : ICronjobTriggerer
     {
-        public async Task TriggerAsync(Cronjob cronjob)
+        private readonly IRecurringJobManager _recurringJobManager;
+
+        public HangfireCronjobTriggerer(IRecurringJobManager recurringJobManager)
         {
-            await Task.Delay(TimeSpan.FromSeconds(3));
+            _recurringJobManager = recurringJobManager;
+        }
+
+        public Task TriggerAsync(Cronjob cronjob)
+        {
+            _recurringJobManager.Trigger(cronjob.GetHangfireId());
+            return Task.CompletedTask;
         }
     }
 }
