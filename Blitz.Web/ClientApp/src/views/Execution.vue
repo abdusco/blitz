@@ -26,7 +26,7 @@
       <div class="container">
         <h2 class="title is-4">Updates</h2>
 
-        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="createdAt" ref="updates" hoverable custom-row-key="createdAt">
+        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="createdAt" ref="updates" custom-row-key="createdAt">
           <template #empty>
             No updates yet.
           </template>
@@ -99,3 +99,9 @@ export default {
   }
 }
 </script>
+<style scoped>
+.detail-item {
+  padding: 0;
+  background-color: transparent;
+}
+</style>
