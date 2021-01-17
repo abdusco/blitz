@@ -1,13 +1,13 @@
 using System;
 using AutoMapper;
 using Blitz.Web.Cronjobs;
+using Blitz.Web.Hangfire;
 using Blitz.Web.Persistence;
 using Hangfire;
 using Hangfire.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,6 +29,7 @@ namespace Blitz.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<HttpRequestJob>();
             services.AddTransient<ICronjobTriggerer, HangfireCronjobTriggerer>();
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
             services.AddHttpClient<HttpRequestJob>(

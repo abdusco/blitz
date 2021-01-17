@@ -1,26 +1,29 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Blitz.Web.Hangfire;
 using Hangfire;
 
 namespace Blitz.Web.Cronjobs
 {
     public interface ICronjobTriggerer
     {
-        Task TriggerAsync(Cronjob cronjob);
+        Task<Guid> TriggerAsync(Cronjob cronjob);
     }
 
     public class HangfireCronjobTriggerer : ICronjobTriggerer
     {
-        private readonly IRecurringJobManager _recurringJobManager;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public HangfireCronjobTriggerer(IRecurringJobManager recurringJobManager)
+        public HangfireCronjobTriggerer(IBackgroundJobClient backgroundJobClient)
         {
-            _recurringJobManager = recurringJobManager;
+            _backgroundJobClient = backgroundJobClient;
         }
 
-        public Task TriggerAsync(Cronjob cronjob)
+        public Task<Guid> TriggerAsync(Cronjob cronjob)
         {
-            _recurringJobManager.Trigger(cronjob.GetHangfireId());
-            return Task.CompletedTask;
+            var id = Guid.NewGuid();
+            _backgroundJobClient.Enqueue<HttpRequestJob>(job => job.SendRequestAsync(cronjob.Id, id, default));
+            return Task.FromResult(id);
         }
     }
 }
