@@ -107,7 +107,7 @@ export default {
       )
     },
     async refreshUpdates() {
-      this.loading = true;
+      this.loading = true && this.execution.id;
       const result = await client.getExecutionDetails(this.id);
       this.execution = result;
       this.cronjob = result.cronjob;
