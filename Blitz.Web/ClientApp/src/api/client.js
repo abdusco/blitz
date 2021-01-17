@@ -89,7 +89,7 @@ class BlitzClient {
      * @param {boolean} enabled
      * */
     async toggleCronjob(id, enabled) {
-        return await this.updateCronjob(id, {enabled});
+        return this.updateCronjob(id, {enabled});
     }
 
     /**
@@ -97,6 +97,14 @@ class BlitzClient {
      * */
     async getExecutionDetails(id) {
         return fetchJson(`/api/executions/${id}`);
+    }
+
+    async listCronjobs() {
+        return fetchJson(`/api/cronjobs`);
+    }
+
+    async listExecutions(skip = 0, take = 20) {
+        return fetchJson(`/api/executions?skip=${skip}&take=${take}`);
     }
 }
 

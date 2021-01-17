@@ -6,6 +6,7 @@ import Cronjobs from "@/views/Cronjobs";
 import Project from "@/views/Project";
 import Cronjob from "@/views/Cronjob";
 import Execution from "@/views/Execution";
+import Executions from "@/views/Executions";
 
 Vue.use(VueRouter)
 
@@ -34,6 +35,11 @@ const routes = [
         path: '/cronjobs/:id',
         name: 'cronjob',
         component: Cronjob
+    },
+    {
+        path: '/executions',
+        name: 'executions',
+        component: Executions
     },
     {
         path: '/executions/:id',

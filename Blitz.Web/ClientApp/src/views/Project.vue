@@ -4,7 +4,7 @@
       <div class="hero-body">
         <div class="container">
           <breadcrumbs :items="{'Projects': '/projects'}"/>
-          <h1 class="title is-flex is-align-items-center is-uppercase">{{ project.title || '...' }}</h1>
+          <h1 class="title is-flex is-align-items-center">{{ project.title || '...' }}</h1>
         </div>
       </div>
     </section>
@@ -18,11 +18,15 @@
       <div class="container">
         <h2 class="title is-4">Cronjobs</h2>
         <b-table :data="project.cronjobs">
-          <b-table-column label="Title" field="title" v-slot="{row}">
-            <router-link :to="{name: 'cronjob', params: {id: row.id}}">{{ row.title }}</router-link>
+          <b-table-column label="Title" field="title" v-slot="{row}" sortable>
+            <router-link :to="{name: 'cronjob', params: {id: row.id}}"><b>{{ row.title }}</b></router-link>
           </b-table-column>
-          <b-table-column label="Schedule" field="cron" v-slot="{row}">{{ row.cron }}</b-table-column>
-          <b-table-column label="Enabled" field="enabled" v-slot="{row}">
+          <b-table-column label="Schedule" field="cron" v-slot="{row}">
+            <cron-expression v-if="row.cron" :value="row.cron">
+              <code>{{ row.cron }}</code>
+            </cron-expression>
+          </b-table-column>
+          <b-table-column label="Enabled" field="enabled" v-slot="{row}" sortable>
             <b-switch v-model="row.enabled" @input="(enabled) => onCronjobToggle(row.id, enabled)"/>
           </b-table-column>
           <template v-slot:empty>
@@ -38,10 +42,11 @@
 import client from "@/api/client";
 import CreateCronjobForm from "@/components/CreateCronjobForm";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import CronExpression from "@/components/CronExpression";
 
 export default {
   name: "Project",
-  components: {Breadcrumbs, CreateCronjobForm},
+  components: {CronExpression, Breadcrumbs, CreateCronjobForm},
   data() {
     return {
       id: null,

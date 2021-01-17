@@ -13,6 +13,10 @@ $weight-bold: 600;
 @import "~bulma/bulma";
 @import "~buefy/src/scss/buefy";
 
+b, strong {
+  font-weight: 600;
+}
+
 code {
   background-color: transparent;
   color: inherit;
@@ -39,6 +43,14 @@ th {
 
 .input {
   font-family: inherit;
+}
+
+.text--dash {
+  border-bottom: 1px dashed #666;
+}
+
+.text--tabular {
+  font-family: $family-monospace;
 }
 
 .text--smallcaps {

@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="projects">
+  <div>
     <section class="hero is-light">
       <div class="hero-body">
         <div class="container">
@@ -23,11 +23,11 @@
     <section class="section">
       <div class="container">
         <h2 class="title is-4">All Projects</h2>
-        <b-table :loading="loading" :data="projects">
+        <b-table :data="projects" custom-row-key="id">
           <b-table-column field="title" label="Title" v-slot="{row: {title, id}}" sortable>
-            <router-link :to="{name: 'project', params: {id}}">{{ title }}</router-link>
+            <router-link :to="{name: 'project', params: {id}}"><b>{{ title }}</b></router-link>
           </b-table-column>
-          <b-table-column field="cronjobsCount" label="Total Cronjobs" numeric v-slot="{row}" sortable>
+          <b-table-column field="cronjobsCount" label="Total Cronjobs" v-slot="{row}" sortable>
             {{ `${row.cronjobsCount}` }}
           </b-table-column>
           <template v-slot:empty>
@@ -46,7 +46,6 @@ export default {
   name: "Projects",
   data() {
     return {
-      loading: true,
       projects: [],
       form: {
         name: ''
@@ -54,8 +53,7 @@ export default {
     }
   },
   async mounted() {
-    this.projects = await client.listProjects();
-    this.loading = false;
+    this.projects = await this.$spin(client.listProjects());
   },
   methods: {
     onNewProject: async function () {
@@ -66,7 +64,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
