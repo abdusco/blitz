@@ -8,6 +8,7 @@ namespace Blitz.Web
     {
         public MappingProfile()
         {
+            AllowNullCollections = true;
             CreateMap<string, CronExpression>().ConvertUsing(s => new CronExpression(s));
             CreateMap<CronExpression, string>().ConvertUsing(s => s.Cron);
             CreateMap<string, ExecutionState>().ConvertUsing(s => ExecutionState.FromValue(s));
