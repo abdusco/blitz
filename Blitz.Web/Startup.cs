@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
@@ -29,6 +30,11 @@ namespace Blitz.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<ICronjobTriggerer, HangfireCronjobTriggerer>();
+            services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
+            services.AddHttpClient<HttpRequestJob>(
+                (provider, client) => { client.Timeout = TimeSpan.FromSeconds(5); }
+            );
+
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddDbContext<BlitzDbContext>(
                 builder =>
@@ -54,7 +60,10 @@ namespace Blitz.Web
                     c.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz.Web", Version = "v1"});
                 }
             );
-            services.AddHangfire(configuration => configuration.UseEFCoreStorage(builder => builder.UseSqlite(Configuration.GetConnectionString("HangfireSqlite"))).UseDatabaseCreator());
+            services.AddHangfire(
+                configuration => configuration.UseEFCoreStorage(builder => builder.UseSqlite(Configuration.GetConnectionString("HangfireSqlite")))
+                    .UseDatabaseCreator()
+            );
             services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
         }
 
