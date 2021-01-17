@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ardalis.SmartEnum;
-using Blitz.Web.Domain;
+using Blitz.Web.Persistence;
 using Blitz.Web.Projects;
 
 namespace Blitz.Web.Cronjobs

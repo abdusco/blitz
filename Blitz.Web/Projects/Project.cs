@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Blitz.Web.Cronjobs;
-using Blitz.Web.Domain;
+using Blitz.Web.Persistence;
 
 namespace Blitz.Web.Projects
 {

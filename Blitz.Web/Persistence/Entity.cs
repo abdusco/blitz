@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Blitz.Web.Domain
+namespace Blitz.Web.Persistence
 {
     public abstract class Entity : ITimestamped
     {
