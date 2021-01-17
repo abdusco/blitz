@@ -31,7 +31,7 @@
         <div class="is-flex is-align-items-center">
           <h2 class="title is-4 m-0 mr-4">Updates</h2>
           <span class="spacer"></span>
-          <b class="is-4">Autorefresh</b>
+          <b class="is-4 mr-2">Autorefresh</b>
           <b-switch v-model="autoRefresh"></b-switch>
         </div>
 
@@ -40,19 +40,21 @@
             No updates yet.
           </template>
           <template #detail="{row}">
-            <table v-if="row.details" class="table is-striped is-fullwidth is-hoverable">
+            <table v-if="row.details" class="table is-fullwidth is-hoverable">
               <thead>
               <tr>
                 <th class="is-column-min">Key</th>
-                <th>Value</th>
+                <th class="is-column-max">Value</th>
               </tr>
               </thead>
+              <tbody>
               <tr v-for="(v,k) in flattenObject(row.details)" :key="k">
-                <td><code class="text--small text--nowrap has-text-weight-medium">{{ k }}</code></td>
+                <td class="is-column-min"><code class="detail-key text--nowrap"><b>{{ k }}</b></code></td>
                 <td>
-                  <pre class="detail-item"><code class="text--small">{{ v }}</code></pre>
+                  <pre class="detail-value"><code class="">{{ v }}</code></pre>
                 </td>
               </tr>
+              </tbody>
             </table>
             <span v-else>No details</span>
           </template>
@@ -145,8 +147,15 @@ export default {
 }
 </script>
 <style scoped>
-.detail-item {
-  font-size: inherit;
+tbody td, tbody th {
+  border: 0;
+}
+.detail-key {
+  font-size: 0.8em;
+}
+
+.detail-value {
+  font-size: 0.8em;
   padding: 0;
   white-space: pre-wrap;
   background-color: transparent;

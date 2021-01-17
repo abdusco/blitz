@@ -17,7 +17,6 @@ $navbar-item-active-background-color: rgba($primary-light, 0.5);
 @import "~buefy/src/scss/buefy";
 
 
-
 b, strong {
   font-weight: 600;
 }
@@ -52,6 +51,10 @@ th {
 
 .is-column-min {
   width: 0;
+}
+
+.is-column-max {
+  width: 100%;
 }
 
 .input {
