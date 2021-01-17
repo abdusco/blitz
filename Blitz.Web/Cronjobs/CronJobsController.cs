@@ -92,10 +92,10 @@ namespace Blitz.Web.Cronjobs
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            await _cronjobRegistrationService.Add(c);
             await _db.AddAsync(c, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
+            await _cronjobRegistrationService.Add(c);
 
             return _mapper.Map<CronjobDetailDto>(c);
         }
@@ -133,6 +133,7 @@ namespace Blitz.Web.Cronjobs
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             var execution = await existing.TriggerAsync(_cronjobTriggerer);
+            await _db.AddAsync(execution, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 

@@ -42,9 +42,8 @@ namespace Blitz.Web.Cronjobs
         {
             var exe = new Execution(this);
             Executions.Add(exe);
-            exe.UpdateStatus(ExecutionState.Pending);
-            await triggerer.TriggerAsync(this);
-            exe.UpdateStatus(ExecutionState.Triggered);
+            var executionId = await triggerer.TriggerAsync(this);
+            exe.Id = executionId;
             return exe;
         }
     }
@@ -73,6 +72,9 @@ namespace Blitz.Web.Cronjobs
             Updates.Add(executionStatus ?? throw new ArgumentNullException(nameof(executionStatus)));
             State = Updates.OrderByDescending(u => u.CreatedAt).First().State;
         }
+
+        public void UpdateStatus(ExecutionState state, Dictionary<string, object> details) =>
+            UpdateStatus(new ExecutionStatus(this, state) {Details = details});
 
         public void UpdateStatus(ExecutionState state) => UpdateStatus(new ExecutionStatus(this, state));
     }
