@@ -4,7 +4,12 @@
       <div class="hero-body">
         <div class="container">
           <breadcrumbs :items="{'Projects': '/projects'}"/>
-          <h1 class="page-title title is-flex is-align-items-center">{{ project.title || '...' }}</h1>
+          <div class="is-flex is-align-items-center mb-5">
+
+            <h1 class="page-title title is-flex is-align-items-center">{{ project.title || '...' }}</h1>
+            <span class="spacer"></span>
+            <b-button rounded type="is-danger is-light" @click="deleteProject">Delete</b-button>
+          </div>
         </div>
       </div>
     </section>
@@ -68,6 +73,10 @@ export default {
     },
     async onCronjobToggle(id, value) {
       await client.toggleCronjob(id, value);
+    },
+    async deleteProject() {
+      await client.deleteProject(this.project.id);
+      await this.$router.push({name: 'projects'});
     }
   }
 }
