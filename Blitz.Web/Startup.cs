@@ -70,7 +70,7 @@ namespace Blitz.Web
                 c =>
                 {
                     c.DisplayOperationId();
-                    c.RoutePrefix = "/api";
+                    c.RoutePrefix = "api";
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz.Web v1");
                 }
             );
