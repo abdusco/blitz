@@ -72,7 +72,15 @@ namespace Blitz.Web.Cronjobs
             existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            await _cronjobRegistrationService.Add(existing);
+            if (!existing.Enabled)
+            {
+                await _cronjobRegistrationService.Remove(existing);
+            }
+            else
+            {
+                await _cronjobRegistrationService.Add(existing);
+            }
+
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
@@ -162,7 +170,7 @@ namespace Blitz.Web.Cronjobs
                 .ProjectTo<CronjobExecutionsListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
-        
+
         [HttpDelete("{id}/executions")]
         public async Task<ActionResult<List<CronjobExecutionsListDto>>> ClearExecutions(
             Guid id,
@@ -176,7 +184,7 @@ namespace Blitz.Web.Cronjobs
 
             var removables = await _db.Executions.Where(e => e.CronjobId == id)
                 .ToListAsync(cancellationToken);
-            
+
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             _db.RemoveRange(removables);
             await _db.SaveChangesAsync(cancellationToken);
@@ -184,7 +192,6 @@ namespace Blitz.Web.Cronjobs
 
             return NoContent();
         }
-        
     }
 
     [AutoMap(typeof(Execution))]
