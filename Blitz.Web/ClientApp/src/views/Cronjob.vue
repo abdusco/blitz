@@ -6,7 +6,7 @@
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
             <h1 class="page-title title m-0">{{ cronjob.title || '...' }}</h1>
-            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-4 text--smallcaps is-small"
+            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-4 text--smallcaps"
                       :disabled="!cronjob.enabled"
                       :loading="triggering"
                       @click="triggerCronjob">

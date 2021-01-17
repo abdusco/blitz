@@ -10,7 +10,7 @@
           <table class="mini-status table is-narrow">
             <tr>
               <th>Created at</th>
-              <td><b-tooltip :label="humanizedDate(execution.createdAt)"><span>{{ formatDate(execution.createdAt) }}</span></b-tooltip></td>
+              <td><b-tooltip :label="humanizedDate(execution.createdAt)"><code>{{ formatDate(execution.createdAt) }}</code></b-tooltip></td>
             </tr>
             <tr v-if="execution.state">
               <th>Status</th>
@@ -26,7 +26,7 @@
       <div class="container">
         <h2 class="title is-4">Updates</h2>
 
-        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="createdAt" ref="updates" custom-row-key="createdAt">
+        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="createdAt" ref="updates">
           <template #empty>
             No updates yet.
           </template>
@@ -51,9 +51,9 @@
           <b-table-column field="state" label="State" v-slot="{row}" sortable>
             <execution-state-pill :value="row.state"/>
           </b-table-column>
-          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable>{{ row.createdAt }}</b-table-column>
+          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable><b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt) }}</code></b-tooltip></b-table-column>
           <b-table-column label="Actions" v-slot="{row}" sortable>
-            <b-button v-if="row.details" rounded type="is-small is-info" @click="toggleRow(row)">Details</b-button>
+            <b-button v-if="Object.keys(row.details).length" rounded type="is-small is-info" @click="toggleRow(row)">Details</b-button>
           </b-table-column>
         </b-table>
       </div>
@@ -102,6 +102,10 @@ export default {
 <style scoped>
 .detail-item {
   padding: 0;
+  white-space: pre-wrap;
   background-color: transparent;
+}
+.b-table .table tr.detail .detail-container {
+  padding: 0; 
 }
 </style>
