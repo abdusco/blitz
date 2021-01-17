@@ -162,6 +162,29 @@ namespace Blitz.Web.Cronjobs
                 .ProjectTo<CronjobExecutionsListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
+        
+        [HttpDelete("{id}/executions")]
+        public async Task<ActionResult<List<CronjobExecutionsListDto>>> ClearExecutions(
+            Guid id,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (!await _db.Cronjobs.AnyAsync(c => c.Id == id, cancellationToken))
+            {
+                return NotFound();
+            }
+
+            var removables = await _db.Executions.Where(e => e.CronjobId == id)
+                .ToListAsync(cancellationToken);
+            
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            _db.RemoveRange(removables);
+            await _db.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+
+            return NoContent();
+        }
+        
     }
 
     [AutoMap(typeof(Execution))]

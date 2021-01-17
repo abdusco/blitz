@@ -106,6 +106,13 @@ class BlitzClient {
     async listExecutions(skip = 0, take = 20) {
         return fetchJson(`/api/executions?skip=${skip}&take=${take}`);
     }
+
+    /**
+     * @param {string} id
+     * */
+    async clearCronjobExecutions(id) {
+        return fetchJson(`/api/cronjobs/${id}/executions`, {method: 'DELETE'});
+    } 
 }
 
 export default new BlitzClient(); 

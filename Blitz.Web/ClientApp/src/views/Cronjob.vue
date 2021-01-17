@@ -13,7 +13,7 @@
               Trigger 🗲
             </b-button>
             <span class="spacer"></span>
-            <b-button rounded type="is-danger is-light" @click="deleteCronjob">Delete</b-button>
+            <b-button rounded type="is-danger is-light" class="ml-2" @click="deleteCronjob">Delete</b-button>
           </div>
           <p class="subtitle mt-4 mb-2">
 
@@ -49,14 +49,20 @@
       </div>
     </section>
     <section class="container py-6">
-      <h2 class="title is-size-4">Latest executions</h2>
+      <div class="is-flex is-align-items-center mb-4">
+        <h2 class="title is-size-4 m-0 mr-4">Latest executions</h2>
+        <span class="spacer"></span>
+        <b-button rounded type="is-light is-small" @click="clearExecutions">Clear</b-button>
+      </div>
 
       <b-table :data="executions">
         <b-table-column field="id" label="Id" v-slot="{row}">
           <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id }}</b></code></router-link>
         </b-table-column>
         <b-table-column field="createdAt" label="Created At" v-slot="{row}" sortable>
-          <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{ formatDate(row.createdAt) }}</span></b-tooltip>
+          <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{
+              formatDate(row.createdAt)
+            }}</span></b-tooltip>
         </b-table-column>
         <b-table-column field="state" label="State" v-slot="{row}" sortable>
           <execution-state-pill :value="row.state"/>
@@ -109,6 +115,10 @@ export default {
     async deleteCronjob() {
       await client.deleteCronjob(this.cronjob.id);
       await this.$router.push({name: 'project', params: {id: this.cronjob.projectId}});
+    },
+    async clearExecutions() {
+      await client.clearCronjobExecutions(this.cronjob.id);
+      await this.$spin(this.refreshExecutions());
     }
   },
   computed: {

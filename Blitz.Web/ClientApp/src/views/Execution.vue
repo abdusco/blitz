@@ -26,7 +26,7 @@
       <div class="container">
         <h2 class="title is-4">Updates</h2>
 
-        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="createdAt" ref="updates">
+        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="id" ref="updates">
           <template #empty>
             No updates yet.
           </template>
