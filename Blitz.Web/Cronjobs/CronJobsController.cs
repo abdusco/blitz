@@ -132,7 +132,7 @@ namespace Blitz.Web.Cronjobs
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            var execution = await existing.TriggerAsync(_cronjobTriggerer, cancellationToken);
+            var execution = await existing.TriggerAsync(_cronjobTriggerer);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 

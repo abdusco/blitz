@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Ardalis.SmartEnum;
 using Blitz.Web.Persistence;
@@ -39,7 +38,7 @@ namespace Blitz.Web.Cronjobs
         public List<Execution> Executions { get; set; } = new();
         public Execution LastExecution => Executions.OrderByDescending(e => e.CreatedAt).FirstOrDefault();
 
-        public async Task<Execution> TriggerAsync(ICronjobTriggerer triggerer, CancellationToken cancellationToken)
+        public async Task<Execution> TriggerAsync(ICronjobTriggerer triggerer)
         {
             var exe = new Execution(this);
             Executions.Add(exe);
