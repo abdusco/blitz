@@ -10,7 +10,11 @@
           <table class="mini-status table is-narrow">
             <tr>
               <th>Created at</th>
-              <td><b-tooltip :label="humanizedDate(execution.createdAt)"><code>{{ formatDate(execution.createdAt) }}</code></b-tooltip></td>
+              <td>
+                <b-tooltip :label="humanizedDate(execution.createdAt)"><code>{{
+                    formatDate(execution.createdAt)
+                  }}</code></b-tooltip>
+              </td>
             </tr>
             <tr v-if="execution.state">
               <th>Status</th>
@@ -24,9 +28,14 @@
     </section>
     <section class="section">
       <div class="container">
-        <h2 class="title is-4">Updates</h2>
+        <div class="is-flex is-align-items-center">
+          <h2 class="title is-4 m-0 mr-4">Updates</h2>
+          <span class="spacer"></span>
+          <b class="is-4">Autorefresh</b>
+          <b-switch v-model="autoRefresh" left-label="refresh"></b-switch>
+        </div>
 
-        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="id" ref="updates">
+        <b-table :data="updates" detailed :show-detail-icon="false" detail-key="id" ref="updates" :loading="loading">
           <template #empty>
             No updates yet.
           </template>
@@ -51,9 +60,14 @@
           <b-table-column field="state" label="State" v-slot="{row}" sortable>
             <execution-state-pill :value="row.state"/>
           </b-table-column>
-          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable><b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, true) }}</code></b-tooltip></b-table-column>
+          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable>
+            <b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, true) }}</code>
+            </b-tooltip>
+          </b-table-column>
           <b-table-column label="Actions" v-slot="{row}" sortable>
-            <b-button v-if="Object.keys(row.details).length" rounded type="is-small is-info" @click="toggleRow(row)">Details</b-button>
+            <b-button v-if="Object.keys(row.details).length" rounded type="is-small is-info" @click="toggleRow(row)">
+              Details
+            </b-button>
           </b-table-column>
         </b-table>
       </div>
@@ -72,19 +86,34 @@ export default {
   components: {ExecutionStatePill, Breadcrumbs},
   data() {
     return {
+      _interval: null,
+      loading: false,
+      id: this.$route.params.id,
       execution: {},
       cronjob: {},
       updates: [],
+      autoRefresh: true,
     }
   },
   async mounted() {
-    const result = await this.$spin(client.getExecutionDetails(this.$route.params.id));
-    this.execution = result;
-    this.cronjob = result.cronjob;
-    this.updates = result.updates;
+    await this.$spin(this.refreshUpdates());
+    this.initAutorefresh();
   },
   methods: {
     flattenObject,
+    initAutorefresh() {
+      requestAnimationFrame(
+          () => this._interval = setInterval(() => this.refreshUpdates(), 5000)
+      )
+    },
+    async refreshUpdates() {
+      this.loading = true;
+      const result = await client.getExecutionDetails(this.id);
+      this.execution = result;
+      this.cronjob = result.cronjob;
+      this.updates = result.updates;
+      this.loading = false;
+    },
     toggleRow(row) {
       this.$refs.updates.toggleDetails(row);
     }
@@ -96,6 +125,15 @@ export default {
         [this.cronjob.title || '...']: `/cronjobs/${this.cronjob.id}`,
       };
     }
+  },
+  watch: {
+    autoRefresh(enabled) {
+      if (!enabled) {
+        clearInterval(this._interval);
+      } else {
+        this.initAutorefresh();
+      }
+    }
   }
 }
 </script>
@@ -106,7 +144,8 @@ export default {
   white-space: pre-wrap;
   background-color: transparent;
 }
+
 .b-table .table tr.detail .detail-container {
-  padding: 0; 
+  padding: 0;
 }
 </style>
