@@ -1,4 +1,4 @@
-﻿const sleep = async (delay = 750) => new Promise(resolve => setTimeout(resolve, delay));
+﻿const sleep = async (delay = 250) => new Promise(resolve => setTimeout(resolve, delay));
 /**
  * @param {string} url
  * @param {Partial<RequestInit>} options
@@ -11,6 +11,9 @@ const fetchJson = async (url, options = {}) => {
         headers['content-type'] = 'application/json'
     }
     const res = await fetch(url, {...options, body, headers});
+    if (options.method !== 'GET') {
+        await sleep();
+    }
     if (res.status === 204) {
         return
     }
