@@ -3,24 +3,32 @@
     <section class="hero hero--gradient">
       <div class="hero-body">
         <div class="container">
-          <h1 class="page-title title">Executions</h1>
+          <div class="is-flex is-align-items-center">
+            <h1 class="page-title title">Executions</h1>
+            <span class="spacer"></span>
+            <b class="is-4 mr-2">Autorefresh</b>
+            <b-switch v-model="autoRefresh"></b-switch>
+          </div>
         </div>
       </div>
     </section>
     <section class="section">
       <div class="container">
-        <b-table :data="executions" custom-row-key="id">
+        <b-table :data="executions" custom-row-key="id" :loading="loading">
           <b-table-column field="id" label="Id" v-slot="{row}">
             <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id }}</b></code></router-link>
           </b-table-column>
           <b-table-column field="cronjob.projectTitle" label="Project" v-slot="{row}">
-            <router-link :to="{name: 'project', params: {id: row.cronjob.projectId}}">{{row.cronjob.projectTitle}}</router-link>
+            <router-link :to="{name: 'project', params: {id: row.cronjob.projectId}}">{{ row.cronjob.projectTitle }}
+            </router-link>
           </b-table-column>
           <b-table-column field="cronjob.title" label="Cronjob" v-slot="{row}">
-            <router-link :to="{name: 'cronjob', params: {id: row.cronjob.id}}">{{row.cronjob.title}}</router-link>
+            <router-link :to="{name: 'cronjob', params: {id: row.cronjob.id}}">{{ row.cronjob.title }}</router-link>
           </b-table-column>
           <b-table-column field="createdAt" label="Created At" v-slot="{row}">
-            <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{ formatDate(row.createdAt) }}</span></b-tooltip>
+            <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{
+                formatDate(row.createdAt)
+              }}</span></b-tooltip>
           </b-table-column>
           <b-table-column field="state" label="State" v-slot="{row}" sortable>
             <execution-state-pill :value="row.state"/>
@@ -43,17 +51,36 @@ export default {
   components: {ExecutionStatePill},
   data() {
     return {
+      _interval: null,
+      loading: false,
+      autoRefresh: true,
       executions: [],
     }
   },
   async mounted() {
-    this.executions = await this.$spin(client.listExecutions());
+    await this.$spin(this.refreshExecutions());
+    this.initAutorefresh();
   },
   methods: {
-    onNewProject: async function () {
-      let project = {...this.form};
-      const id = await client.createProject(project);
-      await this.$router.push({name: 'project', params: {id}});
+    async refreshExecutions() {
+      this.loading = true && !!this.executions.length;
+      this.executions = await client.listExecutions();
+      this.loading = false;
+    },
+    initAutorefresh() {
+      this._interval = setInterval(
+          () => !document.hidden && this.refreshExecutions(),
+          5000
+      );
+    },
+  },
+  watch: {
+    autoRefresh(enabled) {
+      if (!enabled) {
+        clearInterval(this._interval);
+      } else {
+        this.initAutorefresh();
+      }
     }
   }
 }

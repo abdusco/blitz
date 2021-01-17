@@ -5,7 +5,7 @@
       <ul class="app-parts columns is-6 is-desktop">
         <li class="column">
           <router-link to="/projects">
-            <article class="home-card card is-flex is-justify-content-center is-align-items-center has-text-primary">
+            <article class="home-card is-flex is-justify-content-center is-align-items-center">
               <div>
                 <figure class="card-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
@@ -20,7 +20,7 @@
         </li>
         <li class="column">
           <router-link to="/cronjobs">
-            <article class="home-card card is-flex is-justify-content-center is-align-items-center has-text-info">
+            <article class="home-card is-flex is-justify-content-center is-align-items-center">
               <div>
                 <figure class="card-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
@@ -35,7 +35,7 @@
         </li>
         <li class="column">
           <router-link to="/executions">
-            <article class="home-card card is-flex is-justify-content-center is-align-items-center has-text-warning">
+            <article class="home-card is-flex is-justify-content-center is-align-items-center">
               <div>
                 <figure class="card-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
@@ -75,8 +75,16 @@ export default {
   margin-top: 4rem;
 }
 .home-card {
+  /*color: #ffd65b;*/
+  border-radius: 2rem;
+  box-shadow: 0 0.25rem 2rem -0.5rem rgba(0,0,0, 0.1);
+  padding: 2rem;
   min-height: 15rem;
   aspect-ratio: 5/4;
+  transition: 0.2s;
+}
+.home-card:hover {
+  box-shadow: 0 0.5rem 3rem -0.5rem rgba(0,0,0, 0.2);
 }
 
 .card-icon {
