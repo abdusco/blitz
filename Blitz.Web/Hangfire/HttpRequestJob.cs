@@ -37,11 +37,10 @@ namespace Blitz.Web.Hangfire
                 _ => throw new Exception("Unsupported HTTP method")
             };
 
-            var execution = await db.Executions.SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken)
-                ?? new Execution();
+            Execution execution;
             if (executionId != Guid.Empty)
             {
-                execution = ;
+                execution = await db.Executions.SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
             }
             else
             {
