@@ -36,10 +36,10 @@ namespace Blitz.Web.Projects
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
-            return await _db.Projects
+            var result = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
-                .ProjectTo<ProjectDetailsDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+            return _mapper.Map<ProjectDetailsDto>(result);
         }
 
         [HttpPost]
@@ -101,6 +101,7 @@ namespace Blitz.Web.Projects
         [AutoMap(typeof(Cronjob))]
         public class CronJobOverviewDto
         {
+            public Guid Id { get; set; }
             public string Title { get; set; }
             public string Cron { get; set; }
             public bool Enabled { get; set; }
