@@ -6,12 +6,14 @@
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
             <h1 class="page-title title m-0">{{ cronjob.title || '...' }}</h1>
-            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" size="" class="ml-4 text--smallcaps is-small"
+            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-4 text--smallcaps is-small"
                       :disabled="!cronjob.enabled"
                       :loading="triggering"
                       @click="triggerCronjob">
               Trigger 🗲
             </b-button>
+            <span class="spacer"></span>
+            <b-button rounded type="is-danger is-light" @click="deleteCronjob">Delete</b-button>
           </div>
           <p class="subtitle mt-4 mb-2">
 
@@ -103,6 +105,10 @@ export default {
       } finally {
         this.triggering = false;
       }
+    },
+    async deleteCronjob() {
+      await client.deleteCronjob(this.cronjob.id);
+      await this.$router.push({name: 'project', params: {id: this.cronjob.projectId}});
     }
   },
   computed: {
