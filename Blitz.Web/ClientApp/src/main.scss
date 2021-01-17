@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap');
+
+$family-sans-serif: Inter;
+$family-monospace: 'Jetbrains Mono', consolas, monospace;
+$navbar-background-color: transparent;
+$weight-bold: 600;
+//$primary: #cc0000;
+
+@import "~bulma/sass/utilities/functions";
+@import "~bulma/sass/utilities/initial-variables";
+@import "~buefy/src/scss/utils/_all";
+@import "~bulma/bulma";
+@import "~buefy/src/scss/buefy";
+
+code {
+  background-color: transparent;
+  color: inherit;
+  font-size: 1em;
+  font-weight: normal;
+  padding: 0;
+}
+
+.hero .title {
+  font-weight: 800;
+}
+
+.table tr > *:first-child {
+  padding-left: 0;
+}
+
+th {
+  font-weight: 600;
+}
+
+.is-column-min {
+  width: 0;
+}
+
+.input {
+  font-family: inherit;
+}
+
+.text--smallcaps {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.text--nowrap {
+  white-space: nowrap;
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+.button {
+  font-weight: 600;
+}
+
+.radio {
+  height: 2.5em;
+}
+
+.breadcrumb a {
+  font-weight: 600;
+}
+
+.mini-status {
+  background-color: transparent;
+}
+
+.mini-status td, .mini-status th {
+  border: 0;
+}
