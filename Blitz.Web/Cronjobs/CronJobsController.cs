@@ -65,22 +65,17 @@ namespace Blitz.Web.Cronjobs
             {
                 return NotFound();
             }
+            
+            await _cronjobRegistrationService.Remove(existing);
 
             // TODO: figure out how to ignore null members when mapping 
             existing.Enabled = request.Enabled ?? existing.Enabled;
             existing.Title = request.Title ?? existing.Title;
             existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
 
+            await _cronjobRegistrationService.Add(existing);
+            
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            if (!existing.Enabled)
-            {
-                await _cronjobRegistrationService.Remove(existing);
-            }
-            else
-            {
-                await _cronjobRegistrationService.Add(existing);
-            }
-
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
