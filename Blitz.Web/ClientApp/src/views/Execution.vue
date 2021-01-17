@@ -10,7 +10,7 @@
           <table class="mini-status table is-narrow">
             <tr>
               <th>Created at</th>
-              <td>{{ execution.createdAt }}</td>
+              <td><b-tooltip :label="humanizedDate(execution.createdAt)"><span>{{ formatDate(execution.createdAt) }}</span></b-tooltip></td>
             </tr>
             <tr v-if="execution.state">
               <th>Status</th>
