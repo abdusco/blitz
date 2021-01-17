@@ -63,7 +63,7 @@
             <execution-state-pill :value="row.state"/>
           </b-table-column>
           <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable>
-            <b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, true) }}</code>
+            <b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, {seconds: true}) }}</code>
             </b-tooltip>
           </b-table-column>
           <b-table-column label="Actions" v-slot="{row}" sortable>

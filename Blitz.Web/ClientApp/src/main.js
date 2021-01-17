@@ -39,10 +39,15 @@ Vue.mixin({
         },
         /**
          * @param {Date} date
-         * @param {boolean} seconds
+         * @param {Object} options
+         * @param {boolean} options.seconds
+         * @param {boolean} options.utc
          * @return {string} */
-        formatDate(date, seconds = false) {
-            const format = seconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm'; 
+        formatDate(date, options = {seconds: false, utc: false}) {
+            const format = options.seconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
+            if (options.utc) {
+                return dayjs.utc(date).format(format)
+            }
             return dayjs.utc(date).local().format(format);
         },
         humanizedDate(date) {
