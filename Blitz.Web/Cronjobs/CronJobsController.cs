@@ -72,7 +72,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> Create(
+        public async Task<ActionResult<CronjobDetailDto>> Create(
             CronjobCreateDto request,
             CancellationToken cancellationToken
         )
@@ -88,7 +88,7 @@ namespace Blitz.Web.Cronjobs
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
-            return c.Id;
+            return _mapper.Map<CronjobDetailDto>(c);
         }
 
         [HttpDelete("{id}")]
