@@ -6,7 +6,7 @@
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
             <h1 class="page-title title m-0">{{ cronjob.title || '...' }}</h1>
-            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-4 text--smallcaps"
+            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-5 text--smallcaps"
                       :disabled="!cronjob.enabled"
                       :loading="triggering"
                       @click="triggerCronjob">
@@ -52,7 +52,7 @@
       <div class="is-flex is-align-items-center mb-4">
         <h2 class="title is-size-4 m-0 mr-4">Latest executions</h2>
         <span class="spacer"></span>
-        <b-button rounded type="is-light is-small" @click="clearExecutions">Clear</b-button>
+        <b-button rounded type="is-light" @click="clearExecutions">Clear</b-button>
       </div>
 
       <b-table :data="executions">

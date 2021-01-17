@@ -39,9 +39,11 @@ Vue.mixin({
         },
         /**
          * @param {Date} date
+         * @param {boolean} seconds
          * @return {string} */
-        formatDate(date) {
-            return dayjs.utc(date).local().format('YYYY-MM-DD HH:mm');
+        formatDate(date, seconds = false) {
+            const format = seconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm'; 
+            return dayjs.utc(date).local().format(format);
         },
         humanizedDate(date) {
             return dayjs.utc(date).local().fromNow();

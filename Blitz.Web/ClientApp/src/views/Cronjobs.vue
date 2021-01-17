@@ -29,9 +29,9 @@
             </cron-expression>
           </b-table-column>
           <b-table-column field="url" label="Action" v-slot="{row}" sortable>
-            <code>{{ row.httpMethod }} {{ row.url }}</code>
+            <code><b>{{ row.httpMethod }}</b> {{ row.url }}</code>
           </b-table-column>
-          <b-table-column field="lastExecution" label="Last Execution" v-slot="{row}" sortable>
+          <b-table-column field="lastExecution" label="Last State" v-slot="{row}" sortable>
             <execution-state-pill :value="(row.lastExecution || {}).state"/>
           </b-table-column>
           <b-table-column label="Enabled" field="enabled" v-slot="{row}" sortable>

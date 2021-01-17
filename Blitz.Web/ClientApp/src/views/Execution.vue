@@ -39,9 +39,9 @@
               </tr>
               </thead>
               <tr v-for="(v,k) in flattenObject(row.details)" :key="k">
-                <th><span class="text--nowrap">{{ k }}</span></th>
+                <td><code class="text--small text--nowrap has-text-weight-medium">{{ k }}</code></td>
                 <td>
-                  <pre class="detail-item"><code>{{ v }}</code></pre>
+                  <pre class="detail-item"><code class="text--small">{{ v }}</code></pre>
                 </td>
               </tr>
             </table>
@@ -51,7 +51,7 @@
           <b-table-column field="state" label="State" v-slot="{row}" sortable>
             <execution-state-pill :value="row.state"/>
           </b-table-column>
-          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable><b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt) }}</code></b-tooltip></b-table-column>
+          <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable><b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, true) }}</code></b-tooltip></b-table-column>
           <b-table-column label="Actions" v-slot="{row}" sortable>
             <b-button v-if="Object.keys(row.details).length" rounded type="is-small is-info" @click="toggleRow(row)">Details</b-button>
           </b-table-column>
@@ -101,6 +101,7 @@ export default {
 </script>
 <style scoped>
 .detail-item {
+  font-size: inherit;
   padding: 0;
   white-space: pre-wrap;
   background-color: transparent;
