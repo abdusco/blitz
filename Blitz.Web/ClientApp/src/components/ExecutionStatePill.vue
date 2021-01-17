@@ -2,7 +2,7 @@
   <b v-if="state"
      class="tag is-light text--smallcaps"
      :class="{'is-danger': failed, 'is-success': finished, 'is-info': triggered}">{{ state }}</b>
-  <b v-else class="tag is-light text--smallcaps">Unknown</b>
+  <b v-else class="tag is-light text--smallcaps">Never</b>
 </template>
 
 <script>
