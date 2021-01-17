@@ -1,11 +1,9 @@
 ﻿<template>
   <div>
-    <section class="hero is-light">
+    <section class="hero hero--gradient">
       <div class="hero-body">
         <div class="container">
-          <h1 class="title">
-            Projects
-          </h1>
+          <h1 class="page-title title">Projects</h1>
         </div>
       </div>
     </section>

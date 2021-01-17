@@ -1,12 +1,12 @@
 ﻿<template>
   <article>
-    <section class="hero is-light">
+    <section class="hero hero--gradient">
       <div class="hero-body">
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
-            <h1 class="title m-0">{{ cronjob.title || '...' }}</h1>
-            <b-button rounded :type="cronjob.enabled ? 'is-info': 'is-light'" size="" class="ml-4 text--smallcaps"
+            <h1 class="page-title title m-0">{{ cronjob.title || '...' }}</h1>
+            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" size="" class="ml-4 text--smallcaps is-small"
                       :disabled="!cronjob.enabled"
                       :loading="triggering"
                       @click="triggerCronjob">
@@ -51,7 +51,7 @@
 
       <b-table :data="executions">
         <b-table-column field="id" label="Id" v-slot="{row}">
-          <router-link :to="{name: 'execution', params: {id: row.id}}"><code>{{ row.id }}</code></router-link>
+          <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id }}</b></code></router-link>
         </b-table-column>
         <b-table-column field="createdAt" label="Created At" v-slot="{row}" sortable>
           <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{ formatDate(row.createdAt) }}</span></b-tooltip>

@@ -1,10 +1,10 @@
 ﻿<template>
   <div>
-    <section class="hero is-light">
+    <section class="hero hero--gradient">
       <div class="hero-body">
         <div class="container">
           <breadcrumbs :items="{'Projects': '/projects'}"/>
-          <h1 class="title is-flex is-align-items-center">{{ project.title || '...' }}</h1>
+          <h1 class="page-title title is-flex is-align-items-center">{{ project.title || '...' }}</h1>
         </div>
       </div>
     </section>

@@ -1,11 +1,11 @@
 ﻿<template>
   <article>
-    <section class="hero is-light">
+    <section class="hero hero--gradient">
       <div class="hero-body">
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
-          <h1 class="title mt-4">
-            Execution {{ execution.id }}
+          <h1 class="page-title title mt-4">
+            <span class="has-text-weight-medium">Execution</span> <code>{{ execution.id }}</code>
           </h1>
           <table class="mini-status table is-narrow">
             <tr>
