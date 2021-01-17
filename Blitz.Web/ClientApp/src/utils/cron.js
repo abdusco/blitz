@@ -1,4 +1,6 @@
-﻿const shorthands = {
+﻿// taken from https://github.com/cheap-glitch/mi-cron
+
+const shorthands = {
     '@hourly': '0 * * * *',
     '@daily': '0 0 * * *',
     '@weekly': '0 0 * * 0',

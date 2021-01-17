@@ -25,16 +25,24 @@
           <b-input v-model="form.title" name="title" placeholder="Email reports" required></b-input>
         </b-field>
       </div>
-      <div class="column is-one-quarter">
+      <div class="column is-one-third">
         <cron-expression :value="form.cron" :always="showCronInfo">
-          <b-field label="Schedule" message="Cron expression">
-            <b-input v-model="form.cron"
-                     name="cron"
-                     placeholder="*/15 * * * *"
-                     class="is-family-monospace"
-                     @focus="showCronInfo = true"
-                     @blur="showCronInfo = false"
-                     required/>
+          <b-field label="Schedule" message="Cron expression. Use suggestions as examples">
+            <b-autocomplete :data="defaultCrons" v-model="form.cron"
+                            max-height="500"
+                            placeholder="*/15 * * * *"
+                            clearable
+                            field="cron"
+                            open-on-focus
+                            class="is-family-monospace"
+                            name="cron"
+                            @focus="showCronInfo = true"
+                            @blur="showCronInfo = false"
+                            required>
+              <template v-slot="{option}">
+                <code class="has-text-weight-bold">{{ option.cron }}</code> <b class="ml-2 is-family-primary has-text-primary">{{ option.title }}</b>
+              </template>
+            </b-autocomplete>
           </b-field>
         </cron-expression>
       </div>
@@ -79,6 +87,14 @@ export default {
   data() {
     return {
       projects: [],
+      defaultCrons: [
+        {title: 'every 15 min', cron: '*/15 * * * *'},
+        {title: 'every hour', cron: '0 * * * *'},
+        {title: 'daily at 7', cron: '0 7 * * *'},
+        {title: 'mondays at 22:00', cron: '0 22 * * mon'},
+        {title: 'sundays at 00:00', cron: '0 0 * * sun'},
+        {title: 'weekdays at 07:59', cron: '59 7 * * mon-fri'},
+      ],
       selectedProject: '',
       showCronInfo: false,
       form: {
