@@ -5,8 +5,11 @@ import './main.scss'
 import router from './router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
+
 Vue.use(Buefy)
 
 Vue.config.productionTip = false
@@ -38,10 +41,10 @@ Vue.mixin({
          * @param {Date} date
          * @return {string} */
         formatDate(date) {
-            return dayjs(date).format('YYYY-MM-DD HH:mm');
+            return dayjs.utc(date).local().format('YYYY-MM-DD HH:mm');
         },
         humanizedDate(date) {
-            return dayjs(date).fromNow();
+            return dayjs.utc(date).local().fromNow();
         }
     }
 });
