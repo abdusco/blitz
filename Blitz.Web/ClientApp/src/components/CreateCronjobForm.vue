@@ -3,7 +3,9 @@
     <div class="columns">
       <div class="column is-one-quarter" v-if="!project">
         <b-field label="Project" message="Which project this cronjob belong to?">
-          <b-autocomplete v-model="selectedProject" :data="projects" :custom-formatter="it => it.title" open-on-focus
+          <b-autocomplete v-model="selectedProject" 
+                          name="projectId"
+                          :data="projects" :custom-formatter="it => it.title" open-on-focus
                           clearable keep-first
                           @select="onSelectProject"
                           required>
@@ -28,7 +30,8 @@
       <div class="column is-one-third">
         <cron-expression :value="form.cron" :always="showCronInfo">
           <b-field label="Schedule" message="Cron expression. Use suggestions as examples">
-            <b-autocomplete :data="defaultCrons" v-model="form.cron"
+            <b-autocomplete :data="defaultCrons" 
+                            v-model="form.cron"
                             max-height="500"
                             placeholder="*/15 * * * *"
                             clearable
@@ -98,6 +101,7 @@ export default {
       selectedProject: '',
       showCronInfo: false,
       form: {
+        projectId: (this.project || {}).id,
         title: '',
         cron: '0 * * * *',
         url: '',
@@ -110,7 +114,7 @@ export default {
   },
   methods: {
     onSubmit() {
-      this.$emit('create', this.formValues);
+      this.$emit('create', {...this.form});
     },
     onSelectProject(project) {
       this.form.projectId = project?.id;
@@ -119,14 +123,6 @@ export default {
       this.$router.push({name: 'projects'});
     },
   },
-  computed: {
-    formValues() {
-      return {
-        ...this.form,
-        projectId: this.form.projectId,
-      }
-    }
-  }
 }
 </script>
 
