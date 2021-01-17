@@ -7,6 +7,8 @@
     <ItemGroup>
         <PackageReference Include="Ardalis.SmartEnum" Version="2.0.0" />
         <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
+        <PackageReference Include="Hangfire.AspNetCore" Version="1.7.19" />
+        <PackageReference Include="Hangfire.EntityFrameworkCore" Version="0.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.2" />

@@ -1,6 +1,8 @@
 using AutoMapper;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
+using Hangfire;
+using Hangfire.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -14,12 +16,14 @@ namespace Blitz.Web
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -50,6 +54,8 @@ namespace Blitz.Web
                     c.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz.Web", Version = "v1"});
                 }
             );
+            services.AddHangfire(configuration => configuration.UseEFCoreStorage(builder => builder.UseSqlite(Configuration.GetConnectionString("HangfireSqlite"))).UseDatabaseCreator());
+            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -77,11 +83,13 @@ namespace Blitz.Web
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                endpoints.MapFallbackToFile("ui/index.html");
-            });
+            app.UseEndpoints(
+                endpoints =>
+                {
+                    endpoints.MapControllers();
+                    endpoints.MapFallbackToFile("ui/index.html");
+                }
+            );
         }
     }
 }
