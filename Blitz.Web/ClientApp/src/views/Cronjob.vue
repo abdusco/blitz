@@ -59,6 +59,7 @@
         <b-table-column field="state" label="State" v-slot="{row}" sortable>
           <execution-state-pill :value="row.state"/>
         </b-table-column>
+        <template #empty>No executions yet.</template>
       </b-table>
     </section>
   </article>

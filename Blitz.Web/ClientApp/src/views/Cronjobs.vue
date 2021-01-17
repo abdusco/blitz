@@ -31,6 +31,9 @@
           <b-table-column field="url" label="Action" v-slot="{row}" sortable>
             <code>{{ row.httpMethod }} {{ row.url }}</code>
           </b-table-column>
+          <b-table-column field="lastExecution" label="Last Execution" v-slot="{row}" sortable>
+            <execution-state-pill :value="(row.lastExecution || {}).state"/>
+          </b-table-column>
           <b-table-column label="Enabled" field="enabled" v-slot="{row}" sortable>
             <b-switch v-model="row.enabled" @input="(enabled) => onCronjobToggle(row.id, enabled)"/>
           </b-table-column>
@@ -47,10 +50,11 @@
 import CreateCronjobForm from "@/components/CreateCronjobForm";
 import client from "@/api/client";
 import CronExpression from "@/components/CronExpression";
+import ExecutionStatePill from "@/components/ExecutionStatePill";
 
 export default {
   name: "Cronjobs",
-  components: {CronExpression, CreateCronjobForm},
+  components: {ExecutionStatePill, CronExpression, CreateCronjobForm},
   data() {
     return {
       cronjobs: []
