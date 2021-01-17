@@ -112,6 +112,11 @@ export default {
       this.execution = result;
       this.cronjob = result.cronjob;
       this.updates = result.updates;
+      
+      if (this.updates.length) {
+        this.execution.state = this.updates[0].state;
+      }
+      
       this.loading = false;
     },
     toggleRow(row) {
