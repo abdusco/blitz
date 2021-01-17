@@ -1,7 +1,7 @@
 ﻿<template>
   <b v-if="state"
      class="tag is-light text--smallcaps"
-     :class="{'is-danger': failed, 'is-success': finished, 'is-info': triggered}">{{ state }}</b>
+     :class="{'is-danger': state.failed, 'is-success': state.finished, 'is-info': state.triggered}">{{ state.state }}</b>
   <b v-else class="tag is-light text--smallcaps">Never</b>
 </template>
 
@@ -9,15 +9,16 @@
 export default {
   name: "ExecutionStatePill",
   props: ['value'],
-  data() {
-    let state = this.value;
-    return {
-      state,
-      pending: state === 'pending',
-      triggered: state === 'triggered',
-      started: state === 'started',
-      finished: state === 'finished',
-      failed: state === 'failed',
+  computed: {
+    state() {
+      return {
+        state: this.value,
+        pending: this.value === 'pending',
+        triggered: this.value === 'triggered',
+        started: this.value === 'started',
+        finished: this.value === 'finished',
+        failed: this.value === 'failed',
+      }
     }
   }
 }
