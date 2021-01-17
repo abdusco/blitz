@@ -98,7 +98,6 @@ export default {
       selectedProject: '',
       showCronInfo: false,
       form: {
-        projectId: this.project?.id,
         title: '',
         cron: '0 * * * *',
         url: '',
@@ -111,8 +110,7 @@ export default {
   },
   methods: {
     onSubmit() {
-      let cronjob = {...this.form};
-      this.$emit('create', cronjob);
+      this.$emit('create', this.formValues);
     },
     onSelectProject(project) {
       this.form.projectId = project?.id;
@@ -121,6 +119,14 @@ export default {
       this.$router.push({name: 'projects'});
     },
   },
+  computed: {
+    formValues() {
+      return {
+        ...this.form,
+        projectId: this.project.id,
+      }
+    }
+  }
 }
 </script>
 
