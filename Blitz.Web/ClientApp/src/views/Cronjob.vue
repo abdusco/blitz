@@ -5,7 +5,10 @@
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
-            <h1 class="page-title title m-0">{{ cronjob.title || '...' }}</h1>
+            <h1 class="page-title is-unselectable title m-0" @dblclick="onEditTitle"><span class="editable"
+                                                                                           title="double click to edit">{{
+                cronjob.title || '...'
+              }}</span></h1>
             <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-5 text--smallcaps"
                       :disabled="!cronjob.enabled"
                       :loading="triggering"
@@ -92,13 +95,16 @@ export default {
   },
   async mounted() {
     await this.$spin(Promise.all([
-      client.getCronjobDetails(this.id).then(val => this.cronjob = val),
+      this.refreshDetails(),
       this.refreshExecutions(),
     ]));
   },
   methods: {
     async refreshExecutions() {
       this.executions = await client.getCronjobExecutions(this.id);
+    },
+    async refreshDetails() {
+      this.cronjob = await client.getCronjobDetails(this.id);
     },
     async onCronjobToggle(id, value) {
       await client.toggleCronjob(id, value);
@@ -119,6 +125,25 @@ export default {
     async clearExecutions() {
       await client.clearCronjobExecutions(this.cronjob.id);
       await this.$spin(this.refreshExecutions());
+    },
+    async onEditTitle() {
+      this.$buefy.dialog.prompt({
+        message: `Edit title for "${this.cronjob.title}"`,
+        inputAttrs: {
+          type: 'text',
+          placeholder: 'new title',
+          value: this.cronjob.title,
+          required: true
+        },
+        confirmText: 'Update',
+        trapFocus: true,
+        closeOnConfirm: false,
+        onConfirm: async (value, {close}) => {
+          await client.updateCronjob(this.cronjob.id, {title: value});
+          await this.refreshDetails();
+          close();
+        }
+      })
     }
   },
   computed: {
@@ -133,5 +158,11 @@ export default {
 </script>
 
 <style scoped>
-
+.editable:hover {
+  display: inline;
+  background-color: gray;
+  color: white;
+  padding: 0.25rem 0;
+  cursor: text;
+}
 </style>
