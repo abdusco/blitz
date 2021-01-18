@@ -73,7 +73,10 @@ namespace Blitz.Web.Cronjobs
             existing.Title = request.Title ?? existing.Title;
             existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
 
-            await _cronjobRegistrationService.Add(existing);
+            if (existing.Enabled)
+            {
+                await _cronjobRegistrationService.Add(existing);
+            }
             
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
@@ -210,14 +213,6 @@ namespace Blitz.Web.Cronjobs
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; }
-        public ExecutionOverviewDto LastExecution { get; set; }
-
-        [AutoMap(typeof(Execution))]
-        public class ExecutionOverviewDto
-        {
-            public DateTime CreatedAt { get; set; }
-            public string State { get; set; }
-        }
     }
 
     [AutoMap(typeof(Cronjob), ReverseMap = true)]
