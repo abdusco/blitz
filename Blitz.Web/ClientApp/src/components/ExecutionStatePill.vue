@@ -1,7 +1,7 @@
 ﻿<template>
-  <b v-if="state.state"
-     class="tag is-light text--smallcaps"
-     :class="{'is-danger': state.failed, 'is-success': state.finished, 'is-info': state.triggered}">{{ state.state }}</b>
+  <b v-if="value"
+     class="tag text--smallcaps is-rounded"
+     :class="pillClass">{{ value }}</b>
   <b v-else class="tag is-light text--smallcaps">Never</b>
 </template>
 
@@ -10,22 +10,39 @@ export default {
   name: "ExecutionStatePill",
   props: ['value'],
   computed: {
-    state() {
-      return {
-        state: this.value,
-        pending: this.value === 'pending',
-        triggered: this.value === 'triggered',
-        started: this.value === 'started',
-        finished: this.value === 'finished',
-        failed: this.value === 'failed',
-      }
+    pillClass() {
+      return this.value || 'never';
     }
   }
 }
 </script>
 
 <style scoped>
-.state {
+.tag {
+  background-color: whitesmoke;
+}
 
+.never {
+  color: red;
+}
+
+.pending {
+  color: gray;
+}
+
+.triggered {
+  color: #34495e;
+}
+
+.started {
+  color: #1E88E5;
+}
+
+.finished {
+  color: #2ecc71;
+}
+
+.failed {
+  color: #e53935;
 }
 </style>
