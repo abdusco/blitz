@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Hangfire
 {
@@ -17,18 +19,49 @@ namespace Blitz.Web.Hangfire
     {
         private readonly HttpClient _http;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<HttpRequestJob> _logger;
 
-        public HttpRequestJob(HttpClient http, IServiceScopeFactory scopeFactory)
+        public HttpRequestJob(HttpClient http, IServiceScopeFactory scopeFactory, ILogger<HttpRequestJob> logger)
         {
             _http = http;
             _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         public async Task SendRequestAsync(Guid cronjobId, Guid executionId = default, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Received cronjobId={CronjobId}", cronjobId);
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
-            var cronjob = await db.Cronjobs.SingleAsync(c => c.Id == cronjobId, cancellationToken);
+            var cronjob = await db.Cronjobs.SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
+            if (cronjob is null)
+            {
+                _logger.LogInformation("Cannot find a cronjob record with id={CronjobId}", cronjobId);
+                return;
+            }
+
+            Execution exec = null;
+            if (executionId != Guid.Empty)
+            {
+                exec = await db.Executions
+                    .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
+                    .SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
+            }
+
+            if (exec is null)
+            {
+                exec = new Execution(cronjob) {Id = executionId = Guid.NewGuid()};
+                await db.AddAsync(exec, cancellationToken);
+            }
+
+            _logger.LogInformation("Executing {ExecutionId} for {CronjobTitle} ({CronjobId})", exec.Id, cronjobId, cronjob.Title);
+
+            exec.UpdateStatus(ExecutionState.Pending);
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            }
 
             var method = cronjob.HttpMethod.ToUpperInvariant() switch
             {
@@ -36,46 +69,41 @@ namespace Blitz.Web.Hangfire
                 "POST" => HttpMethod.Post,
                 _ => throw new Exception("Unsupported HTTP method")
             };
-
-            Execution execution;
-            if (executionId != Guid.Empty)
-            {
-                execution = await db.Executions.SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
-            }
-            else
-            {
-                execution = new Execution(cronjob) {Id = Guid.NewGuid()};
-                await db.AddAsync(execution, cancellationToken);
-            }
-
-            execution.UpdateStatus(ExecutionState.Pending);
-
-            var req = new HttpRequestMessage(method, cronjob.Url);
-            req.Headers.Add("X-Execution-Id", execution.Id.ToString());
-
+            
             var timer = Stopwatch.StartNew();
             try
             {
+                var now = DateTime.UtcNow;
+                
+                var req = new HttpRequestMessage(method, cronjob.Url);
+                req.Headers.Add("X-Execution-Id", exec.Id.ToString());
                 var response = await _http.SendAsync(req, cancellationToken);
                 timer.Stop();
-                execution.UpdateStatus(
-                    ExecutionState.Triggered, new Dictionary<string, object>
+                exec.UpdateStatus(
+                    new ExecutionStatus(exec, ExecutionState.Triggered)
                     {
-                        ["StatusCode"] = response.StatusCode,
-                        ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
-                        ["Elapsed"] = timer.ElapsedMilliseconds
+                        CreatedAt = now,
+                        Details = new Dictionary<string, object>
+                        {
+                            ["StatusCode"] = response.StatusCode,
+                            ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
+                            ["Elapsed"] = timer.ElapsedMilliseconds
+                        }
                     }
                 );
             }
             catch (Exception e)
             {
-                if (timer.IsRunning)
-                {
-                    timer.Stop();
-                }
+                timer.Stop();
 
-                execution.UpdateStatus(
-                    ExecutionState.Failed,
+                var state = e switch
+                {
+                    TaskCanceledException => ExecutionState.TimedOut,
+                    WebException => ExecutionState.TimedOut,
+                    _ => ExecutionState.Failed
+                };
+                exec.UpdateStatus(
+                    state,
                     new Dictionary<string, object>
                     {
                         ["ExceptionMessage"] = e.Message,
@@ -88,6 +116,7 @@ namespace Blitz.Web.Hangfire
             }
             finally
             {
+                _logger.LogInformation("Saving execution={ExecutionId}", exec.Id);
                 await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await tx.CommitAsync(cancellationToken);
