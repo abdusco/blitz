@@ -5,8 +5,10 @@
         <b-field label="Project" message="Which project this cronjob belong to?">
           <b-autocomplete v-model="selectedProject" 
                           name="projectId"
-                          :data="projects" :custom-formatter="it => it.title" open-on-focus
-                          clearable keep-first
+                          :data="projects" :custom-formatter="it => it.title"
+                          open-on-focus
+                          clearable 
+                          keep-first
                           @select="onSelectProject"
                           required>
             <template v-slot:header>

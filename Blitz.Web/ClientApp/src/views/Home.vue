@@ -38,10 +38,7 @@
             <article class="home-card is-flex is-justify-content-center is-align-items-center">
               <div>
                 <figure class="card-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
-                    <path
-                        d="M316.5 619.5L93 576l12-64.5L262.5 543l51-259.5L255 306v109.5h-63v-150L358.5 195q4.5 0 12.8-1.5T384 192q31.5 0 54 31.5l31.5 51Q513 351 607.5 351v64.5Q501 415.5 432 336l-19.5 96 67.5 63v240h-64.5V543L348 480zm115.5-444q-25.5 0-45-19.5t-19.5-45T387 66.7 432 48t44.3 18.8T495 111t-18.8 45-44.2 19.5z"/>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 7l-1.4-1.4-6.4 6.3 1.5 1.4L18 7zm4.2-1.4L11.7 16.2 7.5 12 6 13.4l5.6 5.6 12-12-1.5-1.4zM.4 13.4L6 19l1.4-1.4L1.8 12 .4 13.4z"/></svg>
                 </figure>
                 <h1 class="title is-5 has-text-centered">Executions</h1>
               </div>
