@@ -63,14 +63,11 @@ namespace Blitz.Web.Cronjobs
         public Cronjob Cronjob { get; set; }
 
         public List<ExecutionStatus> Updates { get; set; } = new();
-
-        // this property is denormalized for performance reasons
-        public ExecutionState State { get; private set; } = ExecutionState.Pending;
+        public ExecutionState State => Updates.OrderByDescending(u => u.CreatedAt).FirstOrDefault()?.State;
 
         public void UpdateStatus(ExecutionStatus executionStatus)
         {
             Updates.Add(executionStatus ?? throw new ArgumentNullException(nameof(executionStatus)));
-            State = Updates.OrderByDescending(u => u.CreatedAt).First().State;
         }
 
         public void UpdateStatus(ExecutionState state, Dictionary<string, object> details) =>
@@ -97,15 +94,16 @@ namespace Blitz.Web.Cronjobs
         public Dictionary<string, object> Details { get; set; }
     }
 
-    public class ExecutionState : SmartEnum<ExecutionState, string>
+    public class ExecutionState : SmartEnum<ExecutionState, int>
     {
-        public static readonly ExecutionState Pending = new(nameof(Pending), nameof(Pending).ToLowerInvariant());
-        public static readonly ExecutionState Triggered = new(nameof(Triggered), nameof(Triggered).ToLowerInvariant());
-        public static readonly ExecutionState Started = new(nameof(Started), nameof(Started).ToLowerInvariant());
-        public static readonly ExecutionState Finished = new(nameof(Finished), nameof(Finished).ToLowerInvariant());
-        public static readonly ExecutionState Failed = new(nameof(Failed), nameof(Failed).ToLowerInvariant());
+        public static readonly ExecutionState Pending = new(nameof(Pending).ToLowerInvariant(), 0);
+        public static readonly ExecutionState Triggered = new(nameof(Triggered).ToLowerInvariant(), 10);
+        public static readonly ExecutionState Started = new(nameof(Started).ToLowerInvariant(), 20);
+        public static readonly ExecutionState Finished = new(nameof(Finished).ToLowerInvariant(), 30);
+        public static readonly ExecutionState Failed = new(nameof(Failed).ToLowerInvariant(), 40);
+        public static readonly ExecutionState TimedOut = new(nameof(TimedOut).ToLowerInvariant(), 50);
 
-        private ExecutionState(string name, string value) : base(name, value)
+        private ExecutionState(string name, int value) : base(name, value)
         {
         }
     }

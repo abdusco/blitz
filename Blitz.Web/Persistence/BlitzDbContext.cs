@@ -44,12 +44,6 @@ namespace Blitz.Web.Persistence
                     .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal))
             );
             modelBuilder.Entity<Project>(builder => builder.HasIndex(p => p.Title).IsUnique());
-            modelBuilder.Entity<Execution>(
-                builder => builder.Property(e => e.State).HasConversion(
-                    val => val.Value,
-                    dbValue => ExecutionState.FromValue(dbValue)
-                )
-            );
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
                 {
@@ -58,8 +52,8 @@ namespace Blitz.Web.Persistence
                         dbVal => JsonSerializer.Deserialize<Dictionary<string, object>>(dbVal, null)
                     );
                     builder.Property(e => e.State).HasConversion(
-                        val => val.Value,
-                        dbValue => ExecutionState.FromValue(dbValue)
+                        val => val.Name,
+                        dbValue => ExecutionState.FromName(dbValue, true)
                     );
                 }
             );

@@ -16,7 +16,7 @@
       <div class="container">
         <b-table :data="executions" custom-row-key="id" :loading="loading">
           <b-table-column field="id" label="Id" v-slot="{row}">
-            <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id }}</b></code></router-link>
+            <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id.toUpperCase() }}</b></code></router-link>
           </b-table-column>
           <b-table-column field="cronjob.projectTitle" label="Project" v-slot="{row}">
             <router-link :to="{name: 'project', params: {id: row.cronjob.projectId}}">{{ row.cronjob.projectTitle }}

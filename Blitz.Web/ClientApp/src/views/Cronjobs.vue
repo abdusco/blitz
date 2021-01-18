@@ -31,9 +31,6 @@
           <b-table-column field="url" label="Action" v-slot="{row}" sortable>
             <code><b>{{ row.httpMethod }}</b> {{ row.url }}</code>
           </b-table-column>
-          <b-table-column field="lastExecution" label="Last State" v-slot="{row}" sortable>
-            <execution-state-pill :value="(row.lastExecution || {}).state"/>
-          </b-table-column>
           <b-table-column label="Enabled" field="enabled" v-slot="{row}" sortable>
             <b-switch v-model="row.enabled" @input="(enabled) => onCronjobToggle(row.id, enabled)"/>
           </b-table-column>
