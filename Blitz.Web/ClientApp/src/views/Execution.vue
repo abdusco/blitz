@@ -5,7 +5,7 @@
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
           <h1 class="page-title title mt-4">
-            <span class="has-text-weight-medium">Execution</span> <code>{{ execution.id }}</code>
+            <span class="has-text-weight-medium">Execution</span> <code>{{ execution.id.toUpperCase() }}</code>
           </h1>
           <table class="mini-status table is-narrow">
             <tr>
@@ -17,7 +17,7 @@
               </td>
             </tr>
             <tr v-if="execution.state">
-              <th>Status</th>
+              <th>State</th>
               <td>
                 <execution-state-pill :value="execution.state"/>
               </td>
@@ -28,7 +28,7 @@
     </section>
     <section class="section">
       <div class="container">
-        <div class="is-flex is-align-items-center">
+        <div class="is-flex is-align-items-center mb-4">
           <h2 class="title is-4 m-0 mr-4">Updates</h2>
           <span class="spacer"></span>
           <b class="is-4 mr-2">Autorefresh</b>
@@ -104,8 +104,19 @@ export default {
   methods: {
     flattenObject,
     initAutorefresh() {
+      if (this.isCompleted) {
+        this.autoRefresh = false;
+        return;
+      }
+      
       this._interval = setInterval(
-          () => !document.hidden && this.refreshUpdates(),
+          () => {
+            if (this.isCompleted) {
+              this.autoRefresh = false;
+              return;
+            }
+            !document.hidden && this.refreshUpdates();
+          },
           5000
       );
     },
@@ -133,6 +144,9 @@ export default {
         [this.cronjob.projectTitle || '...']: `/projects/${this.cronjob.projectId}`,
         [this.cronjob.title || '...']: `/cronjobs/${this.cronjob.id}`,
       };
+    },
+    isCompleted() {
+      return ['finished', 'failed'].includes(this.execution.state)
     }
   },
   watch: {
@@ -140,6 +154,11 @@ export default {
       if (!enabled) {
         clearInterval(this._interval);
       } else {
+        if (this.isCompleted) {
+          this.$buefy.toast.open({message: 'Execution is already finished'});
+          return;
+        }
+        
         this.initAutorefresh();
       }
     }
