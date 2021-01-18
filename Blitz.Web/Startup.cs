@@ -33,7 +33,7 @@ namespace Blitz.Web
             services.AddTransient<ICronjobTriggerer, HangfireCronjobTriggerer>();
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
             services.AddHttpClient<HttpRequestJob>(
-                (provider, client) => { client.Timeout = TimeSpan.FromSeconds(5); }
+                (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
             );
 
             services.AddAutoMapper(typeof(Startup).Assembly);
@@ -90,7 +90,7 @@ namespace Blitz.Web
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz.Web v1");
                 }
             );
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
             app.UseEndpoints(
