@@ -5,12 +5,15 @@
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
           <div class="is-flex is-align-items-center mb-5">
-            <h1 class="page-title is-unselectable title m-0" @dblclick="onEditTitle"><span class="editable"
-                                                                                           title="double click to edit">{{
-                cronjob.title || '...'
-              }}</span></h1>
-            <b-button rounded :type="cronjob.enabled ? 'is-primary': 'is-black'" class="ml-5 text--smallcaps"
-                      :disabled="!cronjob.enabled"
+            <h1 class="page-title is-unselectable title m-0" @dblclick="onEditTitle">
+              <b-tooltip label="Double click to edit title" type="is-info" position="is-bottom" :delay="500">
+                <span class="editable">
+                {{ cronjob.title || '...' }}
+              </span>
+              </b-tooltip>
+            </h1>
+            <b-button rounded type="is-primary" 
+                      class="ml-5 text--smallcaps"
                       :loading="triggering"
                       @click="triggerCronjob">
               Trigger 🗲
@@ -41,10 +44,10 @@
                 </cron-expression>
               </td>
             </tr>
-            <tr v-if="cronjob.lastExecution">
+            <tr v-if="lastExecution">
               <th>Last Execution</th>
               <td>
-                <execution-state-pill :value="cronjob.lastExecution.state"/>
+                <execution-state-pill :value="lastExecution.state"/>
               </td>
             </tr>
           </table>
@@ -60,11 +63,11 @@
 
       <b-table :data="executions">
         <b-table-column field="id" label="Id" v-slot="{row}">
-          <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id }}</b></code></router-link>
+          <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id.toUpperCase() }}</b></code></router-link>
         </b-table-column>
         <b-table-column field="createdAt" label="Created At" v-slot="{row}" sortable>
           <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{
-              formatDate(row.createdAt)
+              formatDate(row.createdAt, {seconds: true})
             }}</span></b-tooltip>
         </b-table-column>
         <b-table-column field="state" label="State" v-slot="{row}" sortable>
@@ -101,7 +104,8 @@ export default {
   },
   methods: {
     async refreshExecutions() {
-      this.executions = await client.getCronjobExecutions(this.id);
+      this.executions = await client.getCronjobExecutions(this.id)
+      this.cronjob.lastExecution = (this.executions[0] || {});
     },
     async refreshDetails() {
       this.cronjob = await client.getCronjobDetails(this.id);
@@ -153,12 +157,16 @@ export default {
         [this.cronjob.projectTitle || '...']: `/projects/${this.cronjob.projectId}`
       };
     },
+    lastExecution() {
+      return this.executions[0] || {};
+    }
   }
 }
 </script>
 
 <style scoped>
 .editable:hover {
+  transition: 0.2s 0.25s;
   display: inline;
   background-color: gray;
   color: white;
