@@ -5,7 +5,8 @@
         <div class="container">
           <breadcrumbs :items="breadcrumbItems"/>
           <h1 class="page-title title mt-4">
-            <span class="has-text-weight-medium">Execution</span> <code>{{ execution.id.toUpperCase() }}</code>
+            <span class="has-text-weight-medium">Execution</span> <code
+              v-if="execution.id">{{ execution.id.toUpperCase() }}</code>
           </h1>
           <table class="mini-status table is-narrow">
             <tr>
@@ -63,7 +64,8 @@
             <execution-state-pill :value="row.state"/>
           </b-table-column>
           <b-table-column field="createdAt" label="Date" v-slot="{row}" sortable>
-            <b-tooltip :label="humanizedDate(row.createdAt)"><code>{{ formatDate(row.createdAt, {seconds: true}) }}</code>
+            <b-tooltip :label="humanizedDate(row.createdAt)">
+              <code>{{ formatDate(row.createdAt, {seconds: true}) }}</code>
             </b-tooltip>
           </b-table-column>
           <b-table-column label="Actions" v-slot="{row}" sortable>
@@ -88,7 +90,6 @@ export default {
   components: {ExecutionStatePill, Breadcrumbs},
   data() {
     return {
-      _interval: null,
       loading: false,
       id: this.$route.params.id,
       execution: {},
