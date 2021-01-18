@@ -38,7 +38,7 @@ namespace Blitz.Web.Projects
         {
             var result = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
-                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+                .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
             return _mapper.Map<ProjectDetailsDto>(result);
         }
 
@@ -62,10 +62,10 @@ namespace Blitz.Web.Projects
             return p.Id;
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
-            var existing = await _db.Projects.FirstOrDefaultAsync(
+            var existing = await _db.Projects.SingleOrDefaultAsync(
                 p => p.Id == id, cancellationToken: cancellationToken
             );
             if (existing is null)
