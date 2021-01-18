@@ -1,5 +1,5 @@
 ﻿<template>
-  <b v-if="state"
+  <b v-if="state.state"
      class="tag is-light text--smallcaps"
      :class="{'is-danger': state.failed, 'is-success': state.finished, 'is-info': state.triggered}">{{ state.state }}</b>
   <b v-else class="tag is-light text--smallcaps">Never</b>
