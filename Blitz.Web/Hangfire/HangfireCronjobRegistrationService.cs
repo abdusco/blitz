@@ -22,7 +22,7 @@ namespace Blitz.Web.Hangfire
             _logger.LogInformation("Registering cronjob '{CronjobTitle}' ({CronjobId}) with Hangfire", cronjob.Title, cronjob.Id);
             _recurringJobManager.AddOrUpdate<HttpRequestJob>(
                 cronjob.GetHangfireId(),
-                job => job.SendRequestAsync(cronjob.Id, default, default),
+                job => job.SendRequestAsync(cronjob.Id, default, null, default),
                 cronjob.Cron.ToString(),
                 TimeZoneInfo.Local
             );
@@ -39,6 +39,6 @@ namespace Blitz.Web.Hangfire
 
     internal static class CronjobExtensions
     {
-        public static string GetHangfireId(this Cronjob cronjob) => $"{cronjob.Title}.{cronjob.Id}";
+        public static string GetHangfireId(this Cronjob cronjob) => $"{cronjob.Id}.{cronjob.Title}";
     }
 }

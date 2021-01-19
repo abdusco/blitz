@@ -66,6 +66,8 @@ namespace Blitz.Web.Cronjobs
                 return NotFound();
             }
             
+            // remove registered cronjobs that belongs to existing cronjob record
+            // then update its details
             await _cronjobRegistrationService.Remove(existing);
 
             // TODO: figure out how to ignore null members when mapping 

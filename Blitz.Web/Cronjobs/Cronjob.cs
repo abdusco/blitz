@@ -63,7 +63,7 @@ namespace Blitz.Web.Cronjobs
         public Cronjob Cronjob { get; set; }
 
         public List<ExecutionStatus> Updates { get; set; } = new();
-        public ExecutionState State => Updates.OrderByDescending(u => u.CreatedAt).FirstOrDefault()?.State;
+        public ExecutionState State => Updates.OrderByDescending(u => u.CreatedAt).FirstOrDefault()?.State ?? ExecutionState.Unknown;
 
         public void UpdateStatus(ExecutionStatus executionStatus)
         {
@@ -96,6 +96,7 @@ namespace Blitz.Web.Cronjobs
 
     public class ExecutionState : SmartEnum<ExecutionState, int>
     {
+        public static readonly ExecutionState Unknown = new(nameof(Unknown).ToLowerInvariant(), -1);
         public static readonly ExecutionState Pending = new(nameof(Pending).ToLowerInvariant(), 0);
         public static readonly ExecutionState Triggered = new(nameof(Triggered).ToLowerInvariant(), 10);
         public static readonly ExecutionState Started = new(nameof(Started).ToLowerInvariant(), 20);

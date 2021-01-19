@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -9,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
+using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,7 +28,7 @@ namespace Blitz.Web.Hangfire
             _logger = logger;
         }
 
-        public async Task SendRequestAsync(Guid cronjobId, Guid executionId = default, CancellationToken cancellationToken = default)
+        public async Task SendRequestAsync(Guid cronjobId, Guid executionId = default, PerformContext context = null, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Received cronjobId={CronjobId}", cronjobId);
             using var scope = _scopeFactory.CreateScope();
