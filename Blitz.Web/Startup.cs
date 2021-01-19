@@ -2,6 +2,7 @@ using System;
 using AutoMapper;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Hangfire;
+using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
 using Hangfire.EntityFrameworkCore;
@@ -32,6 +33,7 @@ namespace Blitz.Web
             services.AddTransient<HttpRequestJob>();
             services.AddTransient<ICronjobTriggerer, HangfireCronjobTriggerer>();
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
+            services.AddGarbageCollector();
             services.AddHttpClient<HttpRequestJob>(
                 (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
             );
@@ -73,6 +75,8 @@ namespace Blitz.Web
         {
             // dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
+            
+            app.UseGarbageCollector();
 
             if (env.IsDevelopment())
             {
