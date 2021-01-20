@@ -22,25 +22,37 @@ namespace Blitz.Web.Maintenance
             var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(GarbageCollector));
 
             logger.LogInformation($"Registering a cronjob for garbage collection with cron={options.Schedule}");
-            jobManager.AddOrUpdate<GarbageCollector>(nameof(GarbageCollector),
-                collector => collector.ExecuteAsync(default), () => options.Schedule);
+            jobManager.RemoveIfExists(nameof(GarbageCollector));
+            if (options.Enabled)
+            {
+                jobManager.AddOrUpdate<GarbageCollector>(nameof(GarbageCollector),
+                    collector => collector.ExecuteAsync(default), () => options.Schedule);
+            }
         }
     }
 
     internal static class ServiceCollectionExtensions
     {
-        public static void AddGarbageCollector(this IServiceCollection serviceCollection)
+        public static void AddGarbageCollector(this IServiceCollection serviceCollection, Action<GarbageCollectorOptions> configure = null)
         {
-            serviceCollection.AddOptions<GarbageCollectorOptions>().BindConfiguration("GarbageCollector");
+            var optionsBuilder = serviceCollection.AddOptions<GarbageCollectorOptions>()
+                .BindConfiguration(nameof(GarbageCollector));
+            if (configure is not null)
+            {
+                optionsBuilder.Configure(configure);
+            }
+
+            serviceCollection.AddTransient<GarbageCollector>();
         }
     }
 
 
     internal class GarbageCollectorOptions
     {
-        public string Schedule { get; set; } = "*/15 * * * *";
+        public string Schedule { get; set; } = "*/5 * * * *";
         public int MinAgeMinutes { get; set; } = 30;
         public int MinKeptRecentExecutions { get; set; } = 10;
+        public bool Enabled { get; set; } = true;
     }
 
     internal class GarbageCollector
