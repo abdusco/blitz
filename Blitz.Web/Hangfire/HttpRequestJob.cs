@@ -28,7 +28,10 @@ namespace Blitz.Web.Hangfire
             _logger = logger;
         }
 
-        public async Task SendRequestAsync(Guid cronjobId, Guid executionId = default, PerformContext context = null, CancellationToken cancellationToken = default)
+        public async Task SendRequestAsync(Guid cronjobId,
+                                           Guid executionId = default,
+                                           PerformContext context = null,
+                                           CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Received cronjobId={CronjobId}", cronjobId);
             using var scope = _scopeFactory.CreateScope();
@@ -54,11 +57,11 @@ namespace Blitz.Web.Hangfire
                 await db.AddAsync(exec, cancellationToken);
             }
 
-            _logger.LogInformation("Executing {ExecutionId} for {CronjobTitle} ({CronjobId})", exec.Id, cronjobId, cronjob.Title);
+            _logger.LogInformation("Executing {ExecutionId} for {CronjobTitle} ({CronjobId})", exec.Id, cronjob.Title, cronjobId);
 
             exec.UpdateStatus(ExecutionState.Pending);
+            await using (var tx = await db.Database.BeginTransactionAsync(cancellationToken))
             {
-                await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await tx.CommitAsync(cancellationToken);
             }
@@ -69,12 +72,12 @@ namespace Blitz.Web.Hangfire
                 "POST" => HttpMethod.Post,
                 _ => throw new Exception("Unsupported HTTP method")
             };
-            
+
             var timer = Stopwatch.StartNew();
             try
             {
                 var now = DateTime.UtcNow;
-                
+
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("X-Execution-Id", exec.Id.ToString());
                 var response = await _http.SendAsync(req, cancellationToken);
