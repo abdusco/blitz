@@ -8,7 +8,7 @@
 
         <h2 class="is-6 has-text-weight-semibold has-text-primary mt-2">Estimated schedule</h2>
         <ul v-if="nextDates.length">
-          <li v-for="(date, i) in nextDates" :key="+date"><code>{{ formatDate(date, {utc: true}) }}</code></li>
+          <li v-for="(date, i) in nextDates" :key="+date"><code>{{ formatDate(date) }}</code></li>
         </ul>
       </article>
       <span v-else>Invalid cron!</span>
