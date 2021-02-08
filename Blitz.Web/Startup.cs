@@ -84,7 +84,8 @@ namespace Blitz.Web
         {
             // dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
-
+            
+            app.SetupCronjobs();
             app.UseGarbageCollector();
 
             if (env.IsDevelopment())
