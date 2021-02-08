@@ -39,21 +39,7 @@ namespace Blitz.Web
             );
 
             services.AddAutoMapper(typeof(Startup).Assembly);
-            services.AddDbContext<BlitzDbContext>(
-                builder =>
-                {
-                    builder = builder
-                        .EnableDetailedErrors().EnableSensitiveDataLogging();
-                    if (Configuration.GetConnectionString("BlitzSqlite") is { } sqliteDsn)
-                    {
-                        builder = builder.UseSqlite(sqliteDsn);
-                    }
-                    else if (Configuration.GetConnectionString("BlitzSqlServer") is { } sqlServerDsn)
-                    {
-                        builder = builder.UseSqlServer(sqlServerDsn);
-                    }
-                }
-            );
+            services.AddDbContext<BlitzDbContext>(ConfigureDbContext);
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers();
             services.AddSwaggerGen(
@@ -64,10 +50,33 @@ namespace Blitz.Web
                 }
             );
             services.AddHangfire(
-                configuration => configuration.UseEFCoreStorage(builder => builder.UseSqlite(Configuration.GetConnectionString("HangfireSqlite")))
-                    .UseDatabaseCreator()
+                configuration =>
+                {
+                    configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 1});
+                    configuration.UseEFCoreStorage(ConfigureDbContext)
+                        .UseDatabaseCreator();
+                }
             );
             services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+        }
+
+        private void ConfigureDbContext(DbContextOptionsBuilder builder)
+        {
+            builder = builder
+                .EnableDetailedErrors().EnableSensitiveDataLogging();
+
+            if (Configuration.GetConnectionString("BlitzPostgres") is { } postgresDsn)
+            {
+                builder = builder.UseNpgsql(postgresDsn);
+            }
+            else if (Configuration.GetConnectionString("BlitzSqlServer") is { } sqlServerDsn)
+            {
+                builder = builder.UseSqlServer(sqlServerDsn);
+            }
+            else if (Configuration.GetConnectionString("BlitzSqlite") is { } sqliteDsn)
+            {
+                builder = builder.UseSqlite(sqliteDsn);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,7 +84,7 @@ namespace Blitz.Web
         {
             // dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
-            
+
             app.UseGarbageCollector();
 
             if (env.IsDevelopment())

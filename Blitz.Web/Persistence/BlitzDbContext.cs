@@ -40,8 +40,12 @@ namespace Blitz.Web.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Cronjob>(
-                builder => builder.Property(e => e.Cron)
-                    .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal))
+                builder =>
+                {
+                    builder.Property(e => e.ProjectId).IsRequired();
+                    builder.Property(e => e.Cron)
+                        .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
+                }
             );
             modelBuilder.Entity<Project>(builder => builder.HasIndex(p => p.Title).IsUnique());
             modelBuilder.Entity<ExecutionStatus>(
