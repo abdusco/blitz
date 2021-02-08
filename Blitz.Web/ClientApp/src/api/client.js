@@ -1,4 +1,4 @@
-﻿const sleep = async (delay = 250) => new Promise(resolve => setTimeout(resolve, delay));
+﻿const sleep = async (delay = 150) => new Promise(resolve => setTimeout(resolve, delay));
 /**
  * @param {string} url
  * @param {Partial<RequestInit>} options

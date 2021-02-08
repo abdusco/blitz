@@ -1,4 +1,4 @@
-# ui-buefy
+# blitz
 
 ## Project setup
 ```

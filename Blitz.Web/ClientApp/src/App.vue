@@ -11,7 +11,6 @@
         <nav-link to="/cronjobs">cronjobs</nav-link>
         <nav-link to="/executions">executions</nav-link>
       </nav>
-      <span class="spacer"></span>
     </div>
     <router-view/>
   </main>

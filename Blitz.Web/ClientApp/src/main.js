@@ -50,6 +50,9 @@ Vue.mixin({
             }
             return dayjs.utc(date).local().format(format);
         },
+        /**
+         * @param {Date} date
+         * @return {string} */
         humanizedDate(date) {
             return dayjs.utc(date).local().fromNow();
         }

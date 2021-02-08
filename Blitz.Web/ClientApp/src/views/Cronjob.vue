@@ -12,8 +12,8 @@
               </span>
               </b-tooltip>
             </h1>
-            <b-button rounded type="is-primary" 
-                      class="ml-5 text--smallcaps"
+            <b-button rounded type="is-primary"
+                      class="trigger-button ml-5 text--smallcaps"
                       :loading="triggering"
                       @click="triggerCronjob">
               Trigger 🗲
@@ -63,7 +63,8 @@
 
       <b-table :data="executions">
         <b-table-column field="id" label="Id" v-slot="{row}">
-          <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id.toUpperCase() }}</b></code></router-link>
+          <router-link :to="{name: 'execution', params: {id: row.id}}"><code><b>{{ row.id.toUpperCase() }}</b></code>
+          </router-link>
         </b-table-column>
         <b-table-column field="createdAt" label="Created At" v-slot="{row}" sortable>
           <b-tooltip :label="humanizedDate(row.createdAt)"><span class="text--tabular">{{
@@ -172,5 +173,19 @@ export default {
   color: white;
   padding: 0.25rem 0;
   cursor: text;
+}
+
+@keyframes buzz {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+.trigger-button:not(.is-loading):hover {
+  transform-origin: center center;
+  animation: buzz ease 0.1s 10 both;
 }
 </style>

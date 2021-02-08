@@ -1,4 +1,5 @@
 ﻿// taken from https://github.com/cheap-glitch/mi-cron
+import dayjs from 'dayjs'
 
 const shorthands = {
     '@hourly': '0 * * * *',
@@ -116,7 +117,7 @@ export function calculateNextDates(exp, count = 3, from = new Date()) {
     if (!cron) return [];
 
     const dates = []
-    let start = from;
+    let start = dayjs(from).local().toDate();
     while (count--) {
         let next = nextDate(cron, start);
         dates.push(next);

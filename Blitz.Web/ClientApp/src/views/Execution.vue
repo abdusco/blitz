@@ -32,8 +32,7 @@
         <div class="is-flex is-align-items-center mb-4">
           <h2 class="title is-4 m-0 mr-4">Updates</h2>
           <span class="spacer"></span>
-          <b class="is-4 mr-2">Autorefresh</b>
-          <b-switch v-model="autoRefresh"></b-switch>
+          <autorefresh-switch :value="!isCompleted" :interval="3000" :on-refresh="refreshUpdates"/>
         </div>
 
         <b-table :data="updates" detailed :show-detail-icon="false" detail-key="id" ref="updates" :loading="loading">
@@ -84,10 +83,11 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import client from "@/api/client";
 import ExecutionStatePill from "@/components/ExecutionStatePill";
 import flattenObject from "@/utils/flattenObject";
+import AutorefreshSwitch from "@/components/AutorefreshSwitch";
 
 export default {
   name: "Execution",
-  components: {ExecutionStatePill, Breadcrumbs},
+  components: {AutorefreshSwitch, ExecutionStatePill, Breadcrumbs},
   data() {
     return {
       loading: false,
@@ -100,27 +100,9 @@ export default {
   },
   async mounted() {
     await this.$spin(this.refreshUpdates());
-    this.initAutorefresh();
   },
   methods: {
     flattenObject,
-    initAutorefresh() {
-      if (this.isCompleted) {
-        this.autoRefresh = false;
-        return;
-      }
-      
-      this._interval = setInterval(
-          () => {
-            if (this.isCompleted) {
-              this.autoRefresh = false;
-              return;
-            }
-            !document.hidden && this.refreshUpdates();
-          },
-          5000
-      );
-    },
     async refreshUpdates() {
       this.loading = true && !!this.execution.id;
       const result = await client.getExecutionDetails(this.id);
@@ -140,36 +122,23 @@ export default {
     }
   },
   computed: {
+    isCompleted() {
+      return ['finished', 'failed'].includes(this.execution.state)
+    },
     breadcrumbItems() {
       return {
         [this.cronjob.projectTitle || '...']: `/projects/${this.cronjob.projectId}`,
         [this.cronjob.title || '...']: `/cronjobs/${this.cronjob.id}`,
       };
-    },
-    isCompleted() {
-      return ['finished', 'failed'].includes(this.execution.state)
     }
   },
-  watch: {
-    autoRefresh(enabled) {
-      if (!enabled) {
-        clearInterval(this._interval);
-      } else {
-        if (this.isCompleted) {
-          this.$buefy.toast.open({message: 'Execution is already finished'});
-          return;
-        }
-        
-        this.initAutorefresh();
-      }
-    }
-  }
 }
 </script>
 <style scoped>
 tbody td, tbody th {
   border: 0;
 }
+
 .detail-key {
   font-size: 0.8em;
 }
