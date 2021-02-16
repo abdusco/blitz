@@ -4,8 +4,10 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Projects;
+using Hangfire.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -13,6 +15,8 @@ namespace Blitz.Web.Persistence
 {
     public class BlitzDbContext : DbContext
     {
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<Cronjob> Cronjobs { get; set; }
         public DbSet<Execution> Executions { get; set; }
@@ -61,7 +65,8 @@ namespace Blitz.Web.Persistence
                     );
                 }
             );
-
+            
+            modelBuilder.OnHangfireModelCreating();
             modelBuilder.ConfigureTimestamps();
             modelBuilder.ApplyNamingConventions();
         }
