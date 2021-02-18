@@ -6,17 +6,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
+using Blitz.Web.Identity;
 using Blitz.Web.Projects;
 using Hangfire.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Role = Blitz.Web.Identity.Role;
+using User = Blitz.Web.Identity.User;
 
 namespace Blitz.Web.Persistence
 {
-    public class BlitzDbContext : DbContext
+    public class BlitzDbContext : IdentityDbContext<User, Role, string>
     {
-        public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<Cronjob> Cronjobs { get; set; }
         public DbSet<Execution> Executions { get; set; }
@@ -43,6 +45,22 @@ namespace Blitz.Web.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // add identity models
+            base.OnModelCreating(modelBuilder);
+            // add hangfire models
+            modelBuilder.OnHangfireModelCreating();
+
+            // remove unused columns
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.Ignore(e => e.PhoneNumber);
+                builder.Ignore(e => e.PhoneNumberConfirmed);
+                builder.Ignore(e => e.AccessFailedCount);
+                builder.Ignore(e => e.LockoutEnabled);
+                builder.Ignore(e => e.LockoutEnd);
+                builder.Ignore(e => e.TwoFactorEnabled);
+            });
+
             modelBuilder.Entity<Cronjob>(
                 builder =>
                 {
@@ -65,8 +83,7 @@ namespace Blitz.Web.Persistence
                     );
                 }
             );
-            
-            modelBuilder.OnHangfireModelCreating();
+
             modelBuilder.ConfigureTimestamps();
             modelBuilder.ApplyNamingConventions();
         }
