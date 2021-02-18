@@ -1,8 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Blitz.Web.Persistence;
-using IdentityModel;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Identity
@@ -26,6 +25,12 @@ namespace Blitz.Web.Identity
 
         private async Task CreateDefaultRoles()
         {
+            if (await _roleManager.Roles.AnyAsync())
+            {
+                _logger.LogDebug("Roles found in database, skipping seed");
+                return;
+            }
+            
             foreach (var role in IdentityDefaults.Stereotypes)
             {
                 await _roleManager.CreateAsync(role);

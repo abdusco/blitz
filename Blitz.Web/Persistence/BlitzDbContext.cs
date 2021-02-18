@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Projects;
@@ -12,8 +11,6 @@ using Hangfire.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Role = Blitz.Web.Identity.Role;
-using User = Blitz.Web.Identity.User;
 
 namespace Blitz.Web.Persistence
 {
@@ -50,9 +47,34 @@ namespace Blitz.Web.Persistence
             // add hangfire models
             modelBuilder.OnHangfireModelCreating();
 
-            // remove unused columns
             modelBuilder.Entity<User>(builder =>
             {
+                /*
+                 * The navigation properties have been removed from the base IdentityUser class
+                 * So we redefine them here to prevent creating double foreign keys
+                 */
+                builder
+                    .HasMany(e => e.Claims)
+                    .WithOne()
+                    .HasForeignKey(e => e.UserId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                builder
+                    .HasMany(e => e.Logins)
+                    .WithOne()
+                    .HasForeignKey(e => e.UserId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                builder
+                    .HasMany(e => e.Roles)
+                    .WithOne()
+                    .HasForeignKey(e => e.UserId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // remove unused columns
                 builder.Ignore(e => e.PhoneNumber);
                 builder.Ignore(e => e.PhoneNumberConfirmed);
                 builder.Ignore(e => e.AccessFailedCount);
@@ -60,6 +82,15 @@ namespace Blitz.Web.Persistence
                 builder.Ignore(e => e.LockoutEnd);
                 builder.Ignore(e => e.TwoFactorEnabled);
             });
+            // modelBuilder.Entity<Role>(builder =>
+            // {
+            //     builder.HasMany<IdentityUserRole<string>>().WithOne().HasForeignKey(ur => ur.RoleId).IsRequired();
+            // });
+            // modelBuilder.Entity<IdentityUserRole<string>>(b =>
+            // {
+            //     b.ToTable("AspNetUserRoles");
+            //     b.HasKey(r => new {r.UserId, r.RoleId});
+            // });
 
             modelBuilder.Entity<Cronjob>(
                 builder =>
