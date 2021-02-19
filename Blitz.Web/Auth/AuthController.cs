@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Blitz.Web.Identity;
 using Microsoft.AspNetCore.Authentication;
@@ -10,28 +11,34 @@ using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Auth
 {
-    [ApiExplorerSettings(IgnoreApi = true)]
     [Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
         private readonly SignInManager<User> _signInManager;
-        private readonly IUserStore<User> _userStore;
         private readonly UserManager<User> _userManager;
 
         public AuthController(ILogger<AuthController> logger,
                               SignInManager<User> signInManager,
-                              IUserStore<User> userStore,
                               UserManager<User> userManager)
         {
             _logger = logger;
             _signInManager = signInManager;
-            _userStore = userStore;
             _userManager = userManager;
         }
+        
+        public record UserInfo(string Username, string Name, IList<string> Roles);
 
-        private const string Provider = "github";
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<UserInfo> LoggedInUserInfo()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var roles = await _userManager.GetRolesAsync(user);
+            return new UserInfo(user.UserName, user.Name, roles);
+        }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -39,19 +46,21 @@ namespace Blitz.Web.Auth
             return Redirect("~/");
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [AllowAnonymous]
         [HttpPost("login")]
         [HttpGet("login")]
-        public async Task<IActionResult> ExternalLogin(string returnUrl)
+        public Task<ActionResult> ExternalLogin(string returnUrl)
         {
             var provider = OpenIdConnectDefaults.AuthenticationScheme;
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(
                 provider,
                 Url.Action(nameof(ExternalLoginCallback), new {returnUrl})
             );
-            return Challenge(properties, provider);
+            return Task.FromResult<ActionResult>(Challenge(properties, provider));
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [AllowAnonymous]
         [HttpGet("externalcallback")]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl)
@@ -69,13 +78,14 @@ namespace Blitz.Web.Auth
                 // Update any authentication tokens if login succeeded
                 await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
 
-                _logger.LogInformation(5, "User logged in with {Name} provider.", info.LoginProvider);
+                _logger.LogInformation(5, "User logged in with {Provider} provider.", info.LoginProvider);
                 return RedirectToLocal(returnUrl);
             }
 
             _logger.LogInformation("Creating user record for {Email}", User.FindFirstValue(ClaimTypes.Email));
             var userRecord = new User
             {
+                Id = info.ProviderKey,
                 UserName = info.ProviderKey,
                 Email = info.Principal.FindFirstValue(ClaimTypes.Email),
                 Name = info.Principal.FindFirstValue(ClaimTypes.Name),
@@ -87,23 +97,13 @@ namespace Blitz.Web.Auth
                 RedirectToLocal("~/login");
             }
 
-            var loginResult = await _userManager.AddLoginAsync(userRecord, info);
+            var _ = await _userManager.AddLoginAsync(userRecord, info);
             await _signInManager.SignInAsync(userRecord, isPersistent: false);
-            _logger.LogInformation(6, "User created an account using {Name} provider.", info.LoginProvider);
+            _logger.LogInformation(6, "User created an account using {Provider} provider.", info.LoginProvider);
 
             // Update any authentication tokens as well
             await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
             return RedirectToLocal(returnUrl);
-        }
-
-        public record UserInfo(string Username, string Name, string Email);
-
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<UserInfo> LoggedInUserInfo()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            return new UserInfo(user.UserName, user.Name, user.Email);
         }
 
         private IActionResult RedirectToLocal(string returnUrl)

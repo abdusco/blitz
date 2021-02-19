@@ -32,8 +32,8 @@ namespace Blitz.Web.Identity
 
         public override async Task<IdentityResult> CreateAsync(User user)
         {
-            var result = await base.CreateAsync(user);
             var isFirstUser = !(await _context.Users.AnyAsync(CancellationToken));
+            var result = await base.CreateAsync(user);
             if (result.Succeeded && isFirstUser)
             {
                 Logger.LogInformation("User {Username} is the first registered user, granting it admin privileges", user.UserName);
