@@ -51,5 +51,24 @@ namespace Blitz.Web.Identity
         {
             return await Users.FirstOrDefaultAsync(e => e.Id == id, CancellationToken);
         }
+
+        public Task<User> GetUserAsync(Guid id) => GetUserAsync(id.ToString());
+
+        public override async Task<IdentityResult> RemoveFromRoleAsync(User user, string role)
+        {
+            if (
+                role == IdentityDefaults.AdminRole
+                && await IsInRoleAsync(user, IdentityDefaults.AdminRole)
+                && (await GetUsersInRoleAsync(IdentityDefaults.AdminRole)).Except(new[] {user}).Any())
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "NoRemainingAdmins",
+                    Description = "You cannot remove admin role from the only remaining admin"
+                });
+            }
+
+            return await base.RemoveFromRoleAsync(user, role);
+        }
     }
 }
