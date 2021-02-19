@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -12,10 +10,7 @@ using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
 using Hangfire.EntityFrameworkCore;
-using IdentityModel;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,9 +24,6 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerUI;
-using Role = Blitz.Web.Identity.Role;
-using User = Blitz.Web.Identity.User;
 
 namespace Blitz.Web
 {
@@ -68,7 +60,7 @@ namespace Blitz.Web
                     const string scope = "demo_api";
                     options.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
                     options.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz", Version = "v1"});
-                    options.OperationFilter<MethodNameSentenceOperationFilter>();
+                    options.OperationFilter<PopulateMethodMetadataOperationFilter>();
                     options.AddSecurityDefinition("oidc", new OpenApiSecurityScheme
                     {
                         Type = SecuritySchemeType.OAuth2,
@@ -181,7 +173,6 @@ namespace Blitz.Web
                         }
                     };
                 });
-            // TODO: add jwt
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
             services.AddAuthorization(options =>
@@ -227,6 +218,7 @@ namespace Blitz.Web
             app.UseSwaggerUI(
                 c =>
                 {
+                    c.DocumentTitle = "Blitz API";
                     c.DisplayOperationId();
                     c.RoutePrefix = "api";
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz API");

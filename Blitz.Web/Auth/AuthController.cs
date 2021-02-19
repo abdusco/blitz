@@ -26,8 +26,8 @@ namespace Blitz.Web.Auth
             _signInManager = signInManager;
             _userManager = userManager;
         }
-        
-        public record UserInfo(string Username, string Name, IList<string> Roles);
+
+        public record UserInfo(string Id, string Name, IList<string> Roles);
 
         [Authorize]
         [HttpGet("me")]
@@ -35,7 +35,7 @@ namespace Blitz.Web.Auth
         {
             var user = await _userManager.GetUserAsync(User);
             var roles = await _userManager.GetRolesAsync(user);
-            return new UserInfo(user.UserName, user.Name, roles);
+            return new UserInfo(user.Id, user.Name, roles);
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
