@@ -5,9 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,17 +17,20 @@ namespace Blitz.Web.Projects
 {
     public class ProjectsController : ApiController
     {
+        private readonly IAuthorizationService _authorizationService;
         private readonly BlitzDbContext _db;
         private readonly IMapper _mapper;
 
-        public ProjectsController(BlitzDbContext db, IMapper mapper)
+        public ProjectsController(BlitzDbContext db, IMapper mapper, IAuthorizationService authorizationService)
         {
             _db = db;
             _mapper = mapper;
+            _authorizationService = authorizationService;
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpGet]
-        public async Task<ActionResult<List<ProjectListDto>>> ListAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
         {
             return await _db.Projects
                 .OrderBy(p => p.Title)
@@ -33,6 +38,7 @@ namespace Blitz.Web.Projects
                 .ToListAsync(cancellationToken);
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireProjectManager)]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
@@ -42,8 +48,9 @@ namespace Blitz.Web.Projects
             return _mapper.Map<ProjectDetailsDto>(result);
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpPost]
-        public async Task<ActionResult<Guid>> Create(
+        public async Task<ActionResult<Guid>> CreateProject(
             ProjectCreateDto request,
             CancellationToken cancellationToken
         )
@@ -62,8 +69,9 @@ namespace Blitz.Web.Projects
             return p.Id;
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
         {
             var existing = await _db.Projects.SingleOrDefaultAsync(
                 p => p.Id == id, cancellationToken: cancellationToken

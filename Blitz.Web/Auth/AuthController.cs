@@ -41,6 +41,7 @@ namespace Blitz.Web.Auth
 
         [AllowAnonymous]
         [HttpPost("login")]
+        [HttpGet("login")]
         public async Task<IActionResult> ExternalLogin(string returnUrl)
         {
             var provider = OpenIdConnectDefaults.AuthenticationScheme;

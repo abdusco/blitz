@@ -50,7 +50,7 @@ namespace Blitz.Web.Persistence
             modelBuilder.Entity<User>(builder =>
             {
                 /*
-                 * The navigation properties have been removed from the base IdentityUser class
+                 * The navigation properties were removed from the base IdentityUser class in ASP.NET Core 2
                  * So we redefine them here to prevent creating double foreign keys
                  */
                 builder
@@ -82,15 +82,6 @@ namespace Blitz.Web.Persistence
                 builder.Ignore(e => e.LockoutEnd);
                 builder.Ignore(e => e.TwoFactorEnabled);
             });
-            // modelBuilder.Entity<Role>(builder =>
-            // {
-            //     builder.HasMany<IdentityUserRole<string>>().WithOne().HasForeignKey(ur => ur.RoleId).IsRequired();
-            // });
-            // modelBuilder.Entity<IdentityUserRole<string>>(b =>
-            // {
-            //     b.ToTable("AspNetUserRoles");
-            //     b.HasKey(r => new {r.UserId, r.RoleId});
-            // });
 
             modelBuilder.Entity<Cronjob>(
                 builder =>

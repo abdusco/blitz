@@ -19,18 +19,17 @@ namespace Blitz.Web.Identity
 
         public async Task SeedAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Creating default roles");
             await CreateDefaultRoles();
         }
 
         private async Task CreateDefaultRoles()
         {
+            _logger.LogInformation("Creating default roles");
             if (await _roleManager.Roles.AnyAsync())
             {
                 _logger.LogDebug("Roles found in database, skipping seed");
                 return;
             }
-            
             foreach (var role in IdentityDefaults.Stereotypes)
             {
                 await _roleManager.CreateAsync(role);

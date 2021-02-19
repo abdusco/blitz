@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Blitz.Web.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -9,11 +10,11 @@ using Microsoft.Extensions.Options;
 
 namespace Blitz.Web.Identity
 {
-    public class UserManager : UserManager<User>
+    public class AppUserManager : UserManager<User>
     {
         private readonly BlitzDbContext _context;
 
-        public UserManager(
+        public AppUserManager(
             BlitzDbContext context,
             IUserStore<User> store,
             IOptions<IdentityOptions> optionsAccessor,
@@ -32,7 +33,8 @@ namespace Blitz.Web.Identity
         public override async Task<IdentityResult> CreateAsync(User user)
         {
             var result = await base.CreateAsync(user);
-            if (result.Succeeded && await IsFirstUserAsync(user))
+            var isFirstUser = !(await _context.Users.AnyAsync(CancellationToken));
+            if (result.Succeeded && isFirstUser)
             {
                 Logger.LogInformation("User {Username} is the first registered user, granting it admin privileges", user.UserName);
                 var roleResult = await AddToRoleAsync(user, IdentityDefaults.AdminRole);
@@ -45,10 +47,9 @@ namespace Blitz.Web.Identity
             return result;
         }
 
-        private async Task<bool> IsFirstUserAsync(User user)
+        public async Task<User> GetUserAsync(string id)
         {
-            var firstUser = await _context.Users.SingleOrDefaultAsync(u => u.Id == user.Id, CancellationToken);
-            return firstUser != null;
+            return await Users.FirstOrDefaultAsync(e => e.Id == id, CancellationToken);
         }
     }
 }
