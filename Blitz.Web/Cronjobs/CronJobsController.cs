@@ -33,7 +33,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<CronjobDetailDto>>> ListAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
             var cronjobs = await _db.Cronjobs
                 .Include(c => c.Project)
@@ -56,7 +56,7 @@ namespace Blitz.Web.Cronjobs
 
 
         [HttpPatch("{id}")]
-        public async Task<ActionResult> Update(Guid id, CronjobUpdateRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> UpdateCronjob(Guid id, CronjobUpdateRequest request, CancellationToken cancellationToken)
         {
             var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
@@ -88,7 +88,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpPost]
-        public async Task<ActionResult<CronjobDetailDto>> Create(
+        public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
             CronjobCreateDto request,
             CancellationToken cancellationToken
         )
@@ -109,7 +109,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteCronjob(Guid id, CancellationToken cancellationToken)
         {
             var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
@@ -129,7 +129,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpPost("{id}/trigger")]
-        public async Task<ActionResult<Guid>> Trigger(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<Guid>> TriggerCronjob(Guid id, CancellationToken cancellationToken)
         {
             var existing = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
@@ -149,7 +149,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpGet("{id}/executions")]
-        public async Task<ActionResult<List<CronjobExecutionsListDto>>> LatestExecutions(
+        public async Task<ActionResult<List<CronjobExecutionsListDto>>> LatestCronjobExecutions(
             Guid id,
             int limit = 10,
             CancellationToken cancellationToken = default
