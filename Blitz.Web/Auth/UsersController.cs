@@ -8,7 +8,6 @@ using Ardalis.SmartEnum;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Blitz.Web.Auth
@@ -21,6 +20,13 @@ namespace Blitz.Web.Auth
         public UsersController(AppUserManager userManager)
         {
             _userManager = userManager;
+        }
+
+        [HttpGet("roles")]
+        public async Task<ActionResult<IList<string>>> ListAllRoles()
+        {
+            var roles = await _userManager.GetRolesAsync();
+            return Ok(roles);
         }
 
         [HttpGet("{userId}/roles")]
@@ -58,10 +64,10 @@ namespace Blitz.Web.Auth
             return Ok("123");
         }
 
-        public record ProjectAccessGrantRequest(List<string> ProjectIds);
+        public record GrantUpdateRequest(List<string> ProjectIds);
 
         [HttpPut("{userId}/grants")]
-        public async Task<IActionResult> GrantUserAccessToProjects(Guid userId, ProjectAccessGrantRequest request)
+        public async Task<IActionResult> UpdateUserGrants(Guid userId, GrantUpdateRequest updateRequest)
         {
             using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
@@ -71,7 +77,7 @@ namespace Blitz.Web.Auth
             var projectClaims = existingClaims.Where(c => c.Type == AppClaimTypes.ProjectManager).ToArray();
             await _userManager.RemoveClaimsAsync(user, projectClaims);
 
-            var requestedClaims = request.ProjectIds
+            var requestedClaims = updateRequest.ProjectIds
                 .Select(pid => new Claim(AppClaimTypes.ProjectManager, pid.ToString()))
                 .ToList();
             await _userManager.AddClaimsAsync(user, requestedClaims);

@@ -70,5 +70,10 @@ namespace Blitz.Web.Identity
 
             return await base.RemoveFromRoleAsync(user, role);
         }
+
+        public async Task<List<string>> GetRolesAsync()
+        {
+            return await _context.Roles.Select(r => r.Name).ToListAsync(CancellationToken);
+        }
     }
 }
