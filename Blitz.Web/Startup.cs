@@ -53,7 +53,7 @@ namespace Blitz.Web
             services.AddDbContext<BlitzDbContext>(ConfigureDbContext);
 
             services.AddRouting(o => o.LowercaseUrls = true);
-            services.AddControllers();
+            services.AddControllers(options => options.Filters.Add<MappingExceptionFilter>());
             services.AddSwaggerGen(
                 options =>
                 {
