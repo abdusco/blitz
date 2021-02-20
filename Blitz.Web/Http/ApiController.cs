@@ -1,8 +1,6 @@
 ﻿using System.Net.Mime;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Blitz.Web.Http
 {
@@ -10,7 +8,7 @@ namespace Blitz.Web.Http
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Route("api/[controller]")]
-    public abstract class ApiController : Controller
+    public abstract class ApiController : ControllerBase
     {
     }
 }
