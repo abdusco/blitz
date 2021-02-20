@@ -11,7 +11,7 @@ namespace Blitz.Web.Http
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            operation.OperationId = context.MethodInfo.Name.Titleize();
+            operation.Summary = context.MethodInfo.Name.Titleize();
 
             operation.Responses.Add("401", new OpenApiResponse {Description = "Unauthorized"});
             
