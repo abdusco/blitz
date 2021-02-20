@@ -70,7 +70,7 @@ namespace Blitz.Web.Cronjobs
 
 
         [HttpPost("{id}/status")]
-        public async Task<ActionResult> UpdateStatus(
+        public async Task<ActionResult> UpdateExecutionStatus(
             Guid id,
             ExecutionStatusCreateDto update,
             CancellationToken cancellationToken

@@ -10,6 +10,7 @@ using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
 using Hangfire.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;

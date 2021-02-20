@@ -7,6 +7,7 @@ using System.Transactions;
 using Ardalis.SmartEnum;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
+using Blitz.Web.Projects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,7 +31,7 @@ namespace Blitz.Web.Auth
         }
 
         [HttpGet("{userId}/roles")]
-        public async Task<ActionResult<IList<string>>> ListUserRoles(Guid userId)
+        public async Task<ActionResult<IList<string>>> ListUserRoles(string userId)
         {
             var user = await _userManager.GetUserAsync(userId);
             var roles = await _userManager.GetRolesAsync(user);
@@ -40,7 +41,7 @@ namespace Blitz.Web.Auth
         public record UserRoleUpdateRequest(List<string> RoleNames);
 
         [HttpPut("{userId}/roles")]
-        public async Task<ActionResult<IList<string>>> UpdateUserRoles(Guid userId, UserRoleUpdateRequest request)
+        public async Task<ActionResult<IList<string>>> UpdateUserRoles(string userId, UserRoleUpdateRequest request)
         {
             using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
@@ -54,20 +55,22 @@ namespace Blitz.Web.Auth
             return NoContent();
         }
 
-        public record Grant(string Resource, string Id, AccessType AccessType);
+        public record UserGrant(string ClaimType, string Resource, object Value);
 
         [HttpGet("{userId}/grants")]
-        public async Task<ActionResult<List<Grant>>> ListUserGrants(Guid userId)
+        public async Task<ActionResult<List<UserGrant>>> ListUserGrants(string userId)
         {
             var user = await _userManager.GetUserAsync(userId);
             var existingClaims = await _userManager.GetClaimsAsync(user);
-            return Ok("123");
+            var grants = existingClaims.Select(c => new UserGrant(c.Type, nameof(Project), c.Value)).ToList();
+
+            return Ok(grants);
         }
 
         public record GrantUpdateRequest(List<string> ProjectIds);
 
         [HttpPut("{userId}/grants")]
-        public async Task<IActionResult> UpdateUserGrants(Guid userId, GrantUpdateRequest updateRequest)
+        public async Task<IActionResult> UpdateUserGrants(string userId, GrantUpdateRequest updateRequest)
         {
             using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 

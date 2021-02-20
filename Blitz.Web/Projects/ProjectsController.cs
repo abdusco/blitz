@@ -42,10 +42,17 @@ namespace Blitz.Web.Projects
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
-            var result = await _db.Projects
+            var project = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
                 .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
-            return _mapper.Map<ProjectDetailsDto>(result);
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
+
+            return _mapper.Map<ProjectDetailsDto>(project);
         }
 
         [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
@@ -55,18 +62,18 @@ namespace Blitz.Web.Projects
             CancellationToken cancellationToken
         )
         {
-            var p = _mapper.Map<Project>(request);
-            if (await _db.Projects.AnyAsync(r => r.Title == p.Title, cancellationToken))
+            var project = _mapper.Map<Project>(request);
+            if (await _db.Projects.AnyAsync(r => r.Title == project.Title, cancellationToken))
             {
                 return BadRequest();
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            await _db.AddAsync(p, cancellationToken);
+            await _db.AddAsync(project, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
-            return p.Id;
+            return project.Id;
         }
 
         [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]

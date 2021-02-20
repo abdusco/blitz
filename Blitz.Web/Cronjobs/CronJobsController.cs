@@ -5,8 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Blitz.Web.Projects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +17,7 @@ namespace Blitz.Web.Cronjobs
 {
     public class CronjobsController : ApiController
     {
+        private readonly IAuthorizationService _authorizationService;
         private readonly ICronjobRegistrationService _cronjobRegistrationService;
         private readonly BlitzDbContext _db;
         private readonly IMapper _mapper;
@@ -23,15 +27,17 @@ namespace Blitz.Web.Cronjobs
             BlitzDbContext db,
             IMapper mapper,
             ICronjobTriggerer cronjobTriggerer,
-            ICronjobRegistrationService cronjobRegistrationService
-        )
+            ICronjobRegistrationService cronjobRegistrationService,
+            IAuthorizationService authorizationService)
         {
             _db = db;
             _mapper = mapper;
             _cronjobTriggerer = cronjobTriggerer;
             _cronjobRegistrationService = cronjobRegistrationService;
+            _authorizationService = authorizationService;
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpGet]
         public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
@@ -51,35 +57,49 @@ namespace Blitz.Web.Cronjobs
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
-            return _mapper.Map<CronjobDetailDto>(cronjob);
+            
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
+
+            return Ok(_mapper.Map<CronjobDetailDto>(cronjob));
         }
 
 
         [HttpPatch("{id}")]
         public async Task<ActionResult> UpdateCronjob(Guid id, CronjobUpdateRequest request, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
+            var cronjob = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
-            if (existing is null)
+            if (cronjob is null)
             {
                 return NotFound();
             }
-            
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
+
             // remove registered cronjobs that belongs to existing cronjob record
             // then update its details
-            await _cronjobRegistrationService.Remove(existing);
+            await _cronjobRegistrationService.Remove(cronjob);
 
             // TODO: figure out how to ignore null members when mapping 
-            existing.Enabled = request.Enabled ?? existing.Enabled;
-            existing.Title = request.Title ?? existing.Title;
-            existing.Cron = _mapper.Map<CronExpression>(request.Cron) ?? existing.Cron;
+            cronjob.Enabled = request.Enabled ?? cronjob.Enabled;
+            cronjob.Title = request.Title ?? cronjob.Title;
+            cronjob.Cron = _mapper.Map<CronExpression>(request.Cron) ?? cronjob.Cron;
 
-            if (existing.Enabled)
+            if (cronjob.Enabled)
             {
-                await _cronjobRegistrationService.Add(existing);
+                await _cronjobRegistrationService.Add(cronjob);
             }
-            
+
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
@@ -87,41 +107,54 @@ namespace Blitz.Web.Cronjobs
             return NoContent();
         }
 
+        [Authorize(Policy = AuthorizationPolicies.RequireProjectManager)]
         [HttpPost]
         public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
             CronjobCreateDto request,
             CancellationToken cancellationToken
         )
         {
-            var c = _mapper.Map<Cronjob>(request);
+            var cronjob = _mapper.Map<Cronjob>(request);
             if (!await _db.Projects.AnyAsync(e => e.Id == request.ProjectId, cancellationToken))
             {
-                return BadRequest();
+                return BadRequest(new ProblemDetails {Detail = "No such project"});
+            }
+            
+            var result = await _authorizationService.AuthorizeAsync(User, new Project{Id = request.ProjectId}, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
             }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            await _db.AddAsync(c, cancellationToken);
+            await _db.AddAsync(cronjob, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            await _cronjobRegistrationService.Add(cronjob);
             await tx.CommitAsync(cancellationToken);
-            await _cronjobRegistrationService.Add(c);
 
-            return _mapper.Map<CronjobDetailDto>(c);
+            return _mapper.Map<CronjobDetailDto>(cronjob);
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCronjob(Guid id, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
+            var cronjob = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
-            if (existing is null)
+            if (cronjob is null)
             {
                 return NotFound();
             }
+            
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            await _cronjobRegistrationService.Remove(existing);
-            _db.Remove(existing);
+            await _cronjobRegistrationService.Remove(cronjob);
+            _db.Remove(cronjob);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
 
@@ -131,16 +164,23 @@ namespace Blitz.Web.Cronjobs
         [HttpPost("{id}/trigger")]
         public async Task<ActionResult<Guid>> TriggerCronjob(Guid id, CancellationToken cancellationToken)
         {
-            var existing = await _db.Cronjobs.SingleOrDefaultAsync(
+            var cronjob = await _db.Cronjobs.SingleOrDefaultAsync(
                 e => e.Id == id, cancellationToken: cancellationToken
             );
-            if (existing is null)
+            if (cronjob is null)
             {
                 return NotFound();
             }
+            
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            var execution = await existing.TriggerAsync(_cronjobTriggerer);
+            var execution = await cronjob.TriggerAsync(_cronjobTriggerer);
             await _db.AddAsync(execution, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
@@ -155,9 +195,17 @@ namespace Blitz.Web.Cronjobs
             CancellationToken cancellationToken = default
         )
         {
-            if (!await _db.Cronjobs.AnyAsync(c => c.Id == id, cancellationToken))
+            var cronjob = await _db.Cronjobs.SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (cronjob == null)
             {
                 return NotFound();
+            }
+            
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
             }
 
             limit = Math.Clamp(limit, 0, 50);
@@ -177,9 +225,17 @@ namespace Blitz.Web.Cronjobs
             CancellationToken cancellationToken = default
         )
         {
-            if (!await _db.Cronjobs.AnyAsync(c => c.Id == id, cancellationToken))
+            var cronjob = await _db.Cronjobs.SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (cronjob == null)
             {
                 return NotFound();
+            }
+            
+            // OPTIMIZE: dont load everything before authorization
+            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
             }
 
             var removables = await _db.Executions.Where(e => e.CronjobId == id)
