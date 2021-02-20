@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Blitz.Web
         {
             var host = CreateHostBuilder(args).Build();
 
-            if (true || args.Contains("--seed"))
+            if (args.Contains("--seed"))
             {
                 using var scope = host.Services.CreateScope();
                 
