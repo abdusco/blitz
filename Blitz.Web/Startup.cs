@@ -97,7 +97,8 @@ namespace Blitz.Web
             services.AddHangfire((provider, configuration) =>
                 {
                     configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 1});
-                    configuration.UseEFCoreStorage(provider.GetRequiredService<BlitzDbContext>, new EFCoreStorageOptions());
+                    configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
+                        new EFCoreStorageOptions());
                 }
             );
             // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
