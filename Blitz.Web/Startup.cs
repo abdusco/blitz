@@ -175,6 +175,7 @@ namespace Blitz.Web
                 });
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
+            services.AddScoped<IClaimsTransformation, AuthorizationClaimsTransformer>();
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
