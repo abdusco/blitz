@@ -253,11 +253,12 @@ namespace Blitz.Web
         private void ConfigureDbContext(DbContextOptionsBuilder builder)
         {
             builder = builder
-                .EnableDetailedErrors().EnableSensitiveDataLogging();
+                .EnableDetailedErrors()
+                .EnableSensitiveDataLogging();
 
             if (Configuration.GetConnectionString("BlitzPostgres") is { } postgresDsn)
             {
-                builder = builder.UseNpgsql(postgresDsn);
+                builder = builder.UseNpgsql(postgresDsn, pg => pg.MigrationsHistoryTable("__ef_migrations"));
             }
 
             // else if (Configuration.GetConnectionString("BlitzSqlServer") is { } sqlServerDsn)
