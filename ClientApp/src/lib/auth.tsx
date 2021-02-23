@@ -13,6 +13,8 @@ export interface AuthOptions extends Omit<UserManagerSettings, 'authority' | 'cl
     scope: string;
     redirectUri?: string;
 
+    onUser(user: User | null): Promise<void>;
+
     [oidcOptsKey: string]: any;
 }
 
@@ -52,11 +54,13 @@ export const initUserManager = (options: AuthOptions): UserManager => {
     });
 };
 
+const noop = (params: any) => Promise.resolve();
 
 const AuthContext = React.createContext<AuthContextProps>({} as any)
 export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
     const history = useHistory();
     const {children, options} = props;
+    const {onUser = noop} = options;
     const [userState, setUserState] = useState<User | null>(null);
     const [ready, setReady] = useState(false);
 
@@ -81,6 +85,7 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
             } else {
                 const user = await userManager!.getUser();
                 if (user && !user.expired) {
+                    await onUser(user);
                     setUserState(user);
                 } else if (options.autoSignIn) {
                     await userManager.signinRedirect();
@@ -89,6 +94,7 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
         };
         const updateUserData = async () => {
             const user = await userManager.getUser();
+            await onUser(user);
             setUserState(user);
             setReady(true);
         }
@@ -119,15 +125,13 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
 };
 export const useAuth = () => React.useContext(AuthContext);
 
-export function useTokens(): { accessToken: string; idToken: string } | null {
+export function useToken(): string | null {
     const {user} = useAuth();
     if (!user) {
         return null;
     }
-    return {
-        accessToken: user!.access_token,
-        idToken: user!.id_token,
-    }
+
+    return user!.access_token;
 }
 
 export function useUser(): Record<string, any> | null {

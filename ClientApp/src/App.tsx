@@ -6,6 +6,9 @@ import Home from "./pages/home";
 import Users from "./pages/users";
 import Unauthorized from "./pages/unauthorized";
 import {HelmetProvider} from "react-helmet-async";
+import {QueryClient, QueryClientProvider} from "react-query";
+import {User} from "oidc-client";
+import axios from "axios";
 
 const Routes = () => (<>
     <Route exact path='/' component={Home}/>
@@ -18,7 +21,16 @@ const authOptions: AuthOptions = {
     clientId: 'demoapp',
     scope: 'openid',
     redirectUri: 'http://localhost:3000/',
+    async onUser(user: User | null): Promise<void> {
+        if (user) {
+            axios.defaults.headers['Authorization'] = `Bearer ${user?.access_token}`;
+        } else {
+            delete axios.defaults.headers['Authorization'];
+        }
+    }
 };
+
+const queryClient = new QueryClient()
 
 export default function App() {
     return (
@@ -26,11 +38,13 @@ export default function App() {
             <Router>
                 {/* auth provider needs useHistory */}
                 <AuthProvider options={authOptions}>
-                    <LoadingApp>
-                        <Switch>
-                            <Routes/>
-                        </Switch>
-                    </LoadingApp>
+                    <QueryClientProvider client={queryClient}>
+                        <LoadingApp>
+                            <Switch>
+                                <Routes/>
+                            </Switch>
+                        </LoadingApp>
+                    </QueryClientProvider>
                 </AuthProvider>
             </Router>
         </HelmetProvider>
