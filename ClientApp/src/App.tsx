@@ -5,6 +5,7 @@ import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
 import Home from "./pages/home";
 import Users from "./pages/users";
 import Unauthorized from "./pages/unauthorized";
+import {HelmetProvider} from "react-helmet-async";
 
 const Routes = () => (<>
     <Route exact path='/' component={Home}/>
@@ -19,19 +20,20 @@ const authOptions: AuthOptions = {
     redirectUri: 'http://localhost:3000/',
 };
 
-
 export default function App() {
     return (
-        <Router>
-            {/* auth provider needs useHistory */}
-            <AuthProvider options={authOptions}>
-                <LoadingApp>
-                    <Switch>
-                        <Routes/>
-                    </Switch>
-                </LoadingApp>
-            </AuthProvider>
-        </Router>
+        <HelmetProvider>
+            <Router>
+                {/* auth provider needs useHistory */}
+                <AuthProvider options={authOptions}>
+                    <LoadingApp>
+                        <Switch>
+                            <Routes/>
+                        </Switch>
+                    </LoadingApp>
+                </AuthProvider>
+            </Router>
+        </HelmetProvider>
     )
 }
 
@@ -42,9 +44,12 @@ const LoadingApp: React.FC<{ timeout?: number; }> = (props) => {
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
+        let id = 0;
         if (ready) {
-            setTimeout(() => setLoaded(true), timeout);
+            id = setTimeout(() => setLoaded(true), timeout);
         }
+
+        return () => clearTimeout(id);
     }, [ready, setLoaded]);
 
     if (!loaded) {
