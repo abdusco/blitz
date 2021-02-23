@@ -1,5 +1,15 @@
 import React from "react";
+import {useLocation} from "react-router-dom";
+import {useAuth} from "../lib/auth";
 
 export default function Unauthorized() {
-    return <div>you are unauthorized</div>
+    const location = useLocation();
+    const {signIn} = useAuth();
+
+    return (
+        <>
+            <h1>you're unauthorized</h1>
+            <button onClick={() => signIn({next: location.pathname})}>click to sign in</button>
+        </>
+    )
 }

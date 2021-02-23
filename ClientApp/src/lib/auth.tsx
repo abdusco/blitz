@@ -1,23 +1,22 @@
 import React, {useEffect, useState} from "react";
 import oidc, {User, UserManager, UserManagerSettings, WebStorageStateStore} from "oidc-client";
+import {useHistory} from "react-router-dom";
 
 oidc.Log.logger = console;
 
 // oidc.Log.level = oidc.Log.DEBUG;
 
-interface AuthOptions extends Omit<UserManagerSettings, 'authority' | 'client_id' | 'client_secret' | 'redirect_uri' | 'scope'> {
+export interface AuthOptions extends Omit<UserManagerSettings, 'authority' | 'client_id' | 'client_secret' | 'redirect_uri' | 'scope'> {
     autoSignIn?: boolean;
     authority: string;
     clientId: string;
     scope: string;
     redirectUri?: string;
 
-    onAuthCallback?: (next: string) => void;
-
     [oidcOptsKey: string]: any;
 }
 
-interface AuthContextProps {
+export interface AuthContextProps {
     user: User | null;
     ready: boolean;
     signIn: (state?: unknown) => Promise<void>;
@@ -56,6 +55,7 @@ export const initUserManager = (options: AuthOptions): UserManager => {
 
 const AuthContext = React.createContext<AuthContextProps>({} as any)
 export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
+    const history = useHistory();
     const {children, options} = props;
     const [userState, setUserState] = useState<User | null>(null);
     const [ready, setReady] = useState(false);
@@ -73,8 +73,10 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
                 setUserState(user);
                 clearAuthQuery();
 
+                console.log(user.state);
+
                 if (user.state?.next) {
-                    options.onAuthCallback && options.onAuthCallback(user.state?.next);
+                    history.push(user.state?.next);
                 }
             } else {
                 const user = await userManager!.getUser();

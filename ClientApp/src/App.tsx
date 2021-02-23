@@ -1,40 +1,36 @@
-import React, {ReactNode, useEffect, useState} from 'react'
-import './App.css'
-import {AuthProvider, useAuth} from "./lib/auth";
+import React, {useEffect, useState} from 'react'
+import {AuthOptions, AuthProvider, useAuth} from "./lib/auth";
 import {CircularProgress} from "@material-ui/core";
-import {BrowserRouter as Router, Route, Switch, useHistory} from "react-router-dom";
+import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
 import Home from "./pages/home";
 import Users from "./pages/users";
 import Unauthorized from "./pages/unauthorized";
 
-function Shell(props: { children: ReactNode }) {
-    const history = useHistory();
-    return <AuthProvider options={{
-        authority: 'https://devauth.thyteknik.com.tr',
-        clientId: 'demoapp',
-        scope: 'openid',
-        redirectUri: 'http://localhost:3000/',
-        onAuthCallback(next) {
-            history.push({pathname: next});
-        }
-        // autoSignIn: true,
-    }}>
-        <LoadingApp>
-            {props.children}
-        </LoadingApp>
-    </AuthProvider>;
-}
+const Routes = () => (<>
+    <Route exact path='/' component={Home}/>
+    <Route path='/users' component={Users}/>
+    <Route path='/unauthorized' component={Unauthorized}/>
+</>);
+
+const authOptions: AuthOptions = {
+    authority: 'https://devauth.thyteknik.com.tr',
+    clientId: 'demoapp',
+    scope: 'openid',
+    redirectUri: 'http://localhost:3000/',
+};
+
 
 export default function App() {
     return (
         <Router>
-            <Shell>
-                <Switch>
-                    <Route exact path='/' component={Home}/>
-                    <Route path='/users' component={Users}/>
-                    <Route path='/unauthorized' component={Unauthorized}/>
-                </Switch>
-            </Shell>
+            {/* auth provider needs useHistory */}
+            <AuthProvider options={authOptions}>
+                <LoadingApp>
+                    <Switch>
+                        <Routes/>
+                    </Switch>
+                </LoadingApp>
+            </AuthProvider>
         </Router>
     )
 }
