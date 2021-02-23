@@ -7,7 +7,6 @@ export const useCheckAuth = () => {
     const router = useHistory();
 
     useEffect(() => {
-        console.log({ready, user});
         if (ready && !user) {
             router.push('/unauthorized', {next: router.location.pathname});
         }

@@ -118,3 +118,23 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
     }}>{children}</AuthContext.Provider>;
 };
 export const useAuth = () => React.useContext(AuthContext);
+
+export function useTokens(): { accessToken: string; idToken: string } | null {
+    const {user} = useAuth();
+    if (!user) {
+        return null;
+    }
+    return {
+        accessToken: user!.access_token,
+        idToken: user!.id_token,
+    }
+}
+
+export function useUser(): Record<string, any> | null {
+    const auth = useAuth();
+    if (!auth.user) {
+        return null;
+    }
+
+    return auth.user?.profile;
+}
