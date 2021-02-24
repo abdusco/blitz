@@ -5,8 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,10 +33,11 @@ namespace Blitz.Web.Cronjobs
         )
         {
             limit = Math.Clamp(limit, 0, 20);
-
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
             var results = await _db.Executions
                 .Include(e => e.Cronjob)
                 .ThenInclude(c => c.Project)
+                .Where(e => User.IsAdmin() || projectGrants.Contains(e.Cronjob.ProjectId.ToString()))
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .OrderByDescending(e => e.CreatedAt)
                 .Take(limit)
@@ -69,6 +72,7 @@ namespace Blitz.Web.Cronjobs
         }
 
 
+        [AllowAnonymous]
         [HttpPost("{id}/status")]
         public async Task<ActionResult> UpdateExecutionStatus(
             Guid id,
