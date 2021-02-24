@@ -24,24 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="Areas\Identity\Pages\_ViewStart.cshtml" />
-      <_ContentIncludedByDefault Remove="Pages\Forbidden.cshtml" />
-      <_ContentIncludedByDefault Remove="Pages\Login.cshtml" />
-      <_ContentIncludedByDefault Remove="Pages\Logout.cshtml" />
-      <_ContentIncludedByDefault Remove="Pages\_ViewImports.cshtml" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\1d96769.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\2208b94.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\3558a3e.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\3ee9708.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\482042e.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\a491739.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\bd5c1fb.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\e4f8914.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\img\buefy.4761382.png" />
-      <_ContentIncludedByDefault Remove="wwwroot\_nuxt\LICENSES" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="static" />
       <Folder Include="wwwroot" />
     </ItemGroup>
