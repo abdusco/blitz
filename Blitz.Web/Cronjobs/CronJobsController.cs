@@ -37,11 +37,13 @@ namespace Blitz.Web.Cronjobs
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+        [Authorize(Roles = "pm,admin")]
         [HttpGet]
         public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
             var cronjobs = await _db.Cronjobs
+                .Where(e => User.IsAdmin() || projectGrants.Contains(e.ProjectId.ToString()))
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .OrderByDescending(p => p.CreatedAt)
@@ -107,7 +109,7 @@ namespace Blitz.Web.Cronjobs
             return NoContent();
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireProjectManager)]
+        [Authorize(Roles = "pm")]
         [HttpPost]
         public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
             CronjobCreateDto request,
