@@ -1,0 +1,36 @@
+.home {
+}
+
+.reset-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid {
+  @extend .reset-list;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-gap: 2rem;
+}
+
+.cardLink {
+  display: block;
+}
+
+.card {
+  box-shadow: 0 0.25rem 2rem -0.25rem rgba(black, 0.15);
+  padding: 4rem 2rem 2rem;
+  border-radius: 2rem;
+  transition: 0.2s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.75rem 2.5rem -0.2rem rgba(black, 0.1);
+  }
+}
+
+.cardTitle {
+  margin: 0;
+  font-weight: 600;
+}

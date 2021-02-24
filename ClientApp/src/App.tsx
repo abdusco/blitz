@@ -1,20 +1,13 @@
 import React, {useEffect, useState} from 'react'
 import {AuthOptions, AuthProvider, useAuth} from "./lib/auth";
-import {CircularProgress} from "@material-ui/core";
-import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
-import Home from "./pages/home";
-import Users from "./pages/users";
-import Unauthorized from "./pages/unauthorized";
+import {CircularProgress, createMuiTheme, jssPreset, StylesProvider, ThemeProvider} from "@material-ui/core";
+import {BrowserRouter as Router, Switch} from "react-router-dom";
 import {HelmetProvider} from "react-helmet-async";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {User} from "oidc-client";
 import axios from "axios";
-
-const Routes = () => (<>
-    <Route exact path='/' component={Home}/>
-    <Route path='/users' component={Users}/>
-    <Route path='/unauthorized' component={Unauthorized}/>
-</>);
+import {create as createJss} from 'jss'
+import {routes} from './routes'
 
 const authOptions: AuthOptions = {
     authority: 'https://devauth.thyteknik.com.tr',
@@ -32,6 +25,43 @@ const authOptions: AuthOptions = {
 
 const queryClient = new QueryClient()
 
+const jss = createJss({
+    plugins: [...jssPreset().plugins],
+    insertionPoint: 'jss',
+});
+const theme = createMuiTheme({
+    palette: {
+        primary: {
+            main: '#ab47bc',
+            light: '#df78ef',
+            dark: '#790e8b',
+            contrastText: '#fefefe',
+        },
+        secondary: {
+            main: '#fdd835',
+            light: '#ffff6b',
+            dark: '#c6a700',
+            contrastText: '#111',
+        }
+    },
+    typography: {
+        fontFamily: 'Inter'
+    },
+    overrides: {
+        MuiButton: {
+            root: {
+                borderRadius: '10rem',
+            },
+            label: {
+                paddingLeft: '1em',
+                paddingRight: '1em',
+                fontWeight: 600,
+                letterSpacing: '0.025em'
+            }
+        }
+    }
+});
+
 export default function App() {
     return (
         <HelmetProvider>
@@ -39,11 +69,16 @@ export default function App() {
                 {/* auth provider needs useHistory */}
                 <AuthProvider options={authOptions}>
                     <QueryClientProvider client={queryClient}>
-                        <LoadingApp>
-                            <Switch>
-                                <Routes/>
-                            </Switch>
-                        </LoadingApp>
+                        <StylesProvider jss={jss}>
+                            <ThemeProvider theme={theme}>
+                                <LoadingApp>
+                                    <Switch>
+                                        {/* attach key prop to stop react from complaining */}
+                                        {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
+                                    </Switch>
+                                </LoadingApp>
+                            </ThemeProvider>
+                        </StylesProvider>
                     </QueryClientProvider>
                 </AuthProvider>
             </Router>
@@ -53,7 +88,7 @@ export default function App() {
 
 
 const LoadingApp: React.FC<{ timeout?: number; }> = (props) => {
-    const {children, timeout = 500} = props;
+    const {children, timeout = 400} = props;
     const {ready} = useAuth();
     const [loaded, setLoaded] = useState(false);
 

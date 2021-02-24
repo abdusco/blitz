@@ -3,14 +3,14 @@ import {useCheckAuth} from "../lib/useCheckAuth";
 import DefaultLayout from "../layout/layout";
 import Head from "../components/head";
 
-export default function Users() {
+export default function Cronjobs() {
     // useCheckAuth()
 
     return <DefaultLayout>
         <Head>
-            <title>Users</title>
+            <title>Cronjobs</title>
         </Head>
 
-        <div>users</div>
+        <div>cronjobs</div>
     </DefaultLayout>
 }

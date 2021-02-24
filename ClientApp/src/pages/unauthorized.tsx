@@ -1,7 +1,7 @@
 import React from "react";
 import {useLocation} from "react-router-dom";
 import {useAuth} from "../lib/auth";
-import {Centered} from "../layout/default";
+import {Centered} from "../layout/layout";
 import {Button} from "@material-ui/core";
 
 export default function Unauthorized() {
