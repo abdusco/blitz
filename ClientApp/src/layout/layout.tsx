@@ -1,32 +1,34 @@
 import React from "react";
 import {useAuth, useUser} from "../lib/auth";
-import {Link, useLocation} from "react-router-dom";
+import {useLocation} from "react-router-dom";
 import styles from './layout.module.scss'
 import {Button, CircularProgress, Typography} from "@material-ui/core";
 import {useIsFetching} from "react-query";
 import clsx from "clsx";
+import Nav from "./nav";
 
 export default function DefaultLayout(props) {
-    return (<>
+    return (<div>
         <TopBar/>
         <GlobalSpinner/>
         {props.children}
-    </>)
+    </div>)
+}
+
+export function Clamp(props: { type?: string, children?: any; className?: string; width?: 'narrow' | 'wide' }) {
+    const {width = 'narrow', type = 'div', children, className, ...otherProps} = props;
+    return React.createElement(type, {
+        className: clsx(width === 'narrow' && styles.narrow, width === 'wide' && styles.wide, className),
+        children
+    })
 }
 
 function TopBar() {
-    return <header className={styles.topbar}>
+    return <Clamp className={clsx(styles.topbar, styles.centerVertically)}>
         <Nav/>
         <Spacer/>
         <LoginInfo/>
-    </header>
-}
-
-function Nav() {
-    return <nav>
-        <Link to='/'>home</Link>
-        <Link to='/users'>users</Link>
-    </nav>;
+    </Clamp>
 }
 
 function GlobalSpinner() {
@@ -34,7 +36,7 @@ function GlobalSpinner() {
     return <CircularProgress
         size={'2rem'}
         title={`Fetching ${isFetching} requests`}
-        variant='indeterminate'
+        variant="indeterminate"
         className={clsx(styles.spinner, !isFetching && styles.hidden)}
     />
 }
@@ -44,8 +46,9 @@ function LoginInfo() {
     const user = useUser();
     const location = useLocation();
 
-    return <div>
-        <Typography variant={'button'} className={styles.username}>
+    return <div className={styles.centerVertically}>
+        <Typography variant={'button'}
+                    className={styles.username}>
             {user && user.email}
         </Typography>
         {!auth.user && <Button onClick={() => auth.signIn(location.pathname)}>login</Button>}

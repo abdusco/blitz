@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {AuthOptions, AuthProvider, useAuth} from "./lib/auth";
-import {CircularProgress, createMuiTheme, jssPreset, StylesProvider, ThemeProvider} from "@material-ui/core";
+import {CircularProgress, StylesProvider, ThemeProvider} from "@material-ui/core";
+import {jssPreset, unstable_createMuiStrictModeTheme as createMuiTheme} from "@material-ui/core/styles";
 import {BrowserRouter as Router, Switch} from "react-router-dom";
 import {HelmetProvider} from "react-helmet-async";
 import {QueryClient, QueryClientProvider} from "react-query";
@@ -30,6 +31,11 @@ const jss = createJss({
     insertionPoint: 'jss',
 });
 const theme = createMuiTheme({
+    props: {
+        MuiButtonBase: {
+            disableRipple: true,
+        },
+    },
     palette: {
         primary: {
             main: '#ab47bc',
@@ -53,12 +59,17 @@ const theme = createMuiTheme({
                 borderRadius: '10rem',
             },
             label: {
-                paddingLeft: '1em',
-                paddingRight: '1em',
+                paddingLeft: '0.5em',
+                paddingRight: '0.5em',
                 fontWeight: 600,
                 letterSpacing: '0.025em'
             }
-        }
+        },
+        MuiDialog: {
+            paper: {
+                padding: '0.5rem'
+            }
+        },
     }
 });
 

@@ -1,4 +1,16 @@
-.topbar {
+.narrow {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wide {
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.centerVertically {
   display: flex;
   align-items: center;
 }

@@ -18,17 +18,19 @@ export default function Home() {
 
     return (
         <div className={styles.home}>
-            <h1>blitz</h1>
-
-            <ul className={styles.grid}>
-                {links.map((it, i) => (<li key={i}>
-                    <Link to={it.pathname} className={styles.cardLink}>
-                        <article className={styles.card}>
-                            <h2 className={styles.cardTitle}>{it.text}</h2>
-                        </article>
-                    </Link>
-                </li>))}
-            </ul>
+            <div className={styles.homeContent}>
+                <h1 className={styles.homeTitle}>blitz</h1>
+                <ul className={styles.grid}>
+                    {links.map((it, i) => (<li key={i}>
+                        <Link to={it.pathname}
+                              className={styles.cardLink}>
+                            <article className={styles.card}>
+                                <h2 className={styles.cardTitle}>{it.text}</h2>
+                            </article>
+                        </Link>
+                    </li>))}
+                </ul>
+            </div>
         </div>
     )
 }

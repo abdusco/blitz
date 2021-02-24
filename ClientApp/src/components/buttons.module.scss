@@ -1,0 +1,18 @@
+.spinnerButton {
+  position: relative;
+}
+
+.spinner {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.contents {
+
+}
