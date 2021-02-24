@@ -101,7 +101,7 @@ namespace Blitz.Web
                         new EFCoreStorageOptions());
                 }
             );
-            // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
 
             services.AddIdentity<User, Role>()
                 .AddUserManager<AppUserManager>()
@@ -194,23 +194,24 @@ namespace Blitz.Web
 
 
             services.AddHttpContextAccessor();
-            // services.AddSpaStaticFiles(options =>
-            // {
-            //     options.RootPath = "static";
-            // });
+            services.AddSpaStaticFiles(options =>
+            {
+                options.RootPath = "ClientApp/build";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BlitzDbContext dbContext)
         {
-            // app.SetupCronjobs();
-            // app.UseGarbageCollector();
+            app.SetupCronjobs();
+            app.UseGarbageCollector();
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseStaticFiles();
 
             // app.UseHttpsRedirection();
@@ -231,23 +232,25 @@ namespace Blitz.Web
                 }
             );
 
-            app.UseEndpoints(
-                endpoints =>
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapSwagger("/openapi/{documentName}.json");
+                endpoints.MapControllers();
+
+                if (!Environment.IsDevelopment())
                 {
-                    endpoints.MapSwagger("/openapi/{documentName}.json");
-                    endpoints.MapControllers();
-
-                    if (!Environment.IsDevelopment())
-                    {
-                        endpoints.MapFallbackToFile("index.html");
-                    }
+                    endpoints.MapFallbackToFile("index.html");
                 }
-            );
-
-            // if (Environment.IsDevelopment())
-            // {
-            //     app.UseSpa(spa => { spa.UseProxyToSpaDevelopmentServer("http://localhost:5002"); });
-            // }
+            });
+            
+            if (Environment.IsDevelopment())
+            {
+                app.UseSpa(spa =>
+                {
+                    spa.Options.SourcePath = "ClientApp";
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5002");
+                });
+            }
         }
 
         private void ConfigureDbContext(DbContextOptionsBuilder builder)
