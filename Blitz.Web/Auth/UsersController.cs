@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -10,6 +9,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Projects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
 {
@@ -23,8 +23,19 @@ namespace Blitz.Web.Auth
             _userManager = userManager;
         }
 
+        public record UserOverview(string Id, string Name, IList<string> RoleIds);
+
+        [HttpGet]
+        public async Task<ActionResult<List<UserOverview>>> ListAllUsers()
+        {
+            var users = await _userManager.Users.Include(e => e.Roles)
+                .Include(e => e.Roles)
+                .Select(e => new UserOverview(e.Id, e.Name, e.Roles.Select(r => r.RoleId).ToList())).ToListAsync();
+            return users;
+        }
+
         [HttpGet("roles")]
-        public async Task<ActionResult<IList<string>>> ListAllRoles()
+        public async Task<ActionResult<IList<AppUserManager.RoleOverview>>> ListAllRoles()
         {
             var roles = await _userManager.GetRolesAsync();
             return Ok(roles);

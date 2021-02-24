@@ -71,9 +71,10 @@ namespace Blitz.Web.Identity
             return await base.RemoveFromRoleAsync(user, role);
         }
 
-        public async Task<List<string>> GetRolesAsync()
+        public record RoleOverview(string Id, string Name);
+        public async Task<List<RoleOverview>> GetRolesAsync()
         {
-            return await _context.Roles.Select(r => r.Name).ToListAsync(CancellationToken);
+            return await _context.Roles.Select(r => new RoleOverview(r.Id, r.Name)).ToListAsync(CancellationToken);
         }
     }
 }
