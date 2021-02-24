@@ -28,17 +28,19 @@ namespace Blitz.Web.Projects
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+        [Authorize(Roles = "pm")]
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
         {
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
             return await _db.Projects
+                .Where(p => User.IsAdmin() || projectGrants.Contains(p.Id.ToString()))
                 .OrderBy(p => p.Title)
                 .ProjectTo<ProjectListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireProjectManager)]
+        [Authorize(Roles = "pm")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
