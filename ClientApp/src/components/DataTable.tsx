@@ -62,7 +62,7 @@ export default function DataTable<T extends object>(
                     {rows.map((row, i) => {
                         prepareRow(row);
                         const isExpanded = (row as any).isExpanded;
-                        const rowProps = row.getRowProps({ bg: isExpanded ? 'purple.50' : '' } as any);
+                        const rowProps = row.getRowProps({ bg: isExpanded ? 'gray.100' : '' } as any);
                         const { key } = rowProps;
                         return (
                             <React.Fragment key={key}>
@@ -80,7 +80,7 @@ export default function DataTable<T extends object>(
                                     column that fills the entire length of the table.
                                 */}
                                 {canExpand?.(row) && (row as any).isExpanded && renderRowDetail ? (
-                                    <Tr>
+                                    <Tr bg={'gray.50'}>
                                         <Td colSpan={visibleColumns.length}>
                                             {/*
                                                 Inside it, call our renderRowSubComponent function. In reality,
