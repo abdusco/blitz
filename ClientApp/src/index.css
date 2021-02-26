@@ -17,6 +17,7 @@ html {
 body {
     padding: 0;
     margin: 0;
+    line-height: 1.5;
     text-rendering: optimizeLegibility;
     font-family: Inter, Arial, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
         Droid Sans, Helvetica Neue, sans-serif;
@@ -27,11 +28,6 @@ body {
 a {
     color: inherit;
     text-decoration: none;
-}
-
-pre,
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 h1,
@@ -90,4 +86,8 @@ kbd,
 code,
 pre {
     font-family: 'Jetbrains Mono', Consolas, monospace;
+}
+
+pre {
+    line-height: 1.5;
 }

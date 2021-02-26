@@ -13,7 +13,7 @@ export default function Nav() {
         '/projects': 'Projects',
         '/cronjobs': 'Cronjobs',
         '/executions': 'Executions',
-        '/users': '/users',
+        '/users': 'Users',
     };
 
     return (

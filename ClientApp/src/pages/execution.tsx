@@ -13,6 +13,7 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { flattenObject } from '../lib/objects';
+import styles from './execution.module.scss';
 
 export default function Execution() {
     const {
@@ -128,21 +129,21 @@ const StatusUpdates: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                 columns={columns}
                 canExpand={canExpand}
                 renderRowDetail={(row) => (
-                    <Table width="unset">
+                    <Table className={styles.updatesTable}>
                         <Thead>
                             <Tr>
-                                <Th>Key</Th>
-                                <Th>Value</Th>
+                                <Th className={styles.updateKey}>Key</Th>
+                                <Th className={styles.updateValue}>Value</Th>
                             </Tr>
                         </Thead>
                         <Tbody>
                             {Object.entries(flattenObject(row.original.details)).map(([k, v]) => (
                                 <Tr key={k}>
-                                    <Td>
-                                        <code>{k}</code>
+                                    <Td className={styles.updateKey}>
+                                        <b>{k}</b>
                                     </Td>
                                     <Td>
-                                        <pre>
+                                        <pre className={styles.updateValue}>
                                             <code>{v}</code>
                                         </pre>
                                     </Td>
