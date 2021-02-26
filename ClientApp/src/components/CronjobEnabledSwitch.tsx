@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { toggleCronjobEnabled } from '../api';
 import SpinnerSwitch from './SpinnerSwitch';
@@ -9,22 +9,22 @@ export const CronjobEnabledSwitch: React.FC<{ id: string; enabled: boolean; proj
     projectId,
 }) => {
     const queryClient = useQueryClient();
+
     const [checked, setChecked] = useState(enabled);
+    useEffect(() => setChecked(enabled), [enabled]);
+
     const mutation = useMutation(toggleCronjobEnabled, {
-        onSuccess: useCallback(
-            (currentEnabled) => {
-                setChecked(currentEnabled);
-                queryClient.invalidateQueries('cronjobs');
-                queryClient.invalidateQueries(['cronjobs', id]);
-                queryClient.invalidateQueries(['projects', projectId]);
-            },
-            [enabled, setChecked]
-        ),
+        onSuccess: (apiEnabled) => {
+            setChecked(apiEnabled);
+            queryClient.invalidateQueries('cronjobs', { exact: true });
+            queryClient.invalidateQueries(['cronjobs', id], { exact: true });
+            queryClient.invalidateQueries(['projects', projectId]);
+        },
     });
 
     return (
         <SpinnerSwitch
-            defaultChecked={checked}
+            isChecked={checked}
             onChange={(e) => mutation.mutate({ id, enabled: e.target.checked })}
             isLoading={mutation.isLoading}
         />
