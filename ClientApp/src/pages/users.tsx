@@ -37,7 +37,8 @@ import { QueryProgress } from '../components/feedback';
 
 export default function Users() {
     // useCheckAuth()
-    const { data, isLoading } = useQuery('users', fetchUsers);
+    const query = useQuery('users', fetchUsers);
+    const { data, isLoading } = query;
 
     return (
         <DefaultLayout>
@@ -52,7 +53,7 @@ export default function Users() {
             </Hero>
 
             <Clamp>
-                {isLoading && <Progress size="xs" isIndeterminate />}
+                <QueryProgress query={query} />
                 {data && <UsersList data={data} />}
             </Clamp>
         </DefaultLayout>
@@ -60,8 +61,8 @@ export default function Users() {
 }
 
 const UsersList: React.FC<{ data: UserOverview[] }> = ({ data }) => {
-    const permissionsPopup = useDisclosure();
     const [userId, setUserId] = useState<string | undefined>();
+    const permissionsPopup = useDisclosure();
     const rolesPopup = useDisclosure();
     const confirmDeleteDialog = useDisclosure();
 
@@ -77,7 +78,7 @@ const UsersList: React.FC<{ data: UserOverview[] }> = ({ data }) => {
 
     const openDeletePopup = (id: string) => {
         setUserId(id);
-        rolesPopup.onOpen();
+        confirmDeleteDialog.onOpen();
     };
 
     const columns = useMemo(
@@ -112,7 +113,7 @@ const UsersList: React.FC<{ data: UserOverview[] }> = ({ data }) => {
                     },
                 },
             ] as Column<UserOverview>[],
-        [openRolesPopup, openPermissionsPopup, openDeletePopup]
+        []
     );
     return (
         <>
@@ -156,6 +157,7 @@ const UserPermissionsPopup: React.FC<{ userId: string } & UseDisclosureReturn> =
                 <ModalCloseButton />
                 <ModalBody>
                     <QueryProgress query={grantsQuery}>
+                        {userId}
                         <Debug value={grantsQuery.data} />
                     </QueryProgress>
                 </ModalBody>
@@ -181,7 +183,10 @@ const UserRolesPopup: React.FC<{ userId: string } & UseDisclosureReturn> = (prop
             <ModalContent>
                 <ModalHeader>Update roles for</ModalHeader>
                 <ModalCloseButton />
-                <ModalBody>Lorem ipsum dolor sit amet consectetur adipisicing elit. Earum, impedit.</ModalBody>
+                <ModalBody>
+                    {userId}
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Earum, impedit.
+                </ModalBody>
 
                 <ModalFooter>
                     <Button colorScheme="blue" mr={3} onClick={onClose}>
@@ -205,7 +210,10 @@ const UserDeleteDialog: React.FC<{ userId: string } & UseDisclosureReturn> = (pr
                         Delete Customer
                     </AlertDialogHeader>
 
-                    <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+                    <AlertDialogBody>
+                        {userId}
+                        Are you sure? You can't undo this action afterwards.
+                    </AlertDialogBody>
 
                     <AlertDialogFooter>
                         <Button ref={cancelRef as any} onClick={props.onClose}>

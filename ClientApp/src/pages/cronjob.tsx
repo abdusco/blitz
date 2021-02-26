@@ -11,6 +11,7 @@ import { ExecutionStatePill } from '../components/ExecutionStatePill';
 import { CronPopup, QueryProgress } from '../components/feedback';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
+import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Cronjob() {
@@ -68,9 +69,9 @@ const CronjobDetails: React.FC<{ data: CronjobDetailDto }> = (props) => {
                 <Tr>
                     <Th>Project</Th>
                     <Td>
-                        <Link to={{ pathname: `/projects/${data.projectId}`, state: { title: data.projectTitle } }}>
+                        <LinkWithState pathname={`/projects/${data.projectId}`} state={{ title: data.projectTitle }}>
                             {data.projectTitle}
-                        </Link>
+                        </LinkWithState>
                     </Td>
                 </Tr>
                 <Tr>

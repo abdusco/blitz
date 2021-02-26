@@ -5,12 +5,17 @@ import { UseQueryResult } from 'react-query';
 
 export const QueryProgress: React.FC<{ query: UseQueryResult } & ProgressProps> = (props) => {
     const { query, ...progressProps } = props;
+    const inProgress = query.isLoading || query.isPlaceholderData || query.isFetching;
 
-    if (query.isLoading || query.isPlaceholderData || query.isFetching) {
-        return <Progress height={0.5} size="xs" isIndeterminate {...progressProps} />;
-    }
-
-    return <>{props.children}</>;
+    return (
+        <Progress
+            height={1}
+            size="xs"
+            isIndeterminate
+            {...progressProps}
+            opacity={inProgress ? 1: 0}
+        />
+    );
 };
 
 export const CronPopup: React.FC<PopoverProps & { cron: string }> = (props) => {

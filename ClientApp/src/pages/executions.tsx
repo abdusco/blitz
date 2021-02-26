@@ -10,9 +10,12 @@ import DataTable from '../components/DataTable';
 import { Column } from 'react-table';
 import { ExecutionStatePill } from '../components/ExecutionStatePill';
 import { Link } from 'react-router-dom';
+import { QueryProgress } from '../components/feedback';
+import LinkWithState from '../components/LinkWithState';
 
 export default function Executions() {
-    const { data, isLoading } = useQuery('executions', fetchLatestExecutions);
+    const query = useQuery('executions', fetchLatestExecutions);
+    const { data } = query;
 
     return (
         <DefaultLayout>
@@ -26,7 +29,7 @@ export default function Executions() {
             </Hero>
 
             <Clamp>
-                {isLoading && <Progress size="xs" isIndeterminate />}
+                <QueryProgress query={query} />
                 {data && <ExecutionsList data={data} />}
             </Clamp>
         </DefaultLayout>
@@ -37,21 +40,21 @@ const ExecutionsList: React.FC<{ data: ExecutionDetailDto[] }> = ({ data }) => {
     const columns = useMemo(
         () =>
             [
-                { Header: 'Date', accessor: 'createdAt' },
+                {
+                    Header: 'Date',
+                    accessor: 'createdAt',
+                    Cell: ({ row, value }) => <Link to={`/executions/${row.original.id}`}>{value}</Link>,
+                },
                 {
                     Header: 'Cronjob',
                     accessor: 'cronjob.title',
                     Cell: ({ value, row }) => (
-                        <Link
-                            to={{
-                                pathname: `/cronjobs/${(row.original as ExecutionDetailDto).cronjob.id}`,
-                                state: {
-                                    title: (row.original as ExecutionDetailDto).cronjob.title,
-                                },
-                            }}
+                        <LinkWithState
+                            pathname={`/cronjobs/${row.original.cronjob.id}`}
+                            state={{ title: row.original.cronjob.title }}
                         >
                             {value}
-                        </Link>
+                        </LinkWithState>
                     ),
                 },
                 {
