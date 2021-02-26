@@ -1,17 +1,31 @@
-import {NavLink as RouterNavLink} from "react-router-dom";
-import React from "react";
-import styles from './nav.module.scss'
+import clsx from 'clsx';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import styles from './nav.module.scss';
 
 export default function Nav() {
-    return <nav className={styles.nav}>
-        <NavLink to="/">dashboard</NavLink>
-        <NavLink to="/projects">projects</NavLink>
-        <NavLink to="/cronjobs">cronjobs</NavLink>
-        <NavLink to="/executions">executions</NavLink>
-        <NavLink to="/users">users</NavLink>
-    </nav>;
-}
+    const linkProps = {
+        activeClassName: styles.active,
+        className: styles.navLink,
+    };
 
-const NavLink = (props) => {
-    return <RouterNavLink activeClassName={styles.active} className={styles.navLink} {...props}/>
+    const links = {
+        '/projects': 'Projects',
+        '/cronjobs': 'Cronjobs',
+        '/executions': 'Executions',
+        '/users': '/users',
+    };
+
+    return (
+        <nav className={styles.nav}>
+            <NavLink className={clsx(styles.navLink, styles.logoLink)} exact to="/">
+                🗲 blitz!
+            </NavLink>
+            {Object.entries(links).map(([to, text], _) => (
+                <NavLink key={to} {...linkProps} to={to}>
+                    {text}
+                </NavLink>
+            ))}
+        </nav>
+    );
 }

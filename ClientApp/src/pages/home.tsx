@@ -20,7 +20,7 @@ export default function Home() {
     return (
         <div className={styles.home}>
             <div className={styles.homeContent}>
-                <Heading size={'xl'} className={styles.homeTitle}>blitz</Heading>
+                <Heading size={'3xl'} className={styles.homeTitle} color='purple.500'>🗲 blitz</Heading>
                 <ul className={styles.grid}>
                     {links.map((it, i) => (<li key={i}>
                         <Link to={it.pathname}
