@@ -4,6 +4,7 @@ import styles from './nav.module.scss'
 
 export default function Nav() {
     return <nav className={styles.nav}>
+        <NavLink to="/">dashboard</NavLink>
         <NavLink to="/projects">projects</NavLink>
         <NavLink to="/cronjobs">cronjobs</NavLink>
         <NavLink to="/executions">executions</NavLink>

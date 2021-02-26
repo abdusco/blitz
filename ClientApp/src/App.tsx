@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from 'react'
 import {AuthOptions, AuthProvider, useAuth} from "./lib/auth";
-import {CircularProgress, StylesProvider, ThemeProvider} from "@material-ui/core";
-import {jssPreset, unstable_createMuiStrictModeTheme as createMuiTheme} from "@material-ui/core/styles";
 import {BrowserRouter as Router, Switch} from "react-router-dom";
 import {HelmetProvider} from "react-helmet-async";
 import {QueryClient, QueryClientProvider} from "react-query";
-import {User} from "oidc-client";
-import axios from "axios";
-import {create as createJss} from 'jss'
+import {Profile, User} from "oidc-client";
+import axios, {AxiosError} from "axios";
 import {routes} from './routes'
+import {ChakraProvider, CircularProgress, extendTheme} from '@chakra-ui/react';
+
+axios.defaults.baseURL = 'https://localhost:5001/api'
 
 const authOptions: AuthOptions = {
     authority: 'https://devauth.thyteknik.com.tr',
@@ -21,57 +21,54 @@ const authOptions: AuthOptions = {
         } else {
             delete axios.defaults.headers['Authorization'];
         }
+    },
+    transformUserProfile(profile: Profile) {
+        return {
+            ...profile,
+            firstName: profile.first_name,
+            lastName: profile.surname,
+        }
     }
 };
 
-const queryClient = new QueryClient()
-
-const jss = createJss({
-    plugins: [...jssPreset().plugins],
-    insertionPoint: 'jss',
-});
-const theme = createMuiTheme({
-    props: {
-        MuiButtonBase: {
-            disableRipple: true,
-        },
-    },
-    palette: {
-        primary: {
-            main: '#ab47bc',
-            light: '#df78ef',
-            dark: '#790e8b',
-            contrastText: '#fefefe',
-        },
-        secondary: {
-            main: '#fdd835',
-            light: '#ffff6b',
-            dark: '#c6a700',
-            contrastText: '#111',
-        }
-    },
-    typography: {
-        fontFamily: 'Inter'
-    },
-    overrides: {
-        MuiButton: {
-            root: {
-                borderRadius: '10rem',
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: (failureCount, error) => {
+                return [401, 403].includes((error as AxiosError).response!.status) ? false : (failureCount < 2);
             },
-            label: {
-                paddingLeft: '0.5em',
-                paddingRight: '0.5em',
-                fontWeight: 600,
-                letterSpacing: '0.025em'
+        },
+    },
+})
+
+
+const theme = extendTheme({
+    brand: {
+        900: "#1a365d",
+        800: "#153e75",
+        700: "#2a69ac",
+    },
+    fonts: {
+        body: 'Inter',
+        heading: 'Inter',
+        mono: 'JetbrainsMono',
+    },
+    fontWeights: {
+        bold: 600,
+    },
+    components: {
+        Button: {
+            baseStyle: {
+                borderRadius: '2rem',
             }
         },
-        MuiDialog: {
-            paper: {
-                padding: '0.5rem'
+        CloseButton: {
+            baseStyle: {
+                borderRadius: '10rem'
             }
         },
     }
-});
+})
 
 export default function App() {
     return (
@@ -80,16 +77,14 @@ export default function App() {
                 {/* auth provider needs useHistory */}
                 <AuthProvider options={authOptions}>
                     <QueryClientProvider client={queryClient}>
-                        <StylesProvider jss={jss}>
-                            <ThemeProvider theme={theme}>
-                                <LoadingApp>
-                                    <Switch>
-                                        {/* attach key prop to stop react from complaining */}
-                                        {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
-                                    </Switch>
-                                </LoadingApp>
-                            </ThemeProvider>
-                        </StylesProvider>
+                        <ChakraProvider theme={theme} resetCSS={false}>
+                            <LoadingApp>
+                                <Switch>
+                                    {/* attach key prop to stop react from complaining */}
+                                    {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
+                                </Switch>
+                            </LoadingApp>
+                        </ChakraProvider>
                     </QueryClientProvider>
                 </AuthProvider>
             </Router>
@@ -119,7 +114,8 @@ const LoadingApp: React.FC<{ timeout?: number; }> = (props) => {
             justifyContent: 'center',
             alignItems: 'center'
         }}>
-            <CircularProgress size={40}/>
+            <CircularProgress isIndeterminate
+                              color="green.300"/>
         </div>;
     }
 

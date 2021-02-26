@@ -2,7 +2,7 @@ import React from "react";
 import {useLocation} from "react-router-dom";
 import {useAuth} from "../lib/auth";
 import {Centered} from "../layout/layout";
-import {Button} from "@material-ui/core";
+import {Button} from "@chakra-ui/react";
 
 export default function Unauthorized() {
     const location = useLocation();

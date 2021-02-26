@@ -1,128 +1,152 @@
-import React, {useState} from "react";
-import DefaultLayout, {Clamp} from "../layout/layout";
-import Head from "../components/head";
-import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField} from "@material-ui/core";
-import {Add} from '@material-ui/icons';
-import Hero from "../components/hero";
-import {useForm} from "react-hook-form";
-import {ColDef, DataGrid} from "@material-ui/data-grid";
+import {
+    Button,
+    FormControl,
+    FormLabel,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Progress,
+    useDisclosure,
+} from '@chakra-ui/react';
+import React from 'react';
+import { useQuery } from 'react-query';
+import { Link } from 'react-router-dom';
+import { Column } from 'react-table';
+import { fetchProjects } from '../api';
+import { ApiError, ProjectListDto } from '../api';
+import { useTranslateApiError } from '../api/utils';
+import DataTable from '../components/DataTable';
+import Head from '../components/Head';
+import Hero from '../components/Hero';
+import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Projects() {
     // useCheckAuth()
-    const [open, setOpen] = useState(false);
-    const form = useForm()
+
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const onSubmit = (data) => {
-        console.log('submitted', {data});
-        setOpen(false);
-    }
+        console.log('submitted', { data });
+        onClose();
+    };
 
-    return <DefaultLayout>
-        <Head>
-            <title>Projects</title>
-        </Head>
+    return (
+        <DefaultLayout>
+            <Head>
+                <title>Projects</title>
+            </Head>
 
-        <Hero>
-            <Hero.Title>Projects</Hero.Title>
-            <Hero.Summary>
-                Cronjobs are filed under a project. You need to have a project before creating a cronjob.
-            </Hero.Summary>
-            <Hero.Body>
-                <Button color="primary"
-                        size="large"
-                        variant="contained"
-                        onClick={() => setOpen(true)}
-                        startIcon={<Add/>}>Create Project</Button>
-            </Hero.Body>
-        </Hero>
+            <Hero>
+                <Hero.Title>Projects</Hero.Title>
+                <Hero.Summary>
+                    Cronjobs are filed under a project. You need to have a project before creating a cronjob.
+                </Hero.Summary>
+                <Hero.Body>
+                    <Button onClick={onOpen}>New Project</Button>
+                </Hero.Body>
+            </Hero>
 
+            <CreateProjectDialog isOpen={isOpen} onClose={onClose} />
+            <ProjectList />
+        </DefaultLayout>
+    );
+}
 
-        <Dialog open={open}
-                onClose={() => setOpen(false)}
-                aria-labelledby="form-dialog-title">
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <DialogTitle id="form-dialog-title">New Project</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Please type in the project title
-                    </DialogContentText>
-                    <TextField
-                        label="Title"
-                        autoFocus
-                        name="title"
-                        required
-                        inputRef={form.register}
-                        fullWidth
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}
-                            color="primary">
-                        Cancel
-                    </Button>
-                    <Button type="submit"
-                            variant="contained"
-                            color="primary">
+const CreateProjectDialog: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+}> = (props) => {
+    return (
+        <Modal isOpen={props.isOpen} onClose={props.onClose}>
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Create a new project</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody pb={6}>
+                    <FormControl>
+                        <FormLabel>Title</FormLabel>
+                        <Input placeholder="project title" />
+                    </FormControl>
+                </ModalBody>
+
+                <ModalFooter>
+                    <Button colorScheme="blue" onClick={props.onClose} mr={3}>
                         Save
                     </Button>
-                </DialogActions>
-            </form>
-        </Dialog>
+                    <Button onClick={props.onClose}>Cancel</Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+    );
+};
 
-        <Clamp width={'narrow'}>
-            <ProjectsTable/>
-        </Clamp>
-    </DefaultLayout>
-}
+const ProjectList: React.FC = (props) => {
+    const { data, error } = useQuery<ProjectListDto[], ApiError>('projects', fetchProjects);
+    const errorTranslator = useTranslateApiError();
 
-const rows = [
-    {id: 1, lastName: 'Snow', firstName: 'Jon', age: 35},
-    {id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42},
-    {id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42},
-    {id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42},
-    {id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42},
-    {id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45},
-    {id: 4, lastName: 'Stark', firstName: 'Arya', age: 16},
-    {id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null},
-    {id: 6, lastName: 'Melisandre', firstName: null, age: 150},
-    {id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44},
-    {id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36},
-    {id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65},
-];
+    const columns = React.useMemo(
+        () =>
+            [
+                {
+                    Header: 'Title',
+                    accessor: 'title',
+                    Cell: ({ row, value }) => (
+                        <Link to={{ pathname: `/projects/${(row as any).original.id}`, state: { title: value } }}>
+                            {value}
+                        </Link>
+                    ),
+                },
+                {
+                    Header: 'Total Cronjobs',
+                    accessor: (row: ProjectListDto) => row.cronjobsCount,
+                    props: {
+                        isNumeric: true,
+                    },
+                },
+            ] as Column[],
+        []
+    );
 
-const columns: ColDef[] = [
-    {field: 'id', headerName: 'ID', flex: 1},
-    {field: 'firstName', headerName: 'First name', flex: 1},
-    {field: 'lastName', headerName: 'Last name', flex: 1},
-    {
-        field: 'age',
-        headerName: 'Age',
-        type: 'number',
-        flex: 1,
-    },
-    {
-        field: 'fullName',
-        headerName: 'Full name',
-        description: 'This column has a value getter and is not sortable.',
-        sortable: false,
-        flex: 1,
-        renderCell: params => {
-          return <div>1</div>
-        },
-        valueGetter: (params) =>
-            `${params.getValue('firstName') || ''} ${params.getValue('lastName') || ''}`,
-    },
-];
+    if (error) {
+        return <Clamp>{errorTranslator(error, 'list projects')}</Clamp>;
+    }
 
-const ProjectsTable = () => {
+    if (!data) {
+        return (
+            <Clamp>
+                <Progress size="xs" isIndeterminate />
+            </Clamp>
+        );
+    }
+
     return (
-        <div>
-            <DataGrid rows={rows}
-                      autoHeight
-                      disableColumnMenu
-                      columns={columns}
-                      pageSize={30}
-            />
-        </div>
+        <Clamp width={'narrow'}>
+            <DataTable columns={columns} data={data} />
+        </Clamp>
+    );
+};
+
+/*
+const ProjectDetail: React.FC<{ value: Project }> = ({value}) => {
+    return (
+        <Table size={'sm'}>
+            <Thead>
+                <Tr>
+                    <Th>Cronjob</Th>
+                    <Th isNumeric>Total Executions</Th>
+                </Tr>
+            </Thead>
+            <tbody>
+            {value.cronjobs.map((c, i) => <Tr key={c.id}>
+                <Td>{c.title}</Td>
+                <Td isNumeric>{c["executions@odata.count"]}</Td>
+            </Tr>)}
+            </tbody>
+        </Table>
     )
-}
+}*/

@@ -1,6 +1,7 @@
 import React from 'react'
 import styles from './hero.module.scss'
 import {Clamp} from "../layout/layout";
+import {Heading} from '@chakra-ui/react';
 
 export default function Hero({children}) {
     return <div className={styles.hero}>
@@ -13,7 +14,7 @@ export default function Hero({children}) {
 }
 
 function HeroTitle({children}) {
-    return <h1 className={styles.heroTitle}>{children}</h1>
+    return <Heading className={styles.heroTitle}>{children}</Heading>
 }
 
 function HeroSummary({children}) {

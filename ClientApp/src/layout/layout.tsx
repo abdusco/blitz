@@ -1,44 +1,44 @@
-import React from "react";
-import {useAuth, useUser} from "../lib/auth";
-import {useLocation} from "react-router-dom";
-import styles from './layout.module.scss'
-import {Button, CircularProgress, Typography} from "@material-ui/core";
-import {useIsFetching} from "react-query";
-import clsx from "clsx";
-import Nav from "./nav";
+import React from 'react';
+import { useAuth, useUser } from '../lib/auth';
+import { useLocation } from 'react-router-dom';
+import styles from './layout.module.scss';
+import { useIsFetching } from 'react-query';
+import clsx from 'clsx';
+import Nav from './nav';
+import { Button, Menu, MenuButton, MenuItem, MenuList, Progress } from '@chakra-ui/react';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 
 export default function DefaultLayout(props) {
-    return (<div>
-        <TopBar/>
-        <GlobalSpinner/>
-        {props.children}
-    </div>)
+    return (
+        <div>
+            <GlobalSpinner />
+            <TopBar />
+            {props.children}
+        </div>
+    );
 }
 
-export function Clamp(props: { type?: string, children?: any; className?: string; width?: 'narrow' | 'wide' }) {
-    const {width = 'narrow', type = 'div', children, className, ...otherProps} = props;
+export function Clamp(props: { type?: string; children?: any; className?: string; width?: 'narrow' | 'wide' }) {
+    const { width = 'narrow', type = 'div', children, className } = props;
     return React.createElement(type, {
         className: clsx(width === 'narrow' && styles.narrow, width === 'wide' && styles.wide, className),
-        children
-    })
+        children,
+    });
 }
 
 function TopBar() {
-    return <Clamp className={clsx(styles.topbar, styles.centerVertically)}>
-        <Nav/>
-        <Spacer/>
-        <LoginInfo/>
-    </Clamp>
+    return (
+        <Clamp className={clsx(styles.topbar, styles.centerVertically)}>
+            <Nav />
+            <Spacer />
+            <LoginInfo />
+        </Clamp>
+    );
 }
 
 function GlobalSpinner() {
-    const isFetching = useIsFetching()
-    return <CircularProgress
-        size={'2rem'}
-        title={`Fetching ${isFetching} requests`}
-        variant="indeterminate"
-        className={clsx(styles.spinner, !isFetching && styles.hidden)}
-    />
+    const isFetching = useIsFetching();
+    return <Progress size="xs" colorScheme="purple" isIndeterminate className={clsx(!isFetching && styles.hidden)} />;
 }
 
 function LoginInfo() {
@@ -46,22 +46,28 @@ function LoginInfo() {
     const user = useUser();
     const location = useLocation();
 
-    return <div className={styles.centerVertically}>
-        <Typography variant={'button'}
-                    className={styles.username}>
-            {user && user.email}
-        </Typography>
-        {!auth.user && <Button onClick={() => auth.signIn(location.pathname)}>login</Button>}
-        {auth.user && <Button onClick={() => auth.signOut()}>logout</Button>}
-    </div>;
+    if (!auth.user) {
+        return <Button onClick={() => auth.signIn(location.pathname)}>Log in</Button>;
+    }
+
+    return (
+        <Menu>
+            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {user && user.firstName}
+            </MenuButton>
+            <MenuList>
+                <MenuItem onClick={() => auth.signOut()}>Log out</MenuItem>
+            </MenuList>
+        </Menu>
+    );
 }
 
-export function Centered({children}) {
-    return <div className={styles.centered}>
-        <div>
-            {children}
+export function Centered({ children }) {
+    return (
+        <div className={styles.centered}>
+            <div>{children}</div>
         </div>
-    </div>
+    );
 }
 
-const Spacer = () => <div className={styles.spacer}/>;
+const Spacer = () => <div className={styles.spacer} />;

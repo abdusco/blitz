@@ -1,94 +1,93 @@
-import React from "react";
-import DefaultLayout from "../layout/layout";
-import Head from "../components/head";
-import {Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, TextField} from "@material-ui/core";
-import {Add} from "@material-ui/icons";
-import {useForm} from "react-hook-form";
-import {useMutation} from "react-query";
-import axios from "axios";
-import {SpinnerButton} from "../components/buttons";
-import {Debug} from "../components/debug";
+import React from 'react';
+import DefaultLayout, { Clamp } from '../layout/layout';
+import Head from '../components/Head';
+import Hero from '../components/Hero';
+import { useQuery } from 'react-query';
+import { CronjobListDto } from '../api';
+import { useTranslateApiError } from '../api';
+import { Column } from 'react-table';
+import DataTable from '../components/DataTable';
+import { AxiosError } from 'axios';
+import { Link } from 'react-router-dom';
+import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
+import { fetchCronjobs } from '../api';
+import { CronPopup, QueryProgress } from '../components/feedback';
 
 export default function Cronjobs() {
-    // useCheckAuth()
+    return (
+        <DefaultLayout>
+            <Head>
+                <title>Cronjobs</title>
+            </Head>
 
-    return <DefaultLayout>
-        <Head>
-            <title>Cronjobs</title>
-        </Head>
+            <Hero>
+                <Hero.Title>Cronjobs</Hero.Title>
+                <Hero.Summary>
+                    Cronjob is a scheduled task that sends a request to an URL.
+                    <br />
+                    Go to a project to create a new cronjob.
+                </Hero.Summary>
+            </Hero>
 
-        <h1>cronjobs</h1>
-        <Button color="primary"
-                variant="contained"
-                startIcon={<Add/>}>Add</Button>
-    </DefaultLayout>
+            <CronjobList />
+        </DefaultLayout>
+    );
 }
 
-interface CronjobForm {
-    projectId: string;
-    name: string;
-    url: string;
-    cron: string;
-    httpMethod: string;
-}
+const CronjobList: React.FC = () => {
+    const query = useQuery<CronjobListDto[], AxiosError>('cronjobs', fetchCronjobs);
+    const translateError = useTranslateApiError();
 
-const sleep = async (duration: number = 5000) => new Promise((resolve) => setTimeout(resolve, duration));
-
-
-export function CreateCronjob() {
-    const {handleSubmit, register, formState} = useForm()
-    const mutation = useMutation((payload) => axios.post('https://httpbin.org/post', payload))
-    const {data, error} = mutation;
-    const onSubmit = async (data) => {
-        await mutation.mutateAsync(data);
-    }
-
-    const {errors, isSubmitting} = formState;
+    const columns = React.useMemo(
+        () =>
+            [
+                {
+                    Header: 'Title',
+                    accessor: 'title',
+                    Cell: ({ row, value }) => <Link to={`/cronjobs/${(row as any).original.id}`}>{value}</Link>,
+                },
+                {
+                    Header: 'Project',
+                    accessor: 'projectTitle',
+                    Cell: ({ row, value }) => (
+                        <Link
+                            to={{ pathname: `/projects/${(row as any).original.projectId}`, state: { title: value } }}
+                        >
+                            {value}
+                        </Link>
+                    ),
+                },
+                {
+                    Header: 'Schedule',
+                    accessor: 'cron',
+                    Cell: ({ value }) => (
+                        <CronPopup cron={value} placement="right">
+                            <code>{value}</code>
+                        </CronPopup>
+                    ),
+                },
+                {
+                    Header: 'URL',
+                    accessor: 'url',
+                    Cell: ({ value }) => <code>{value}</code>,
+                },
+                { Header: 'Method', accessor: 'httpMethod' },
+                {
+                    Header: 'Enabled',
+                    accessor: 'enabled',
+                    Cell: ({ value, row }) => (
+                        <CronjobEnabledSwitch enabled={value} id={row.original.id} projectId={row.original.projectId} />
+                    ),
+                },
+            ] as Column<CronjobListDto>[],
+        []
+    );
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <TextField
-                required
-                label="Name"
-                error={!!errors?.name}
-                helperText={errors?.name?.message}
-                inputRef={register}
-                name="name"/>
-            <TextField
-                required
-                label="URL"
-                type={'url'}
-                error={!!errors?.url}
-                helperText={errors?.url?.message}
-                inputRef={register}
-                name="url"/>
-            <TextField
-                required
-                label="Schedule"
-                error={!!errors?.cron}
-                helperText={errors?.cron?.message}
-                inputRef={register({pattern: {value: /(\S ){4}(\S+)/, message: 'Invalid cron expression'}})}
-                name="cron"/>
-            <FormControl>
-                <FormLabel>HTTP Method</FormLabel>
-                <RadioGroup name="httpMethod"
-                            defaultValue={'POST'}
-                            row>
-                    <FormControlLabel value="POST"
-                                      control={<Radio/>}
-                                      label="POST"
-                                      inputRef={register}/>
-                    <FormControlLabel value="GET"
-                                      control={<Radio/>}
-                                      label="GET"
-                                      inputRef={register}/>
-                </RadioGroup>
-            </FormControl>
-            <SpinnerButton loading={mutation.isLoading}
-                           variant="contained"
-                           color="primary"
-                           type="submit">Save</SpinnerButton>
-            <Debug value={data}/>
-        </form>
-    )
-}
+        <Clamp>
+            {query.error && translateError(query.error, 'list cronjobs')}
+            <QueryProgress query={query} />
+            {!query.isPlaceholderData && query.data && <DataTable columns={columns} data={query.data} />}
+        </Clamp>
+    );
+};
