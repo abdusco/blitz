@@ -11,11 +11,11 @@ namespace Blitz.Web.Auth
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ProjectManagerRequirement requirement)
         {
             // allow admins by default
-            if (context.User.IsInRole(IdentityDefaults.AdminRole))
+            /*if (context.User.IsInRole(IdentityDefaults.AdminRole))
             {
                 context.Succeed(requirement);
                 return Task.CompletedTask;
-            }
+            }*/
             
             var hasAccess = context.Resource switch
             {

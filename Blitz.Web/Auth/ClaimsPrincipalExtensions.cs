@@ -11,10 +11,11 @@ namespace Blitz.Web.Auth
         {
             return principal.Claims.Where(c => c.Type == claimType).Select(c => c.Value).ToList().AsReadOnly();
         }
-        public static bool IsAdmin(this ClaimsPrincipal principal)
+        /*public static bool IsAdmin(this ClaimsPrincipal principal)
         {
             return principal.IsInRole(IdentityDefaults.AdminRole);
         }
+        */
         
     }
 }

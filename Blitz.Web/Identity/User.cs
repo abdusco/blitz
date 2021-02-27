@@ -1,25 +1,27 @@
 ﻿using System.Collections.Generic;
+using Blitz.Web.Persistence;
 using Microsoft.AspNetCore.Identity;
 
 namespace Blitz.Web.Identity
 {
-    public class User : IdentityUser
+    public class User : Entity
     {
         public string Name { get; set; }
+        public string Email { get; set; }
+
+        public string IdProvider { get; set; }
+        
+        public string IdProviderSub { get; set; }
 
         /// <summary>
         /// Navigation property for the roles this user belongs to.
         /// </summary>
-        public virtual ICollection<IdentityUserRole<string>> Roles { get; } = new List<IdentityUserRole<string>>();
+        public virtual ICollection<Role> Roles { get; } = new List<Role>();
 
         /// <summary>
         /// Navigation property for the claims this user possesses.
         /// </summary>
-        public virtual ICollection<IdentityUserClaim<string>> Claims { get; } = new List<IdentityUserClaim<string>>();
+        public virtual ICollection<UserClaim> Claims { get; } = new List<UserClaim>();
 
-        /// <summary>
-        /// Navigation property for this users login accounts.
-        /// </summary>
-        public virtual ICollection<IdentityUserLogin<string>> Logins { get; } = new List<IdentityUserLogin<string>>();
     }
 }

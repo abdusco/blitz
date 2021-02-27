@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Auth
 {
-    [Route("auth")]
+    /*[Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
@@ -115,5 +115,5 @@ namespace Blitz.Web.Auth
 
             return LocalRedirect("~/");
         }
-    }
+    }*/
 }

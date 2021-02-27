@@ -37,7 +37,7 @@ namespace Blitz.Web.Cronjobs
             var results = await _db.Executions
                 .Include(e => e.Cronjob)
                 .ThenInclude(c => c.Project)
-                .Where(e => User.IsAdmin() || projectGrants.Contains(e.Cronjob.ProjectId.ToString()))
+                // .Where(e => User.IsAdmin() || projectGrants.Contains(e.Cronjob.ProjectId.ToString()))
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .OrderByDescending(e => e.CreatedAt)
                 .Take(limit)

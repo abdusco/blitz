@@ -3,15 +3,17 @@ using System;
 using Blitz.Web.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Blitz.Web.Migrations
 {
     [DbContext(typeof(BlitzDbContext))]
-    partial class BlitzDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210227233525_RemoveIdentity")]
+    partial class RemoveIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,113 +146,6 @@ namespace Blitz.Web.Migrations
                         .HasDatabaseName("ix_status_updates_execution_id");
 
                     b.ToTable("status_updates");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Identity.Role", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("text")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id")
-                        .HasName("pk_roles");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_roles_name");
-
-                    b.ToTable("roles");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Identity.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("current_timestamp");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("email");
-
-                    b.Property<string>("IdProvider")
-                        .HasColumnType("text")
-                        .HasColumnName("id_provider");
-
-                    b.Property<string>("IdProviderSub")
-                        .HasColumnType("text")
-                        .HasColumnName("id_provider_sub");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_users");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("ix_users_created_at");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ix_users_email");
-
-                    b.ToTable("users");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Identity.UserClaim", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ClaimType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("claim_type");
-
-                    b.Property<string>("ClaimValue")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("claim_value");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_user_claims");
-
-                    b.HasIndex("ClaimType")
-                        .HasDatabaseName("ix_user_claims_claim_type");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_claims_user_id");
-
-                    b.ToTable("user_claims");
                 });
 
             modelBuilder.Entity("Blitz.Web.Projects.Project", b =>
@@ -612,25 +507,6 @@ namespace Blitz.Web.Migrations
                     b.ToTable("hangfire_state");
                 });
 
-            modelBuilder.Entity("UserRole", b =>
-                {
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("role_id");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("RoleId", "UserId")
-                        .HasName("pk_user_role");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_role_user_id");
-
-                    b.ToTable("user_role");
-                });
-
             modelBuilder.Entity("Blitz.Web.Cronjobs.Cronjob", b =>
                 {
                     b.HasOne("Blitz.Web.Projects.Project", "Project")
@@ -665,18 +541,6 @@ namespace Blitz.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Execution");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Identity.UserClaim", b =>
-                {
-                    b.HasOne("Blitz.Web.Identity.User", "User")
-                        .WithMany("Claims")
-                        .HasForeignKey("UserId")
-                        .HasConstraintName("fk_user_claims_users_user_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireJob", b =>
@@ -725,23 +589,6 @@ namespace Blitz.Web.Migrations
                     b.Navigation("Job");
                 });
 
-            modelBuilder.Entity("UserRole", b =>
-                {
-                    b.HasOne("Blitz.Web.Identity.Role", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .HasConstraintName("fk_user_role_roles_role_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Blitz.Web.Identity.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .HasConstraintName("fk_user_role_users_user_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Blitz.Web.Cronjobs.Cronjob", b =>
                 {
                     b.Navigation("Executions");
@@ -750,11 +597,6 @@ namespace Blitz.Web.Migrations
             modelBuilder.Entity("Blitz.Web.Cronjobs.Execution", b =>
                 {
                     b.Navigation("Updates");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Identity.User", b =>
-                {
-                    b.Navigation("Claims");
                 });
 
             modelBuilder.Entity("Blitz.Web.Projects.Project", b =>

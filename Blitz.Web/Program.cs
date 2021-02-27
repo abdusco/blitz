@@ -23,10 +23,10 @@ namespace Blitz.Web
                 
                 var cancellationToken = scope.ServiceProvider.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping;
                 var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
-                var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+                // var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
                 
                 await db.Database.MigrateAsync(cancellationToken);
-                await seeder.SeedAsync(cancellationToken);
+                // await seeder.SeedAsync(cancellationToken);
             }
 
             await host.RunAsync();

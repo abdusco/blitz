@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Blitz.Web.Persistence
 {
-    public class BlitzDbContext : IdentityDbContext<User, Role, string>
+    public class BlitzDbContext : DbContext
     {
         public DbSet<Project> Projects { get; set; }
         public DbSet<Cronjob> Cronjobs { get; set; }
@@ -42,46 +42,8 @@ namespace Blitz.Web.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // add identity models
-            base.OnModelCreating(modelBuilder);
             // add hangfire models
             modelBuilder.OnHangfireModelCreating();
-
-            modelBuilder.Entity<User>(builder =>
-            {
-                /*
-                 * The navigation properties were removed from the base IdentityUser class in ASP.NET Core 2
-                 * So we redefine them here to prevent creating double foreign keys
-                 */
-                builder
-                    .HasMany(e => e.Claims)
-                    .WithOne()
-                    .HasForeignKey(e => e.UserId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                builder
-                    .HasMany(e => e.Logins)
-                    .WithOne()
-                    .HasForeignKey(e => e.UserId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                builder
-                    .HasMany(e => e.Roles)
-                    .WithOne()
-                    .HasForeignKey(e => e.UserId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                // remove unused columns
-                builder.Ignore(e => e.PhoneNumber);
-                builder.Ignore(e => e.PhoneNumberConfirmed);
-                builder.Ignore(e => e.AccessFailedCount);
-                builder.Ignore(e => e.LockoutEnabled);
-                builder.Ignore(e => e.LockoutEnd);
-                builder.Ignore(e => e.TwoFactorEnabled);
-            });
 
             modelBuilder.Entity<Cronjob>(
                 builder =>
@@ -105,6 +67,36 @@ namespace Blitz.Web.Persistence
                     );
                 }
             );
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.ToTable("Users");
+                builder.Property(e => e.Name).IsRequired();
+                builder.Property(e => e.Email).IsRequired();
+                builder.HasIndex(e => e.Email).IsUnique();
+                builder
+                    .HasMany(e => e.Roles)
+                    .WithMany(r => r.Users)
+                    .UsingEntity<Dictionary<string, object>>(
+                        "UserRole",
+                        m2m => m2m.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+                        m2m => m2m.HasOne<User>().WithMany().HasForeignKey("UserId")
+                    );
+                builder.HasMany<UserClaim>(e => e.Claims).WithOne(e => e.User);
+            });
+            modelBuilder.Entity<Role>(builder =>
+            {
+                builder.ToTable("Roles");
+                builder.Property(e => e.Name).IsRequired();
+                builder.HasIndex(e => e.Name).IsUnique();
+            });
+            modelBuilder.Entity<UserClaim>(builder =>
+            {
+                builder.ToTable("UserClaims");
+                builder.Property(e => e.UserId).IsRequired();
+                builder.Property(e => e.ClaimType).IsRequired();
+                builder.Property(e => e.ClaimValue).IsRequired();
+                builder.HasIndex(e => e.ClaimType);
+            });
 
             modelBuilder.ConfigureTimestamps();
             modelBuilder.ApplyNamingConventions();

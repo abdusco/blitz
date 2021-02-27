@@ -62,7 +62,7 @@ namespace Blitz.Web
                 (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
             );
 
-            services.AddTransient<IdentitySeeder>();
+            // services.AddTransient<IdentitySeeder>();
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddDbContext<BlitzDbContext>(ConfigureDbContext);
 
@@ -116,10 +116,6 @@ namespace Blitz.Web
             );
             // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
 
-            services.AddIdentity<User, Role>()
-                .AddUserManager<AppUserManager>()
-                .AddEntityFrameworkStores<BlitzDbContext>()
-                .AddDefaultTokenProviders();
             /*services.ConfigureApplicationCookie(options =>
             {
                 options.LoginPath = "/auth/login";
@@ -307,7 +303,7 @@ namespace Blitz.Web
 
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
-            services.AddScoped<IClaimsTransformation, AuthorizationClaimsTransformer>();
+            // services.AddScoped<IClaimsTransformation, AuthorizationClaimsTransformer>();
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()

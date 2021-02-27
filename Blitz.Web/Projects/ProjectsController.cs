@@ -34,7 +34,7 @@ namespace Blitz.Web.Projects
         {
             var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
             return await _db.Projects
-                .Where(p => User.IsAdmin() || projectGrants.Contains(p.Id.ToString()))
+                // .Where(p => User.IsAdmin() || projectGrants.Contains(p.Id.ToString()))
                 .OrderBy(p => p.Title)
                 .ProjectTo<ProjectListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);

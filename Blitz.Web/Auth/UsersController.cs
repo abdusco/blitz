@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
 {
-    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    /*[Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
     public class UsersController : ApiController
     {
         private readonly AppUserManager _userManager;
@@ -110,5 +110,5 @@ namespace Blitz.Web.Auth
 
         public static AccessType Read = new AccessType(nameof(Read), nameof(Read).ToLowerInvariant());
         public static AccessType ReadWrite = new AccessType(nameof(ReadWrite), nameof(ReadWrite).ToLowerInvariant());
-    }
+    }*/
 }

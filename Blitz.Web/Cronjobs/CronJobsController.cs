@@ -43,7 +43,7 @@ namespace Blitz.Web.Cronjobs
         {
             var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
             var cronjobs = await _db.Cronjobs
-                .Where(e => User.IsAdmin() || projectGrants.Contains(e.ProjectId.ToString()))
+                // .Where(e => User.IsAdmin() || projectGrants.Contains(e.ProjectId.ToString()))
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .OrderByDescending(p => p.CreatedAt)

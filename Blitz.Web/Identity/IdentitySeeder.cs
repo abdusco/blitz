@@ -30,10 +30,10 @@ namespace Blitz.Web.Identity
                 _logger.LogDebug("Roles found in database, skipping seed");
                 return;
             }
-            foreach (var role in IdentityDefaults.Stereotypes)
-            {
-                await _roleManager.CreateAsync(role);
-            }
+            // foreach (var role in IdentityDefaults.Stereotypes)
+            // {
+            //     await _roleManager.CreateAsync(role);
+            // }
         }
     }
 }
