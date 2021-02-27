@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Switch } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Profile, User } from 'oidc-client';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { routes } from './routes';
-import { ChakraProvider, CircularProgress, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
 
 axios.defaults.baseURL = 'https://localhost:5001/api';
 
@@ -78,10 +78,12 @@ export default function App() {
                     <QueryClientProvider client={queryClient}>
                         <ChakraProvider theme={theme} resetCSS={false}>
                             <LoadingApp>
-                                <Switch>
-                                    {/* attach key prop to stop react from complaining */}
-                                    {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
-                                </Switch>
+                                <FailedQueryNotifier>
+                                    <Switch>
+                                        {/* attach key prop to stop react from complaining */}
+                                        {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
+                                    </Switch>
+                                </FailedQueryNotifier>
                             </LoadingApp>
                         </ChakraProvider>
                     </QueryClientProvider>
@@ -90,6 +92,24 @@ export default function App() {
         </HelmetProvider>
     );
 }
+
+const FailedQueryNotifier: React.FC = (props) => {
+    const toast = useToast();
+    useEffect(() => {
+        axios.interceptors.response.use(
+            (val) => val,
+            (err: AxiosError) => {
+                toast({
+                    title: `Request failed with error ${err.response?.status}`,
+                    status: 'error',
+                    duration: 2000,
+                    description: <div>Failed to fetch <code>{err.config.url}</code></div>
+                })
+            }
+        );
+    }, []);
+    return <>{props.children}</>;
+};
 
 const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     const { children, timeout = 500 } = props;
