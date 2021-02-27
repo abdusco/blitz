@@ -21,6 +21,9 @@
         </PackageReference>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.2" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.0.2" />
+        <PackageReference Include="OpenIddict.Server.AspNetCore" Version="3.0.1" />
+        <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="3.0.1" />
+        <PackageReference Include="OpenIddict.Validation.ServerIntegration" Version="3.0.1" />
     </ItemGroup>
 
     <ItemGroup>

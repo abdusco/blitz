@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
+using System.Security.Policy;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -10,13 +13,21 @@ using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
 using Hangfire.EntityFrameworkCore;
+using Humanizer;
+using IdentityModel;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +36,8 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
+using OpenIddict.Abstractions;
+using OpenIddict.Server;
 
 namespace Blitz.Web
 {
@@ -107,7 +120,7 @@ namespace Blitz.Web
                 .AddUserManager<AppUserManager>()
                 .AddEntityFrameworkStores<BlitzDbContext>()
                 .AddDefaultTokenProviders();
-            services.ConfigureApplicationCookie(options =>
+            /*services.ConfigureApplicationCookie(options =>
             {
                 options.LoginPath = "/auth/login";
                 options.LogoutPath = "/auth/logout";
@@ -132,8 +145,131 @@ namespace Blitz.Web
 
                     return Task.CompletedTask;
                 };
-            });
-            services.AddTransient<IExternalPrincipalTransformer, ThyExternalPrincipalTransformer>();
+            });*/
+
+            services.AddTransient<PermissionClaimsUserInfoHandler>();
+            services.AddOpenIddict()
+                .AddServer(builder =>
+                {
+                    builder.EnableDegradedMode();
+                    builder.UseAspNetCore();
+
+                    builder
+                        .SetAuthorizationEndpointUris("/connect/authorize")
+                        .SetTokenEndpointUris("/connect/token")
+                        .SetUserinfoEndpointUris("/connect/userinfo");
+
+                    builder
+                        .AddDevelopmentEncryptionCertificate()
+                        .AddDevelopmentSigningCertificate()
+                        .DisableAccessTokenEncryption();
+
+                    builder
+                        .AllowAuthorizationCodeFlow()
+                        .AllowClientCredentialsFlow()
+                        .AllowRefreshTokenFlow();
+
+                    // Force client applications to use Proof Key for Code Exchange (PKCE).
+                    builder.RequireProofKeyForCodeExchange();
+
+                    builder.RegisterScopes(OpenIddictConstants.Scopes.Email, OpenIddictConstants.Scopes.Profile, "api");
+
+                    builder.AddEventHandler<OpenIddictServerEvents.ValidateAuthorizationRequestContext>(
+                        validationBuilder =>
+                        {
+                            validationBuilder.UseInlineHandler(context =>
+                            {
+                                /*if (!string.Equals(context.ClientId, "ui", StringComparison.Ordinal))
+                                {
+                                    context.Reject(error: OpenIddictConstants.Errors.InvalidClient,
+                                        description: "Specified client id is not registered");
+                                    return ValueTask.CompletedTask;
+                                }*/
+
+                                // if (!string.Equals(context.RedirectUri, "http://localhost:7890/", StringComparison.Ordinal))
+                                // {
+                                // }
+
+
+                                return ValueTask.CompletedTask;
+                            });
+                        });
+                    builder.AddEventHandler<OpenIddictServerEvents.ValidateTokenRequestContext>(validationBuilder =>
+                    {
+                        validationBuilder.UseInlineHandler(context =>
+                        {
+                            /*if (!string.Equals(context.ClientId, "ui", StringComparison.Ordinal))
+                            {
+                                context.Reject(error: OpenIddictConstants.Errors.InvalidClient, description: "Specified client id is not registered");
+                            }*/
+
+                            return ValueTask.CompletedTask;
+                        });
+                    });
+                    /*builder.AddEventHandler<OpenIddictServerEvents.HandleConfigurationRequestContext>(builder1 =>
+                    {
+                        builder1.UseInlineHandler(context =>
+                        {
+                            return ValueTask.CompletedTask;
+                        });
+                    });*/
+                    builder.AddEventHandler<OpenIddictServerEvents.HandleUserinfoRequestContext>(reqBuilder =>
+                    {
+                        reqBuilder.UseScopedHandler<PermissionClaimsUserInfoHandler>();
+                    });
+                    /*builder.AddEventHandler<OpenIddictServerEvents.ApplyAuthorizationResponseContext>(resBuilder =>
+                    {
+                        resBuilder.UseInlineHandler(context =>
+                        {
+                            var httpContext = context.Transaction.GetHttpRequest()?.HttpContext ??
+                                              throw new InvalidOperationException("The ASP.NET Core response cannot be retrieved.");
+                            var linkGenerator = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
+                            var originalRedirectUri = context.RedirectUri;
+                            var callbackUri = linkGenerator.GetUriByAction(httpContext, nameof(AuthController.ExternalCallback),
+                                "Auth", new
+                                {
+                                    returnUrl = originalRedirectUri
+                                });
+                            context.RedirectUri = callbackUri;
+
+                            return ValueTask.CompletedTask;
+                        });
+                    });*/
+                    builder.AddEventHandler<OpenIddictServerEvents.HandleAuthorizationRequestContext>(reqBuilder =>
+                    {
+                        reqBuilder.UseInlineHandler(async context =>
+                        {
+                            var request = context.Transaction.GetHttpRequest() ??
+                                          throw new InvalidOperationException("The ASP.NET Core request cannot be retrieved.");
+                            var principal = (await request.HttpContext.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme))
+                                ?.Principal;
+                            if (principal == null)
+                            {
+                                await request.HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme);
+                                context.HandleRequest();
+                                return;
+                            }
+
+                            var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType);
+                            identity.AddClaim(new Claim(OpenIddictConstants.Claims.Subject, principal.GetClaim(ClaimTypes.NameIdentifier)));
+                            identity.AddClaim(new Claim(OpenIddictConstants.Claims.Name, principal.GetClaim(ClaimTypes.Name)));
+                            foreach (var claim in identity.Claims)
+                            {
+                                claim.SetDestinations(OpenIddictConstants.Destinations.AccessToken);
+                                claim.SetDestinations(OpenIddictConstants.Destinations.IdentityToken);
+                            }
+
+                            context.Principal = new ClaimsPrincipal(identity);
+                        });
+                    });
+                }).AddValidation(builder =>
+                {
+                    builder.UseAspNetCore();
+                    builder.UseLocalServer();
+                });
+
+
+            services.AddScoped<IExternalUserRegistry, ThyExternalUserRegistry>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddOpenIdConnect(o =>
                 {
@@ -147,34 +283,28 @@ namespace Blitz.Web
                     o.GetClaimsFromUserInfoEndpoint = true;
 
                     o.Scope.Add("openid");
+                    o.Scope.Add("profile");
 
-                    o.Events.OnUserInformationReceived = async context =>
+                    // we only need name, employee id and email
+                    o.ClaimActions.Clear();
+                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
+                    o.ClaimActions.Add(new ThyAuthUserClaimsAction(default, default));
+
+                    o.Events.OnTicketReceived = async context =>
                     {
-                        var principalFactory = context.HttpContext.RequestServices.GetRequiredService<IExternalPrincipalTransformer>();
-                        context.Principal = await principalFactory.TransformAsync(context);
+                        var userRegistry = context.HttpContext.RequestServices.GetRequiredService<IExternalUserRegistry>();
+                        await userRegistry.SaveExternalUserAsync(context.Principal);
                     };
                 })
                 .AddJwtBearer(options =>
                 {
-                    options.Authority = "https://devauth.thyteknik.com.tr";
+                    options.Authority = "https://localhost:5001";
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateAudience = false,
                     };
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnChallenge = context =>
-                        {
-                            if (context.Request.IsApiRequest())
-                            {
-                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            }
-
-                            context.HandleResponse();
-                            return Task.CompletedTask;
-                        }
-                    };
                 });
+
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
             services.AddScoped<IClaimsTransformation, AuthorizationClaimsTransformer>();
@@ -194,10 +324,21 @@ namespace Blitz.Web
 
 
             services.AddHttpContextAccessor();
-            services.AddSpaStaticFiles(options =>
+            services.AddSpaStaticFiles(options => { options.RootPath = "ClientApp/build"; });
+        }
+
+        private class ThyAuthUserClaimsAction : ClaimAction
+        {
+            public ThyAuthUserClaimsAction(string claimType, string valueType) : base(claimType, valueType)
             {
-                options.RootPath = "ClientApp/build";
-            });
+            }
+
+            public override void Run(JsonElement userData, ClaimsIdentity identity, string issuer)
+            {
+                var fullName = $"{userData.GetString("first_name")} {userData.GetString("surname")}";
+                identity.AddClaim(new Claim(ClaimTypes.Name, fullName));
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userData.GetString("sub")));
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -210,7 +351,7 @@ namespace Blitz.Web
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+
             app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseStaticFiles();
 
@@ -242,7 +383,7 @@ namespace Blitz.Web
                     endpoints.MapFallbackToFile("index.html");
                 }
             });
-            
+
             // if (Environment.IsDevelopment())
             // {
             //     app.UseSpa(spa =>
