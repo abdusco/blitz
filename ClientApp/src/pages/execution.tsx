@@ -53,42 +53,44 @@ export default function Execution() {
 const ExecutionSummary: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
     return (
         <Table width="unset">
-            <Tr>
-                <Th>Project</Th>
-                <Td>
-                    <Link
-                        to={{
-                            pathname: `/projects/${data.cronjob.projectId}`,
-                            state: { title: data.cronjob.projectTitle },
-                        }}
-                    >
-                        {data.cronjob.projectTitle}
-                    </Link>
-                </Td>
-            </Tr>
-            <Tr>
-                <Th>Cronjob</Th>
-                <Td>
-                    <Link
-                        to={{
-                            pathname: `/cronjobs/${data.cronjob.id}`,
-                            state: { title: data.cronjob.title },
-                        }}
-                    >
-                        {data.cronjob.title}
-                    </Link>
-                </Td>
-            </Tr>
-            <Tr>
-                <Th>Triggered at</Th>
-                <Td>{data.createdAt}</Td>
-            </Tr>
-            <Tr>
-                <Th>State</Th>
-                <Td>
-                    <ExecutionStatePill state={data.state} />
-                </Td>
-            </Tr>
+            <Tbody>
+                <Tr>
+                    <Th>Project</Th>
+                    <Td>
+                        <Link
+                            to={{
+                                pathname: `/projects/${data.cronjob.projectId}`,
+                                state: { title: data.cronjob.projectTitle },
+                            }}
+                        >
+                            {data.cronjob.projectTitle}
+                        </Link>
+                    </Td>
+                </Tr>
+                <Tr>
+                    <Th>Cronjob</Th>
+                    <Td>
+                        <Link
+                            to={{
+                                pathname: `/cronjobs/${data.cronjob.id}`,
+                                state: { title: data.cronjob.title },
+                            }}
+                        >
+                            {data.cronjob.title}
+                        </Link>
+                    </Td>
+                </Tr>
+                <Tr>
+                    <Th>Triggered at</Th>
+                    <Td>{data.createdAt}</Td>
+                </Tr>
+                <Tr>
+                    <Th>State</Th>
+                    <Td>
+                        <ExecutionStatePill state={data.state} />
+                    </Td>
+                </Tr>
+            </Tbody>
         </Table>
     );
 };
