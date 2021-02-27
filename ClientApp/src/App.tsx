@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AuthOptions, AuthProvider, useAuth } from './lib/auth';
+import { AuthOptions, AuthProvider, useAuth, useUserProfile } from './lib/auth';
 import { BrowserRouter as Router, Switch } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -7,6 +7,7 @@ import { Profile, User } from 'oidc-client';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { routes } from './routes';
 import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
+import { CenteredFullScreen } from './layout/layout';
 
 export default function App() {
     return (
@@ -20,7 +21,9 @@ export default function App() {
                                 <FailedQueryNotifier>
                                     <Switch>
                                         {/* attach key prop to stop react from complaining */}
-                                        {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
+                                        {routes.map((it) =>
+                                            React.cloneElement(it, { ...it.props, key: (it as any).path })
+                                        )}
                                     </Switch>
                                 </FailedQueryNotifier>
                             </LoadingApp>
@@ -47,7 +50,7 @@ const FailedQueryNotifier: React.FC = (props) => {
                 if (sameRequest(err.config, prevRequestConfig.current)) {
                     return;
                 }
-                
+
                 prevRequestConfig.current = err.config;
 
                 const isNetworkError = err?.message === 'Network Error';
@@ -83,8 +86,29 @@ const FailedQueryNotifier: React.FC = (props) => {
 const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     const { children, timeout = 500 } = props;
     const { ready } = useAuth();
+    const user = useUserProfile();
     const [loaded, setLoaded] = useState(false);
+    const toast = useToast();
+    const welcomeRef = useRef(false);
 
+    // welcome user
+    useEffect(() => {
+        if (welcomeRef.current) {
+            return;
+        }
+
+        if (user) {
+            toast({
+                title: `Welcome, ${user.name}`,
+                duration: 1500,
+                status: 'info',
+                position: 'top',
+            });
+            welcomeRef.current = true;
+        }
+    }, [user]);
+
+    //
     useEffect(() => {
         let id = 0;
         if (ready) {
@@ -96,16 +120,9 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
 
     if (!loaded) {
         return (
-            <div
-                style={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <CircularProgress isIndeterminate size={20} color="purple.500" />
-            </div>
+            <CenteredFullScreen>
+                <CircularProgress isIndeterminate size={16} color="purple.500" />
+            </CenteredFullScreen>
         );
     }
 
