@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import { fetchCronjobs } from '../api';
 import { CronPopup, QueryProgress } from '../components/feedback';
+import LinkWithState from '../components/LinkWithState';
 
 export default function Cronjobs() {
     return (
@@ -44,17 +45,26 @@ const CronjobList: React.FC = () => {
                 {
                     Header: 'Title',
                     accessor: 'title',
-                    Cell: ({ row, value }) => <Link to={`/cronjobs/${(row as any).original.id}`}>{value}</Link>,
+                    Cell: ({ row, value }) => (
+                        <LinkWithState
+                            emphasize
+                            pathname={`/cronjobs/${(row as any).original.id}`}
+                            state={{ ...row.original }}
+                        >
+                            {value}
+                        </LinkWithState>
+                    ),
                 },
                 {
                     Header: 'Project',
                     accessor: 'projectTitle',
                     Cell: ({ row, value }) => (
-                        <Link
-                            to={{ pathname: `/projects/${(row as any).original.projectId}`, state: { title: value } }}
+                        <LinkWithState
+                            pathname={`/projects/${(row as any).original.projectId}`}
+                            state={{ title: value }}
                         >
                             {value}
-                        </Link>
+                        </LinkWithState>
                     ),
                 },
                 {

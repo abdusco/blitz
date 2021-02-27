@@ -23,6 +23,7 @@ import DataTable from '../components/DataTable';
 import { QueryProgress } from '../components/feedback';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
+import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Projects() {
@@ -37,7 +38,9 @@ export default function Projects() {
             <Hero>
                 <Hero.Title>Projects</Hero.Title>
                 <Hero.Summary>
-                    Cronjobs are filed under a project. You need to have a project before creating a cronjob.
+                    Cronjobs are filed under a project. 
+                    <br/>
+                    You need to have created a project before creating a cronjob.
                 </Hero.Summary>
                 <Hero.Body>
                     <Button onClick={onOpen}>New Project</Button>
@@ -89,9 +92,9 @@ const ProjectList: React.FC = () => {
                     Header: 'Title',
                     accessor: 'title',
                     Cell: ({ row, value }) => (
-                        <Link to={{ pathname: `/projects/${(row as any).original.id}`, state: { title: value } }}>
+                        <LinkWithState emphasize pathname={`/projects/${(row as any).original.id}`} state={{ title: value }}>
                             {value}
-                        </Link>
+                        </LinkWithState>
                     ),
                 },
                 {

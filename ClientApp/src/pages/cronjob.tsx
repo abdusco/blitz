@@ -18,15 +18,8 @@ export default function Cronjob() {
     const {
         params: { id },
     } = useRouteMatch<{ id: string }>();
-    const { state: { title = 'Cronjob' } = {} } = useLocation<CronjobDetailDto>();
-    const placeholderData = {
-        id,
-        title,
-    } as CronjobDetailDto;
-    const cronjobQuery = useQuery(['cronjobs', id], () => fetchCronjob(id), {
-        placeholderData,
-    });
-
+    const { state } = useLocation<CronjobDetailDto>();
+    const cronjobQuery = useQuery(['cronjobs', id], () => fetchCronjob(id), { placeholderData: state });
     const executionsQuery = useQuery(['cronjobs', id, 'executions'], () => fetchCronjobExecutions(id), {
         placeholderData: [] as CronjobExecutionsListDto[],
     });
@@ -110,16 +103,14 @@ export const RecentExecutions: React.FC<{ data: CronjobExecutionsListDto[] }> = 
         () =>
             [
                 {
-                    Header: 'Id',
-                    accessor: 'id',
-                    Cell: ({ value }) => (
-                        <Link to={{ pathname: `/executions/${value}` }}>
-                            <code>{(value as string).toUpperCase()}</code>
-                        </Link>
+                    Header: 'Date',
+                    accessor: 'createdAt',
+                    Cell: ({ value, row }) => (
+                        <LinkWithState emphasize pathname={`/executions/${row.original.id}`}>
+                            {value}
+                        </LinkWithState>
                     ),
-                    disableSortBy: true,
                 },
-                { Header: 'Date', accessor: 'createdAt', Cell: ({ value }) => <code>{value}</code> },
                 { Header: 'Status', accessor: 'state', Cell: ({ value }) => <ExecutionStatePill state={value} /> },
             ] as Column<CronjobExecutionsListDto>[],
         []

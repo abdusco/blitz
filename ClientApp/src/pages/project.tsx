@@ -28,6 +28,7 @@ import DataTable from '../components/DataTable';
 import { CronPopup, QueryProgress } from '../components/feedback';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
+import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Project() {
@@ -175,9 +176,9 @@ const CronjobList: React.FC<{ data: ProjectDetailsDto }> = ({ data }) => {
                     Header: 'Title',
                     accessor: 'title',
                     Cell: ({ row, value }) => (
-                        <Link to={{ pathname: `/cronjobs/${(row as any).original.id}`, state: { title: value } }}>
+                        <LinkWithState emphasize pathname={`/cronjobs/${(row as any).original.id}`} state={{ title: value }}>
                             {value}
-                        </Link>
+                        </LinkWithState>
                     ),
                 },
                 {

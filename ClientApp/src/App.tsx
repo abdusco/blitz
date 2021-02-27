@@ -1,14 +1,14 @@
-import React, {useEffect, useState} from 'react'
-import {AuthOptions, AuthProvider, useAuth} from "./lib/auth";
-import {BrowserRouter as Router, Switch} from "react-router-dom";
-import {HelmetProvider} from "react-helmet-async";
-import {QueryClient, QueryClientProvider} from "react-query";
-import {Profile, User} from "oidc-client";
-import axios, {AxiosError} from "axios";
-import {routes} from './routes'
-import {ChakraProvider, CircularProgress, extendTheme} from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
+import { AuthOptions, AuthProvider, useAuth } from './lib/auth';
+import { BrowserRouter as Router, Switch } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Profile, User } from 'oidc-client';
+import axios, { AxiosError } from 'axios';
+import { routes } from './routes';
+import { ChakraProvider, CircularProgress, extendTheme } from '@chakra-ui/react';
 
-axios.defaults.baseURL = 'https://localhost:5001/api'
+axios.defaults.baseURL = 'https://localhost:5001/api';
 
 const authOptions: AuthOptions = {
     authority: 'https://devauth.thyteknik.com.tr',
@@ -27,26 +27,25 @@ const authOptions: AuthOptions = {
             ...profile,
             firstName: profile.first_name,
             lastName: profile.surname,
-        }
-    }
+        };
+    },
 };
 
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: (failureCount, error) => {
-                return [401, 403].includes((error as AxiosError).response!.status) ? false : (failureCount < 2);
+                return [401, 403].includes((error as AxiosError).response!.status) ? false : failureCount < 2;
             },
         },
     },
-})
-
+});
 
 const theme = extendTheme({
     brand: {
-        900: "#1a365d",
-        800: "#153e75",
-        700: "#2a69ac",
+        900: '#1a365d',
+        800: '#153e75',
+        700: '#2a69ac',
     },
     fonts: {
         body: 'Inter',
@@ -60,15 +59,15 @@ const theme = extendTheme({
         Button: {
             baseStyle: {
                 borderRadius: '2rem',
-            }
+            },
         },
         CloseButton: {
             baseStyle: {
-                borderRadius: '10rem'
-            }
+                borderRadius: '10rem',
+            },
         },
-    }
-})
+    },
+});
 
 export default function App() {
     return (
@@ -81,7 +80,7 @@ export default function App() {
                             <LoadingApp>
                                 <Switch>
                                     {/* attach key prop to stop react from complaining */}
-                                    {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
+                                    {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
                                 </Switch>
                             </LoadingApp>
                         </ChakraProvider>
@@ -89,13 +88,12 @@ export default function App() {
                 </AuthProvider>
             </Router>
         </HelmetProvider>
-    )
+    );
 }
 
-
-const LoadingApp: React.FC<{ timeout?: number; }> = (props) => {
-    const {children, timeout = 400} = props;
-    const {ready} = useAuth();
+const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
+    const { children, timeout = 500 } = props;
+    const { ready } = useAuth();
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -108,15 +106,18 @@ const LoadingApp: React.FC<{ timeout?: number; }> = (props) => {
     }, [ready, setLoaded]);
 
     if (!loaded) {
-        return <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }}>
-            <CircularProgress isIndeterminate
-                              color="green.300"/>
-        </div>;
+        return (
+            <div
+                style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
+                <CircularProgress isIndeterminate size={20} color="purple.500" />
+            </div>
+        );
     }
 
     return <>{children}</>;

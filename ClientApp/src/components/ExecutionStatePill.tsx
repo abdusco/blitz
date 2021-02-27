@@ -4,7 +4,7 @@ import { ExecutionState } from '../api';
 
 export const ExecutionStatePill: React.FC<{ state?: ExecutionState }> = ({ state = '?' }) => {
     return (
-        <Tag borderRadius={20} size="sm">
+        <Tag borderRadius={20} size="md">
             {state.toUpperCase()}
         </Tag>
     );
