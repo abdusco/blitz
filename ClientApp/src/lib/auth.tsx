@@ -47,7 +47,7 @@ export const initUserManager = (options: AuthOptions): UserManager => {
         response_type: options.responseType || 'code',
         response_mode: 'query',
         scope: options.scope || 'openid',
-        loadUserInfo: true,
+        loadUserInfo: false,
         automaticSilentRenew: options.automaticSilentRenew,
         monitorSession: false,
         stateStore: new WebStorageStateStore({store: localStorage}),
