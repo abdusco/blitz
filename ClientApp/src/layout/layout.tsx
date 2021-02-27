@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth, useUser } from '../lib/auth';
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import styles from './layout.module.scss';
 import { useIsFetching } from 'react-query';
 import clsx from 'clsx';
@@ -45,6 +45,12 @@ function LoginInfo() {
     const auth = useAuth();
     const user = useUser();
     const location = useLocation();
+    const history = useHistory();
+
+    const signOut = () => {
+        auth.signOut();
+        history.push({ pathname: '/' });
+    };
 
     if (!auth.user) {
         return <Button onClick={() => auth.signIn(location.pathname)}>Log in</Button>;
@@ -53,10 +59,10 @@ function LoginInfo() {
     return (
         <Menu>
             <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                {user && user.firstName}
+                {user && user.name}
             </MenuButton>
             <MenuList>
-                <MenuItem onClick={() => auth.signOut()}>Log out</MenuItem>
+                <MenuItem onClick={signOut}>Log out</MenuItem>
             </MenuList>
         </Menu>
     );
