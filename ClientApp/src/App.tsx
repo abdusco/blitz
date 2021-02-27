@@ -25,8 +25,7 @@ const authOptions: AuthOptions = {
     transformUserProfile(profile: Profile) {
         return {
             ...profile,
-            firstName: profile.first_name,
-            lastName: profile.surname,
+            name: profile.name || `${profile.first_name} ${profile.surname}`,
         };
     },
 };
@@ -66,6 +65,18 @@ const theme = extendTheme({
                 borderRadius: '10rem',
             },
         },
+        Menu: {
+            baseStyle: {
+                list: {
+                    paddingTop: 0,
+                    paddingBottom: 0,
+                    boxShadow: '0 0.25rem 1rem -0.25rem rgba(0,0,0,0.2)',
+                },
+                item: {
+                    fontWeight: 500,
+                },
+            },
+        },
     },
 });
 
@@ -102,22 +113,27 @@ const FailedQueryNotifier: React.FC = (props) => {
                 const isNetworkError = err?.message === 'Network Error';
                 const statusCode = err?.response?.status;
 
-                const title = isNetworkError ? 'Network error' :
-                    statusCode ? `Request failed with ${statusCode}`
-                        : 'Request failed'
+                const title = isNetworkError
+                    ? 'Network error'
+                    : statusCode
+                    ? `Request failed with ${statusCode}`
+                    : 'Request failed';
                 toast({
                     title: title,
                     status: 'error',
                     duration: 2000,
-                    description: <div>Failed to fetch <code>{err.config.url}.</code>
-                        {isNetworkError && (
-                            <>
-                                <br />
-                                Make sure you're online and the API can receive requests
-                            </>
-                        )}
-                    </div>
-                })
+                    description: (
+                        <div>
+                            Failed to fetch <code>{err.config.url}.</code>
+                            {isNetworkError && (
+                                <>
+                                    <br />
+                                    Make sure you're online and the API can receive requests
+                                </>
+                            )}
+                        </div>
+                    ),
+                });
             }
         );
     }, []);
