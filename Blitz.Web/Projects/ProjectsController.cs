@@ -28,7 +28,7 @@ namespace Blitz.Web.Projects
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Roles = "pm")]
+        // [Authorize(Roles = "pm")]
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
         {
@@ -40,7 +40,7 @@ namespace Blitz.Web.Projects
                 .ToListAsync(cancellationToken);
         }
 
-        [Authorize(Roles = "pm")]
+        // [Authorize(Roles = "pm")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
@@ -57,7 +57,7 @@ namespace Blitz.Web.Projects
             return _mapper.Map<ProjectDetailsDto>(project);
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+        // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpPost]
         public async Task<ActionResult<Guid>> CreateProject(
             ProjectCreateDto request,
@@ -78,7 +78,7 @@ namespace Blitz.Web.Projects
             return project.Id;
         }
 
-        [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+        // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
         {

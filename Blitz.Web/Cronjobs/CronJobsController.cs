@@ -37,7 +37,7 @@ namespace Blitz.Web.Cronjobs
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Roles = "pm,admin")]
+        // [Authorize(Roles = "pm,admin")]
         [HttpGet]
         public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
@@ -109,7 +109,7 @@ namespace Blitz.Web.Cronjobs
             return NoContent();
         }
 
-        [Authorize(Roles = "pm")]
+        // [Authorize(Roles = "pm")]
         [HttpPost]
         public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
             CronjobCreateDto request,

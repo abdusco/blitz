@@ -101,7 +101,7 @@ namespace Blitz.Web
                         new EFCoreStorageOptions());
                 }
             );
-            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+            // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
 
             services.AddIdentity<User, Role>()
                 .AddUserManager<AppUserManager>()
@@ -243,14 +243,14 @@ namespace Blitz.Web
                 }
             });
             
-            if (Environment.IsDevelopment())
-            {
-                app.UseSpa(spa =>
-                {
-                    spa.Options.SourcePath = "ClientApp";
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5002");
-                });
-            }
+            // if (Environment.IsDevelopment())
+            // {
+            //     app.UseSpa(spa =>
+            //     {
+            //         spa.Options.SourcePath = "ClientApp";
+            //         spa.UseProxyToSpaDevelopmentServer("http://localhost:5002");
+            //     });
+            // }
         }
 
         private void ConfigureDbContext(DbContextOptionsBuilder builder)
