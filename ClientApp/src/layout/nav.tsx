@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import Logo from '../components/Logo';
 import styles from './nav.module.scss';
 
 export default function Nav() {
@@ -19,7 +20,7 @@ export default function Nav() {
     return (
         <nav className={styles.nav}>
             <NavLink className={clsx(styles.navLink, styles.logoLink)} exact to="/">
-                🗲 blitz!
+                <Logo/>
             </NavLink>
             {Object.entries(links).map(([to, text], _) => (
                 <NavLink key={to} {...linkProps} to={to}>
