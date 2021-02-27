@@ -21,9 +21,7 @@ export default function App() {
                                 <FailedQueryNotifier>
                                     <Switch>
                                         {/* attach key prop to stop react from complaining */}
-                                        {routes.map((it) =>
-                                            React.cloneElement(it, { ...it.props, key: (it as any).path })
-                                        )}
+                                        {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
                                     </Switch>
                                 </FailedQueryNotifier>
                             </LoadingApp>
@@ -84,7 +82,7 @@ const FailedQueryNotifier: React.FC = (props) => {
 };
 
 const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
-    const { children, timeout = 500 } = props;
+    const { children, timeout = 400 } = props;
     const { ready } = useAuth();
     const user = useUserProfile();
     const [loaded, setLoaded] = useState(false);
@@ -97,7 +95,7 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
             return;
         }
 
-        if (user) {
+        if (ready && user) {
             toast({
                 title: `Welcome, ${user.name}`,
                 duration: 1500,
@@ -106,7 +104,7 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
             });
             welcomeRef.current = true;
         }
-    }, [user]);
+    }, [user, ready]);
 
     //
     useEffect(() => {
