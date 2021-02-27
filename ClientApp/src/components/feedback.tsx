@@ -5,8 +5,6 @@ import { UseQueryResult } from 'react-query';
 
 export const QueryProgress: React.FC<{ query: UseQueryResult } & ProgressProps> = (props) => {
     const { query, ...progressProps } = props;
-    console.log(query);
-    
     const inProgress = !query.isError && (query.isLoading || query.isPlaceholderData || query.isFetching);
 
     return (
