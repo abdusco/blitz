@@ -35,7 +35,7 @@ const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: (failureCount, error) => {
-                return [401, 403].includes((error as AxiosError).response!.status) ? false : failureCount < 2;
+                return [401, 403].includes((error as AxiosError)?.response?.status as any) ? false : failureCount < 1;
             },
         },
     },
@@ -99,11 +99,24 @@ const FailedQueryNotifier: React.FC = (props) => {
         axios.interceptors.response.use(
             (val) => val,
             (err: AxiosError) => {
+                const isNetworkError = err?.message === 'Network Error';
+                const statusCode = err?.response?.status;
+
+                const title = isNetworkError ? 'Network error' :
+                    statusCode ? `Request failed with ${statusCode}`
+                        : 'Request failed'
                 toast({
-                    title: `Request failed with error ${err.response?.status}`,
+                    title: title,
                     status: 'error',
                     duration: 2000,
-                    description: <div>Failed to fetch <code>{err.config.url}</code></div>
+                    description: <div>Failed to fetch <code>{err.config.url}.</code>
+                        {isNetworkError && (
+                            <>
+                                <br />
+                                Make sure you're online and the API can receive requests
+                            </>
+                        )}
+                    </div>
                 })
             }
         );

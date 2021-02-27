@@ -9,6 +9,8 @@ export const useTranslateApiError = (): ((error: AxiosError, verb?: string) => s
             return `You need to be authenticated to ${verb}`;
         }
 
-        return `Failed to ${verb}. Server returned ${error.response?.status}: ${error.response?.statusText}`;
+        
+
+        return `Failed to ${verb}.`;
     };
 };
