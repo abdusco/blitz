@@ -1,12 +1,13 @@
-import React, {useEffect, useState} from "react";
-import oidc, {Profile, User, UserManager, UserManagerSettings, WebStorageStateStore} from "oidc-client";
-import {useHistory} from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import oidc, { Profile, User, UserManager, UserManagerSettings, WebStorageStateStore } from 'oidc-client';
+import { useHistory } from 'react-router-dom';
 
 oidc.Log.logger = console;
 
 // oidc.Log.level = oidc.Log.DEBUG;
 
-export interface AuthOptions extends Omit<UserManagerSettings, 'authority' | 'client_id' | 'client_secret' | 'redirect_uri' | 'scope'> {
+export interface AuthOptions
+    extends Omit<UserManagerSettings, 'authority' | 'client_id' | 'client_secret' | 'redirect_uri' | 'scope'> {
     autoSignIn?: boolean;
     authority: string;
     clientId: string;
@@ -14,7 +15,7 @@ export interface AuthOptions extends Omit<UserManagerSettings, 'authority' | 'cl
     redirectUri?: string;
 
     onUser: (user: User | null) => Promise<void>;
-    transformUserProfile?: (profile: Profile) => Profile
+    transformUserProfile?: (profile: Profile) => Profile;
 
     [oidcOptsKey: string]: any;
 }
@@ -29,14 +30,14 @@ export interface AuthContextProps {
 
 const hasCodeInUrl = (location: Location): boolean => {
     const searchParams = new URLSearchParams(location.search);
-    return ['code', 'state'].every(key => searchParams.has(key))
+    return ['code', 'state'].every((key) => searchParams.has(key));
 };
 
 const clearAuthQuery = () => {
     const url = new URL(window.location.href);
-    url.search = ''
+    url.search = '';
     history.replaceState(null, document.title, url.toString());
-}
+};
 
 export const initUserManager = (options: AuthOptions): UserManager => {
     return new UserManager({
@@ -50,25 +51,25 @@ export const initUserManager = (options: AuthOptions): UserManager => {
         loadUserInfo: false,
         automaticSilentRenew: options.automaticSilentRenew,
         monitorSession: false,
-        stateStore: new WebStorageStateStore({store: localStorage}),
-        userStore: new WebStorageStateStore({store: localStorage})
+        stateStore: new WebStorageStateStore({ store: localStorage }),
+        userStore: new WebStorageStateStore({ store: localStorage }),
     });
 };
 
 const noop = (params: any) => Promise.resolve();
 
-const AuthContext = React.createContext<AuthContextProps>({} as any)
+const AuthContext = React.createContext<AuthContextProps>({} as any);
 export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
     const history = useHistory();
-    const {children, options} = props;
-    const {onUser = noop, transformUserProfile} = options;
+    const { children, options } = props;
+    const { onUser = noop, transformUserProfile } = options;
     const [userState, setUserState] = useState<User | null>(null);
     const [ready, setReady] = useState(false);
 
     const userManager = initUserManager(options);
 
     const signOutHooks = async (): Promise<void> => {
-        setUserState(null)
+        setUserState(null);
     };
 
     useEffect(() => {
@@ -81,8 +82,6 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
                 }
                 setUserState(user);
                 clearAuthQuery();
-
-                console.log(user.state);
 
                 if (user.state?.next) {
                     history.push(user.state?.next);
@@ -108,7 +107,7 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
             }
             setUserState(user);
             setReady(true);
-        }
+        };
 
         getUser().then(() => setReady(true));
 
@@ -116,28 +115,34 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
         return () => userManager.events.removeUserLoaded(updateUserData);
     }, []);
 
-    return <AuthContext.Provider value={{
-        user: userState,
-        ready,
-        signIn: async (state: unknown): Promise<void> => {
-            await userManager.removeUser();
-            await userManager.clearStaleState();
-            await userManager.signinRedirect({state});
-        },
-        signOut: async (): Promise<void> => {
-            await userManager.removeUser();
-            await signOutHooks();
-        },
-        signOutRedirect: async (args?: unknown): Promise<void> => {
-            await userManager.signoutRedirect(args);
-            await signOutHooks();
-        },
-    }}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider
+            value={{
+                user: userState,
+                ready,
+                signIn: async (state: unknown): Promise<void> => {
+                    await userManager.removeUser();
+                    await userManager.clearStaleState();
+                    await userManager.signinRedirect({ state });
+                },
+                signOut: async (): Promise<void> => {
+                    await userManager.removeUser();
+                    await signOutHooks();
+                },
+                signOutRedirect: async (args?: unknown): Promise<void> => {
+                    await userManager.signoutRedirect(args);
+                    await signOutHooks();
+                },
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 };
 export const useAuth = () => React.useContext(AuthContext);
 
 export function useToken(): string | null {
-    const {user} = useAuth();
+    const { user } = useAuth();
     if (!user) {
         return null;
     }
@@ -145,7 +150,7 @@ export function useToken(): string | null {
     return user!.access_token;
 }
 
-export function useUser(): Record<string, any> | null {
+export function useUserProfile(): Profile | null {
     const auth = useAuth();
     if (!auth.user) {
         return null;
