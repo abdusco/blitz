@@ -31,7 +31,7 @@ export default function Home() {
                             <Link to={link.pathname} className={styles.cardLink}>
                                 <HomeCard>
                                     <div className="cardIcon">{link.icon}</div>
-                                    <Heading size={'md'} className={styles.cardTitle}>
+                                    <Heading size={'md'} className="cardTitle">
                                         {link.text}
                                     </Heading>
                                 </HomeCard>
@@ -69,6 +69,11 @@ const HomeCard = styled.article`
         width: 3rem;
         height: 3rem;
         margin-bottom: 1.5rem;
+    }
+
+    .cardTitle {
+        margin: 0;
+        font-weight: 600;
     }
 `;
 

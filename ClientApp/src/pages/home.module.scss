@@ -1,55 +1,36 @@
 .home {
-  display: flex;
-  min-height: 100vh;
+    display: flex;
+    min-height: 100vh;
+    padding: 4rem 2rem;
 }
 
 .homeContent {
-  width: 100%;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 15vh;
+    width: 100%;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5vh;
 }
 
-
 .homeTitle {
-  text-align: center;
-  margin-bottom: 2em;
-  margin-top: 0;
+    text-align: center;
+    margin-bottom: 2em;
+    margin-top: 0;
 }
 
 .reset-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .grid {
-  @extend .reset-list;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  grid-gap: 2rem;
+    @extend .reset-list;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    grid-gap: 2rem;
 }
 
 .cardLink {
-  display: block;
-}
-
-.card {
-  box-shadow: 0 0.25rem 2rem -0.25rem rgba(black, 0.15);
-  padding: 8rem 2rem 2rem;
-  border-radius: 2rem;
-  transition: 0.2s;
-  background-image: linear-gradient(135deg, rgba(#444, 0), rgba(white, 0.025));
-
-  &:hover {
-    color: var(--c-primary);
-    transform: translateY(-3px);
-    box-shadow: 0 0.75rem 2.5rem -0.2rem rgba(black, 0.1);
-  }
-}
-
-.cardTitle {
-  margin: 0;
-  font-weight: 600;
+    display: block;
 }
