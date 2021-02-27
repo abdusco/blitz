@@ -51,7 +51,7 @@ function LoginInfo() {
 
     const signOut = () => {
         auth.signOut();
-        history.push({ pathname: '/unauthorized' });
+        history.push({ pathname: '/unauthorized' }, { signedOut: true });
         toast({
             title: 'Signed out',
             description: `You've been signed out successfully.`,

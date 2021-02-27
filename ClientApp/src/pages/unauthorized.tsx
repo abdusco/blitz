@@ -7,6 +7,7 @@ import { useAuth } from '../lib/auth';
 
 export default function Unauthorized() {
     const location = useLocation();
+    const justSignedOut = !!location.state?.signedOut;
     const { signIn } = useAuth();
 
     return (
@@ -16,7 +17,7 @@ export default function Unauthorized() {
                     <Logo />
                 </Heading>
 
-                <p>You need to sign in to use the app.</p>
+                {!justSignedOut && <p>You need to sign in to use the app.</p>}
 
                 <Button colorScheme="purple" onClick={() => signIn({ next: location.state?.next })}>
                     Sign in
