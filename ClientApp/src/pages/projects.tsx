@@ -25,8 +25,10 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
+import { useRequireAuth } from '../lib/useCheckAuth';
 
 export default function Projects() {
+    useRequireAuth()
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (

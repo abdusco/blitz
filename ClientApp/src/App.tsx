@@ -134,6 +134,7 @@ const authOptions: AuthOptions = {
     clientId: 'demoapp',
     scope: 'openid profile',
     redirectUri: 'http://localhost:3000/',
+    loadUserInfo: true,
 
     async onUser(user: User | null): Promise<void> {
         if (user) {
@@ -191,9 +192,13 @@ const theme = extendTheme({
                     paddingTop: 0,
                     paddingBottom: 0,
                     boxShadow: '0 0.25rem 1rem -0.25rem rgba(0,0,0,0.2)',
+                    borderRadius: '0.5em',
                 },
                 item: {
+                    lineHeight: 1.5,
                     fontWeight: 500,
+                    paddingTop: '0.5em',
+                    paddingBottom: '0.5em',
                 },
             },
         },

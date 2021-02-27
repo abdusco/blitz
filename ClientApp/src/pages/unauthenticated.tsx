@@ -5,7 +5,7 @@ import Logo from '../components/Logo';
 import { CenteredFullScreen } from '../layout/layout';
 import { useAuth } from '../lib/auth';
 
-export default function Unauthorized() {
+export default function Unauthenticated() {
     const location = useLocation();
     const justSignedOut = !!location.state?.signedOut;
     const { signIn } = useAuth();

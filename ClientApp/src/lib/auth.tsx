@@ -41,6 +41,7 @@ const clearAuthQuery = () => {
 
 export const initUserManager = (options: AuthOptions): UserManager => {
     return new UserManager({
+        ...options,
         authority: options.authority,
         client_id: options.clientId,
         redirect_uri: options.redirectUri,
@@ -48,7 +49,6 @@ export const initUserManager = (options: AuthOptions): UserManager => {
         response_type: options.responseType || 'code',
         response_mode: 'query',
         scope: options.scope || 'openid',
-        loadUserInfo: false,
         automaticSilentRenew: options.automaticSilentRenew,
         monitorSession: false,
         stateStore: new WebStorageStateStore({ store: localStorage }),
