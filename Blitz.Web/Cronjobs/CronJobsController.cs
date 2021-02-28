@@ -175,11 +175,11 @@ namespace Blitz.Web.Cronjobs
             }
             
             // OPTIMIZE: dont load everything before authorization
-            var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
-            if (!result.Succeeded)
-            {
-                return Forbid();
-            }
+            // var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
+            // if (!result.Succeeded)
+            // {
+            //     return Forbid();
+            // }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             var execution = await cronjob.TriggerAsync(_cronjobTriggerer);
