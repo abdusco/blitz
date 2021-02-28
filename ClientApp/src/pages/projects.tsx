@@ -13,10 +13,11 @@ import {
     useDisclosure,
 } from '@chakra-ui/react';
 import React from 'react';
-import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { Link, useHistory } from 'react-router-dom';
 import { Column } from 'react-table';
-import { fetchProjects } from '../api';
+import { createProject, fetchProjects, ProjectCreateInput } from '../api';
 import { ApiError, ProjectListDto } from '../api';
 import { useTranslateApiError } from '../api/utils';
 import DataTable from '../components/DataTable';
@@ -40,8 +41,8 @@ export default function Projects() {
             <Hero>
                 <Hero.Title>Projects</Hero.Title>
                 <Hero.Summary>
-                    Cronjobs are filed under a project. 
-                    <br/>
+                    Cronjobs are filed under a project.
+                    <br />
                     You need to have created a project before creating a cronjob.
                 </Hero.Summary>
                 <Hero.Body>
@@ -59,6 +60,20 @@ const CreateProjectDialog: React.FC<{
     isOpen: boolean;
     onClose: () => void;
 }> = (props) => {
+    const form = useForm();
+    const queryClient = useQueryClient();
+    const history = useHistory();
+    const mutation = useMutation((data: ProjectCreateInput) => createProject(data), {
+        onSuccess: (id: string) => {
+            queryClient.invalidateQueries('projects');
+            history.push(`/projects/${id}`);
+        }
+    });
+
+    const onSubmit = async (data: ProjectCreateInput) => {
+        await mutation.mutateAsync(data);
+    }
+
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
             <ModalOverlay />
@@ -66,14 +81,20 @@ const CreateProjectDialog: React.FC<{
                 <ModalHeader>Create a new project</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <FormControl>
-                        <FormLabel>Title</FormLabel>
-                        <Input placeholder="project title" />
-                    </FormControl>
+                    <form onSubmit={form.handleSubmit(onSubmit)} id='createProjectForm'>
+                        <FormControl>
+                            <FormLabel>Title</FormLabel>
+                            <Input name='title' ref={form.register} placeholder="project title" required />
+                        </FormControl>
+                    </form>
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button colorScheme="blue" onClick={props.onClose} mr={3}>
+                    <Button form='createProjectForm'
+                        isLoading={mutation.isLoading}
+                        colorScheme="blue"
+                        type='submit'
+                        mr={3}>
                         Save
                     </Button>
                     <Button onClick={props.onClose}>Cancel</Button>
