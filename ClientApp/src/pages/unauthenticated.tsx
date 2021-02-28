@@ -9,6 +9,7 @@ export default function Unauthenticated() {
     const location = useLocation();
     const justSignedOut = !!location.state?.signedOut;
     const { signIn } = useAuth();
+    const reason = location.state?.reason;
 
     return (
         <CenteredFullScreen>
@@ -17,6 +18,7 @@ export default function Unauthenticated() {
                     <Logo />
                 </Heading>
 
+                {reason && <p>{reason}</p>}
                 {!justSignedOut && <p>You need to sign in to use the app.</p>}
 
                 <Button colorScheme="purple" onClick={() => signIn({ next: location.state?.next })}>
