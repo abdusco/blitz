@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AuthOptions, AuthProvider, useAuth, useUserProfile } from './lib/auth';
-import { BrowserRouter as Router, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, useHistory } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Profile, User } from 'oidc-client';
@@ -35,6 +35,7 @@ export default function App() {
 
 const FailedQueryNotifier: React.FC = (props) => {
     const toast = useToast();
+    const history = useHistory();
     const prevRequestConfig = useRef<AxiosRequestConfig>();
 
     const sameRequest = (current: AxiosRequestConfig, prev: AxiosRequestConfig | undefined): boolean => {
@@ -45,6 +46,11 @@ const FailedQueryNotifier: React.FC = (props) => {
         axios.interceptors.response.use(
             (val) => val,
             (err: AxiosError) => {
+                if (err.response?.status === 401) {
+                    history.push('/unauthenticated', { next: history.location.pathname });
+                    return;
+                }
+
                 if (sameRequest(err.config, prevRequestConfig.current)) {
                     return;
                 }
