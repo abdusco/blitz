@@ -4,7 +4,7 @@ namespace Blitz.Web.Identity
 {
     public class UserClaim
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.Empty;
         public Guid UserId { get; set; }
         public User User { get; set; }
         public string ClaimType { get; set; }

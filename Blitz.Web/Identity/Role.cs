@@ -7,7 +7,7 @@ namespace Blitz.Web.Identity
 {
     public class Role
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.Empty;
         public string Name { get; set; }
         public string Title { get; init; }
         public ICollection<User> Users { get; set; }
