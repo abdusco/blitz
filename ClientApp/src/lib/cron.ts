@@ -1,5 +1,5 @@
 // taken from https://github.com/cheap-glitch/mi-cron
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 
 /*!
  * mi-cron
@@ -38,7 +38,7 @@ const shorthands: { [index: string]: string } = {
 };
 
 // Return a schedule as a collection of numerical arrays, or `undefined` if the cron expression is deemed invalid
-export function parseCron(exp: string): CronSchedule | undefined {
+function parseCron(exp: string): CronSchedule | undefined {
     const fields = exp.trim().split(/\s+/);
 
     if (fields.length == 1) {
@@ -193,4 +193,22 @@ function cronDateToUTC(date: CronDate): Date {
 
 function range(start: number, stop: number, step: number): number[] {
     return Array.from({ length: Math.floor((stop - start) / step) + 1 }, (_, i) => start + i * step);
+}
+
+export function nextDates(cron: string, count: number = 3): Date[] {
+    if (!cron) return [];
+    try {
+        const parsed = parseCron(cron);
+        if (!parsed) return [];
+
+        const dates: Date[] = [];
+        let now = dayjs().utc().toDate();
+        while (count--) {
+            const next = parseCron.nextDate(parsed, now) as any;
+            dates.push(next);
+            now = next;
+        }
+        return dates;
+    } catch (e) {}
+    return [];
 }
