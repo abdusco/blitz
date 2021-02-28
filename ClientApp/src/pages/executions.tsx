@@ -15,7 +15,7 @@ import LinkWithState from '../components/LinkWithState';
 import { formatDateISO } from '../lib/date';
 
 export default function Executions() {
-    const query = useQuery('executions', fetchLatestExecutions);
+    const query = useQuery('executions', fetchLatestExecutions, { refetchInterval: 5000 });
     const { data } = query;
 
     return (

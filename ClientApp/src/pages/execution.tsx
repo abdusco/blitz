@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from '@chakra-ui/icons';
-import { IconButton, Progress, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
-import React, { useMemo } from 'react';
+import { Heading, IconButton, Progress, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Link, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
@@ -21,7 +21,7 @@ export default function Execution() {
         params: { id },
     } = useRouteMatch<{ id: string }>();
 
-    const query = useQuery(['executions', id], () => fetchExecution(id));
+    const query = useQuery(['executions', id], () => fetchExecution(id), { refetchInterval: 4000 });
     const { data } = query;
 
     return (
@@ -42,9 +42,9 @@ export default function Execution() {
             </Hero>
 
             <Clamp>
-                <QueryProgress query={query} />
-
-                <h2>Status updates</h2>
+                <Heading as="h2" size="md" mb="4">
+                    Status updates
+                </Heading>
                 {data && <StatusUpdates data={data} />}
             </Clamp>
         </DefaultLayout>
