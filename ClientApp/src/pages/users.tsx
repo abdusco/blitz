@@ -1,6 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
-import DefaultLayout, { Clamp } from '../layout/layout';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import {
     AlertDialog,
     AlertDialogBody,
@@ -8,6 +6,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogOverlay,
+    Badge,
     Button,
     Checkbox,
     Divider,
@@ -22,31 +21,34 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Progress,
-    Stack,
+    Tag,
     useDisclosure,
     UseDisclosureReturn,
 } from '@chakra-ui/react';
+import styled from '@emotion/styled';
+import React, { useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { Column, Row } from 'react-table';
 import {
+    deleteUser,
     fetchProjects,
     fetchRoles,
-    fetchUserClaims,
-    fetchUserRoles,
+    fetchUser,
+    fetchUsers,
     updateUserClaims,
+    updateUserRoles,
     UserClaimsUpdateRequest,
     UserListDto,
-    UserOverview,
+    UserProfile,
+    UserRolesUpdateRequest,
 } from '../api';
 import DataTable from '../components/DataTable';
-import { Column } from 'react-table';
-import { fetchUsers } from '../api';
-import { ChevronDownIcon } from '@chakra-ui/icons';
 import { QueryProgress } from '../components/feedback';
+import Head from '../components/Head';
+import Hero from '../components/Hero';
+import DefaultLayout, { Clamp } from '../layout/layout';
 import { useUserProfile } from '../lib/auth';
-import { useForm } from 'react-hook-form';
-import Head from '../components/head';
-import Hero from '../components/hero';
-import styled from '@emotion/styled';
 
 export default function Users() {
     // useCheckAuth()
@@ -74,11 +76,12 @@ export default function Users() {
 }
 
 const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
-    const [user, setUser] = useState<UserListDto | undefined>();
+    const [user, setUser] = useState<UserListDto | null>();
     const claimsPopup = useDisclosure();
     const rolesPopup = useDisclosure();
     const confirmDeleteDialog = useDisclosure();
     const authUser = useUserProfile();
+    console.log(authUser);
 
     const openRolesPopup = (user: UserListDto) => {
         setUser(user);
@@ -95,11 +98,34 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
         confirmDeleteDialog.onOpen();
     };
 
+    const isSelf = (row: Row<UserListDto>) => row.original.id === authUser?.sub;
+
     const columns = useMemo(
         () =>
             [
-                { Header: 'Name', accessor: 'name' },
+                {
+                    Header: 'Name',
+                    accessor: 'name',
+                    Cell: ({ value, row }) => (
+                        <>
+                            {value} {isSelf(row) && <Badge colorScheme="teal">You</Badge>}
+                        </>
+                    ),
+                },
                 { Header: 'Identity Provider', accessor: 'idProvider' },
+                {
+                    Header: 'Roles',
+                    accessor: 'roles',
+                    Cell: ({ value }) => (
+                        <>
+                            {value.map((r) => (
+                                <Tag key={r.id} rounded="lg" size="sm">
+                                    {r.title || r.name}
+                                </Tag>
+                            ))}
+                        </>
+                    ),
+                },
                 {
                     Header: '',
                     id: 'actions',
@@ -118,7 +144,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
                                         <MenuItem onClick={() => openRolesPopup(user)}>Update roles</MenuItem>
                                         <MenuItem onClick={() => openClaimsPopup(user)}>Update claims</MenuItem>
                                         <Divider />
-                                        <MenuItem onClick={() => openDeletePopup(user)}>Delete</MenuItem>
+                                        {!isSelf(row) && <MenuItem onClick={() => openDeletePopup(user)}>Delete</MenuItem>}
                                     </MenuList>
                                 </Menu>
                             </>
@@ -126,7 +152,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
                     },
                 },
             ] as Column<UserListDto>[],
-        []
+        [user]
     );
     return (
         <>
@@ -134,32 +160,30 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
 
             {user && <UserClaimsPopup {...claimsPopup} user={user} />}
 
-            {/* {rolesPopup.isOpen && user && <UserRolesPopup {...rolesPopup} user={user} />} */}
+            {user && <UserRolesPopup {...rolesPopup} user={user} />}
 
-            {/* {confirmDeleteDialog.isOpen && user && <UserDeleteDialog {...confirmDeleteDialog} user={user} />} */}
+            {user && <UserDeleteDialog {...confirmDeleteDialog} user={user} />}
         </>
     );
 };
 
 const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (props) => {
     const { user } = props;
-    const claimsQuery = useQuery(['users', user.id, 'claims'], () => fetchUserClaims(user.id), {
-        refetchOnMount: true,
+
+    const userQuery = useQuery(['users', user.id], () => fetchUser(user.id), {
+        // refetchOnMount: true,
+        placeholderData: user,
     });
     const projectsQuery = useQuery('projects', fetchProjects);
     const queryClient = useQueryClient();
 
-    const userClaims = claimsQuery.data?.filter((c) => c.claimType === 'project').map((c) => c.claimValue);
-    const form = useForm<UserClaimsUpdateRequest>({
-        defaultValues: {
-            projectIds: userClaims,
-        },
-    });
+    const userClaims = userQuery.data?.claims.filter((c) => c.claimType === 'project').map((c) => c.claimValue);
+    const form = useForm<UserClaimsUpdateRequest>();
 
     const mutation = useMutation((req: UserClaimsUpdateRequest) => updateUserClaims(user.id, req), {
         onSettled: () => {
             queryClient.invalidateQueries('users');
-            queryClient.invalidateQueries(['users', user.id, 'claims'], { refetchActive: true });
+            queryClient.invalidateQueries(['users', user.id]);
         },
         onSuccess: () => props.onClose(),
     });
@@ -172,12 +196,12 @@ const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (
         <Modal isOpen={props.isOpen} onClose={props.onClose} size="xl">
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>Update claims {user && `for ${user.name}`}</ModalHeader>
+                <ModalHeader>Update claims for {user.name}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
                     <form onSubmit={form.handleSubmit(onSubmit)} id="userclaimsForm">
                         <QueryProgress query={projectsQuery} />
-                        <ProjectClaimList>
+                        <ChoiceGrid>
                             {projectsQuery.data &&
                                 projectsQuery.data.map((p) => {
                                     const checked = userClaims?.includes(p.id);
@@ -194,7 +218,7 @@ const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (
                                         </li>
                                     );
                                 })}
-                        </ProjectClaimList>
+                        </ChoiceGrid>
                     </form>
                 </ModalBody>
 
@@ -217,7 +241,7 @@ const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (
     );
 };
 
-const ProjectClaimList = styled.ol`
+const ChoiceGrid = styled.ol`
     list-style: none;
     margin: 1rem 0;
     padding: 0;
@@ -227,44 +251,102 @@ const ProjectClaimList = styled.ol`
 `;
 
 const UserRolesPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (props) => {
-    const { user, isOpen, onClose } = props;
-    const query = useQuery(['users', 'roles'], fetchRoles);
+    const { user } = props;
+    const queryClient = useQueryClient();
+
+    const rolesQuery = useQuery(['users', 'roles'], fetchRoles);
+    const userQuery = useQuery(['users', user.id], () => fetchUser(user.id), {
+        // refetchOnMount: true,
+        // refetchOnWindowFocus: true,
+        // optimisticResults: false,
+        placeholderData: user,
+    });
+    const mutation = useMutation((req: UserRolesUpdateRequest) => updateUserRoles(user.id, req), {
+        onSettled: () => {
+            queryClient.invalidateQueries('users', { exact: true });
+            queryClient.invalidateQueries(['users', user.id]);
+        },
+        onSuccess: () => props.onClose(),
+    });
+
+    const form = useForm<UserRolesUpdateRequest>();
+
+    const onSubmit = async (data: UserRolesUpdateRequest) => {
+        await mutation.mutateAsync(data);
+    };
+
+    const roleNames = userQuery.data?.roles.map((r) => r.name);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Modal {...props}>
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>Update roles for</ModalHeader>
+                <ModalHeader>Update roles for {user.name}</ModalHeader>
                 <ModalCloseButton />
+
                 <ModalBody>
-                    {user.id}
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Earum, impedit.
+                    <QueryProgress query={rolesQuery} />
+                    <form onSubmit={form.handleSubmit(onSubmit)} id="userRolesForm">
+                        {rolesQuery.data && (
+                            <ChoiceGrid>
+                                {rolesQuery.data.map((r) => {
+                                    const checked = roleNames?.includes(r.name);
+
+                                    return (
+                                        <Checkbox
+                                            ref={form.register}
+                                            defaultChecked={checked}
+                                            name="roleNames"
+                                            value={r.name}
+                                            key={r.id}
+                                        >
+                                            {r.title || r.name}
+                                        </Checkbox>
+                                    );
+                                })}
+                            </ChoiceGrid>
+                        )}
+                    </form>
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button colorScheme="blue" mr={3} onClick={onClose}>
+                    <Button colorScheme="blue" mr={3} form="userRolesForm" type="submit" isLoading={mutation.isLoading}>
                         Save
                     </Button>
-                    <Button variant="ghost">Close</Button>
+                    <Button variant="ghost" onClick={props.onClose}>
+                        Close
+                    </Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>
     );
 };
 
-const UserDeleteDialog: React.FC<{ userId: string } & UseDisclosureReturn> = (props) => {
-    const { userId } = props;
+const UserDeleteDialog: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (props) => {
+    const { user } = props;
     const cancelRef = useRef();
+    const queryClient = useQueryClient();
+    const mutation = useMutation(() => deleteUser(user.id), {
+        onSuccess: () => {
+            queryClient.invalidateQueries('users', { exact: true });
+        },
+    });
+
+    const onDeleteUser = async () => {
+        await mutation.mutateAsync();
+        props.onClose();
+    };
+
     return (
         <AlertDialog isOpen={props.isOpen} leastDestructiveRef={cancelRef as any} onClose={props.onClose}>
             <AlertDialogOverlay>
                 <AlertDialogContent>
                     <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                        Delete Customer
+                        Delete User
                     </AlertDialogHeader>
 
                     <AlertDialogBody>
-                        {userId}
+                        <b>{user.name}</b> will be deleted. <br />
                         Are you sure? You can't undo this action afterwards.
                     </AlertDialogBody>
 
@@ -272,7 +354,7 @@ const UserDeleteDialog: React.FC<{ userId: string } & UseDisclosureReturn> = (pr
                         <Button ref={cancelRef as any} onClick={props.onClose}>
                             Cancel
                         </Button>
-                        <Button colorScheme="red" onClick={props.onClose} ml={3}>
+                        <Button colorScheme="red" onClick={onDeleteUser} ml={3} isLoading={mutation.isLoading}>
                             Delete
                         </Button>
                     </AlertDialogFooter>
