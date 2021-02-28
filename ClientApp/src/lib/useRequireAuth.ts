@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useAuth } from './auth';
 import { useHistory } from 'react-router-dom';
 
-export const useRequireAuth = () => {
+export const useRequireAuth = (...anyOfRoles: string[]) => {
     const { ready, user } = useAuth();
     const router = useHistory();
 

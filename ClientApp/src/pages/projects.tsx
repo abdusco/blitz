@@ -25,7 +25,7 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
-import { useRequireAuth } from '../lib/useCheckAuth';
+import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Projects() {
     useRequireAuth();
