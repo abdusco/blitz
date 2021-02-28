@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import oidc, { Profile, User, UserManager, UserManagerSettings, WebStorageStateStore } from 'oidc-client';
 import { useHistory } from 'react-router-dom';
+import { UserProfile } from '../api';
 
 oidc.Log.logger = console;
 
@@ -150,11 +151,11 @@ export function useToken(): string | null {
     return user!.access_token;
 }
 
-export function useUserProfile(): Profile | null {
+export function useUserProfile(): UserProfile | null {
     const auth = useAuth();
     if (!auth.user) {
         return null;
     }
 
-    return auth.user?.profile;
+    return (auth.user?.profile as unknown) as UserProfile;
 }

@@ -110,3 +110,10 @@ export interface UserGrant {
 export interface GrantUpdateRequest {
     projectIds: string[];
 }
+
+export interface UserProfile {
+    sub: string;
+    name: string;
+    roles: string[];
+    permissions: string[];
+}
