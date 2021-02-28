@@ -11,8 +11,9 @@ import { AxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import { fetchCronjobs } from '../api';
-import { CronPopup, QueryProgress } from '../components/QueryProgress';
+import { QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
+import { CronPopup } from '../components/CronPopup';
 
 export default function Cronjobs() {
     return (
@@ -47,7 +48,7 @@ const CronjobList: React.FC = () => {
                     accessor: 'title',
                     Cell: ({ row, value }) => (
                         <LinkWithState
-                            emphasize
+                            isEmphasized={true}
                             pathname={`/cronjobs/${(row as any).original.id}`}
                             state={{ ...row.original }}
                         >
@@ -79,7 +80,7 @@ const CronjobList: React.FC = () => {
                 {
                     Header: 'URL',
                     accessor: 'url',
-                    Cell: ({ value }) => <code>{value}</code>,
+                    // Cell: ({ value }) => <code>{value}</code>,
                 },
                 { Header: 'Method', accessor: 'httpMethod' },
                 {
