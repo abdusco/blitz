@@ -26,7 +26,7 @@ namespace Blitz.Web.Auth
         }
 
         [AutoMap(typeof(User), ReverseMap = true)]
-        public record UserListDto(Guid Id, string Name, List<RoleListDto> Roles, List<UserClaimListDto> Claims);
+        public record UserListDto(Guid Id, string Name, string IdProvider, List<RoleListDto> Roles, List<UserClaimListDto> Claims);
         [AutoMap(typeof(Role), ReverseMap = true)]
         public record RoleListDto(Guid Id, string Name, string Title);
         [AutoMap(typeof(UserClaim), ReverseMap = true)]
