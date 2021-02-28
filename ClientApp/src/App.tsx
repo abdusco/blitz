@@ -47,7 +47,9 @@ const FailedQueryNotifier: React.FC = (props) => {
             (val) => val,
             (err: AxiosError) => {
                 if (err.response?.status === 401) {
-                    history.push('/unauthenticated', { next: history.location.pathname });
+                    // let user return back to where he was, unless he was already on unauthenticated page.
+                    const next = history.location.pathname !== '/unauthenticated' ? history.location.pathname : '/';
+                    history.push('/unauthenticated', { next });
                     return;
                 }
 
