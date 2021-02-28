@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
-using Ardalis.SmartEnum;
 using AutoMapper;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
 using Blitz.Web.Projects;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,96 +28,73 @@ namespace Blitz.Web.Auth
         [AutoMap(typeof(User), ReverseMap = true)]
         public record UserListDto(Guid Id, string Name, List<RoleListDto> Roles, List<UserClaimListDto> Claims);
         [AutoMap(typeof(Role), ReverseMap = true)]
-        public record RoleListDto(Guid Id, string Name);
+        public record RoleListDto(Guid Id, string Name, string Title);
         [AutoMap(typeof(UserClaim), ReverseMap = true)]
-        public record UserClaimListDto(Guid Id, string Name);
+        public record UserClaimListDto(Guid Id, string ClaimType, string ClaimValue);
 
         [HttpGet]
         public async Task<ActionResult<List<UserListDto>>> ListAllUsers(CancellationToken cancellationToken)
         {
             var users = await _dbContext.Users
                 .Include(e => e.Roles)
-                .Include(e => e.Claims)
                 .ToListAsync(cancellationToken);
-            return _mapper.Map<List<UserListDto>>(users);
+            return Ok(_mapper.Map<List<UserListDto>>(users));
         }
-    }
-    /*
+
         [HttpGet("roles")]
-        public async Task<ActionResult<IList<AppUserManager.RoleOverview>>> ListAllRoles()
+        public async Task<ActionResult<List<RoleListDto>>> ListAllRoles()
         {
-            var roles = await _userManager.GetRolesAsync();
-            return Ok(roles);
+            var roles = await _dbContext.Roles.ToListAsync();
+            return Ok(_mapper.Map<List<RoleListDto>>(roles));
         }
 
-        [HttpGet("{userId}/roles")]
-        public async Task<ActionResult<IList<string>>> ListUserRoles(string userId)
-        {
-            var user = await _userManager.GetUserAsync(userId);
-            var roles = await _userManager.GetRolesAsync(user);
-            return Ok(roles);
-        }
-
-        public record UserRoleUpdateRequest(List<string> RoleNames);
+        public record UserRoleUpdateRequest(List<Guid> RoleIds);
 
         [HttpPut("{userId}/roles")]
-        public async Task<ActionResult<IList<string>>> UpdateUserRoles(string userId, UserRoleUpdateRequest request)
+        public async Task<ActionResult<IList<string>>> UpdateUserRoles(Guid userId, UserRoleUpdateRequest request)
         {
-            using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
-            var user = await _userManager.GetUserAsync(userId);
-            var roles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, roles.Except(request.RoleNames));
-            await _userManager.AddToRolesAsync(user, request.RoleNames);
-
-            tx.Complete();
-
+            var user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == userId);
+            if (user == null)
+            {
+                return NotFound(new ProblemDetails { Detail = "No such user" });
+            }
+            var roles = await _dbContext.Roles.Where(r => request.RoleIds.Contains(r.Id)).ToListAsync();
+            user.Roles.Clear();
+            foreach (var role in roles)
+            {
+                user.Roles.Add(role);
+            }
+            await _dbContext.SaveChangesAsync();
             return NoContent();
         }
 
-        public record UserGrant(string ClaimType, string Resource, object Value);
-
-        [HttpGet("{userId}/grants")]
-        public async Task<ActionResult<List<UserGrant>>> ListUserGrants(string userId)
+        [HttpGet("{userId}/claims")]
+        public async Task<ActionResult<List<UserClaimListDto>>> ListUserClaims(Guid userId)
         {
-            var user = await _userManager.GetUserAsync(userId);
-            var existingClaims = await _userManager.GetClaimsAsync(user);
-            var grants = existingClaims.Select(c => new UserGrant(c.Type, nameof(Project), c.Value)).ToList();
-
-            return Ok(grants);
+            var claims = await _dbContext.UserClaims.Where(e => e.UserId == userId).ToListAsync();
+            return Ok(_mapper.Map<List<UserClaimListDto>>(claims));
         }
 
-        public record GrantUpdateRequest(List<string> ProjectIds);
+        public record UserClaimsUpdateRequest(List<Guid> ProjectIds);
 
-        [HttpPut("{userId}/grants")]
-        public async Task<IActionResult> UpdateUserGrants(string userId, GrantUpdateRequest updateRequest)
+        [HttpPut("{userId}/claims")]
+        public async Task<IActionResult> UpdateUserClaims(Guid userId, UserClaimsUpdateRequest updateRequest)
         {
-            using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == userId);
+            if (user == null)
+            {
+                return NotFound(new ProblemDetails { Detail = "No such user" });
+            } 
 
-            var user = await _userManager.GetUserAsync(userId);
-            var existingClaims = await _userManager.GetClaimsAsync(user);
+            var projects = await _dbContext.Projects.Where(e => updateRequest.ProjectIds.Contains(e.Id)).ToListAsync();
+            user.RemoveClaimsOfType(Project.ClaimType);
+            foreach (var item in projects)
+            {
+                user.AddControlledEntity(item);
+            }
 
-            var projectClaims = existingClaims.Where(c => c.Type == AppClaimTypes.ProjectManager).ToArray();
-            await _userManager.RemoveClaimsAsync(user, projectClaims);
-
-            var requestedClaims = updateRequest.ProjectIds
-                .Select(pid => new Claim(AppClaimTypes.ProjectManager, pid.ToString()))
-                .ToList();
-            await _userManager.AddClaimsAsync(user, requestedClaims);
-
-            tx.Complete();
-
+            await _dbContext.SaveChangesAsync();
             return NoContent();
         }
     }
-
-    public class AccessType : SmartEnum<AccessType, string>
-    {
-        public AccessType(string name, string value) : base(name, value)
-        {
-        }
-
-        public static AccessType Read = new AccessType(nameof(Read), nameof(Read).ToLowerInvariant());
-        public static AccessType ReadWrite = new AccessType(nameof(ReadWrite), nameof(ReadWrite).ToLowerInvariant());
-    }*/
 }
