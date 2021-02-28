@@ -9,7 +9,7 @@ import {
     ProjectCreateInput,
     ProjectDetailsDto,
     ProjectListDto,
-    RoleUpdateRequest,
+    UserRolesUpdateRequest,
     UserGrant,
     UserOverview,
 } from './types';
@@ -98,6 +98,7 @@ export const fetchUsers = async () => {
 export interface RoleListDto {
     id: string;
     name: string;
+    title: string;
 }
 
 export const fetchRoles = async () => {
@@ -105,21 +106,26 @@ export const fetchRoles = async () => {
     return data;
 };
 
-export const fetchUserRoles = async (userId: string) => {
-    const { data } = await axios.get<UserGrant[]>(`/users/${userId}/roles`);
+export interface UserDto extends UserListDto {
+    id: string;
+    name: string;
+    roles: RoleListDto[];
+    claims: UserClaimListDto[];
+}
+
+export const fetchUser = async (userId: string) => {
+    const { data } = await axios.get<UserDto>(`/users/${userId}`);
     await sleep();
     return data;
 };
 
-export const updateUserRoles = async (userId: string, req: RoleUpdateRequest) => {
+interface RolesUpdateRequest {
+    roleNames: string[];
+}
+
+export const updateUserRoles = async (userId: string, req: RolesUpdateRequest) => {
     await axios.put(`/users/${userId}/roles`, req);
     await sleep();
-};
-
-export const fetchUserClaims = async (userId: string) => {
-    const { data } = await axios.get<UserClaimListDto[]>(`/users/${userId}/claims`);
-    await sleep();
-    return data;
 };
 
 export interface UserClaimsUpdateRequest {
@@ -128,5 +134,10 @@ export interface UserClaimsUpdateRequest {
 
 export const updateUserClaims = async (userId: string, req: GrantUpdateRequest) => {
     await axios.put(`/users/${userId}/claims`, req);
+    await sleep();
+};
+
+export const deleteUser = async (userId: string) => {
+    await axios.delete(`/users/${userId}`);
     await sleep();
 };
