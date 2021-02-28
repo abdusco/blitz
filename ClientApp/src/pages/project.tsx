@@ -18,10 +18,10 @@ import {
 } from '@chakra-ui/react';
 import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQuery } from 'react-query';
-import { Link, useLocation, useRouteMatch } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { Link, useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
-import { CronJobOverviewDto, fetchProject, sleep } from '../api';
+import { createCronjob, CronJobOverviewDto, fetchProject, sleep } from '../api';
 import { CronjobCreateDto, ProjectDetailsDto } from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import DataTable from '../components/DataTable';
@@ -46,14 +46,6 @@ export default function Project() {
     const query = useQuery(['projects', id], () => fetchProject(id), { placeholderData });
 
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const onSubmit = useCallback(
-        async (input: CronjobCreateDto) => {
-            alert(JSON.stringify(input, null, 2));
-            await sleep();
-            onClose();
-        },
-        [onClose]
-    );
 
     return (
         <DefaultLayout>
@@ -69,7 +61,7 @@ export default function Project() {
             </Hero>
 
             <Clamp>
-                <CreateCronjobDialog isOpen={isOpen} onSubmit={onSubmit} onClose={onClose} />
+                {query.data && <CreateCronjobDialog projectId={query.data?.id} isOpen={isOpen} onClose={onClose} />}
 
                 <QueryProgress query={query} />
                 {!query.isPlaceholderData && query.data && <ProjectDetail project={query.data} />}
@@ -80,18 +72,31 @@ export default function Project() {
 }
 
 export const CreateCronjobDialog: React.FC<{
+    projectId: string;
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (input: CronjobCreateDto) => Promise<void>;
+    // onSubmit: (input: CronjobCreateDto) => Promise<void>;
 }> = (props) => {
     const form = useForm<CronjobCreateDto>({
         defaultValues: {
             httpMethod: 'POST',
         },
     });
-    const { isSubmitting } = form.formState;
-    const currentCron = form.watch('cron');
+    const queryClient = useQueryClient();
+    const history = useHistory();
+    const mutation = useMutation((payload: CronjobCreateDto) => createCronjob(payload), {
+        onSuccess(data) {
+            queryClient.invalidateQueries('cronjobs', { exact: true });
+            queryClient.invalidateQueries(['projects', data.projectId]);
+            history.push(`/cronjobs/${data.id}`, data);
+            props.onClose();
+        }
+    });
+    const onSubmit = async (form: CronjobCreateDto) => {
+        await mutation.mutateAsync(form);
+    }
 
+    const currentCron = form.watch('cron');
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
             <ModalOverlay />
@@ -99,13 +104,9 @@ export const CreateCronjobDialog: React.FC<{
                 <ModalHeader>Create a new cronjob</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <form onSubmit={form.handleSubmit(props.onSubmit)} id={'createCronjob'}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} id={'createCronjob'}>
                         <Stack spacing={4}>
-                            <FormControl isRequired>
-                                <FormLabel>Title</FormLabel>
-                                <Input placeholder="e.g. warm up cache" name="title" ref={form.register} required />
-                                <FormHelperText>A name for this cronjob</FormHelperText>
-                            </FormControl>
+                            <input type="hidden" ref={form.register} name='projectId' value={props.projectId} />
                             <FormControl isRequired>
                                 <FormLabel>Title</FormLabel>
                                 <Input placeholder="e.g. warm up cache" name="title" ref={form.register} required />
@@ -154,7 +155,7 @@ export const CreateCronjobDialog: React.FC<{
                     </form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button colorScheme="blue" form={'createCronjob'} type={'submit'} isLoading={isSubmitting} mr={3}>
+                    <Button colorScheme="blue" form={'createCronjob'} type={'submit'} isLoading={mutation.isLoading} mr={3}>
                         Save
                     </Button>
                     <Button onClick={props.onClose}>Cancel</Button>
@@ -164,7 +165,7 @@ export const CreateCronjobDialog: React.FC<{
     );
 };
 
-const ProjectDetail: React.FC<{ project: ProjectDetailsDto }> = ({}) => {
+const ProjectDetail: React.FC<{ project: ProjectDetailsDto }> = ({ }) => {
     return <div></div>;
 };
 
