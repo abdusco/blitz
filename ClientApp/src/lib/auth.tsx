@@ -16,7 +16,6 @@ export interface AuthOptions
     redirectUri?: string;
 
     onUser: (user: User | null) => Promise<void>;
-    transformUserProfile?: (profile: Profile) => Profile;
 
     [oidcOptsKey: string]: any;
 }
@@ -63,7 +62,7 @@ const AuthContext = React.createContext<AuthContextProps>({} as any);
 export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
     const history = useHistory();
     const { children, options } = props;
-    const { onUser = noop, transformUserProfile } = options;
+    const { onUser = noop } = options;
     const [userState, setUserState] = useState<User | null>(null);
     const [ready, setReady] = useState(false);
 
@@ -78,9 +77,6 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
             if (hasCodeInUrl(location)) {
                 const user = await userManager.signinCallback();
                 await onUser(user);
-                if (transformUserProfile) {
-                    user.profile = transformUserProfile(user.profile);
-                }
                 setUserState(user);
                 clearAuthQuery();
 
@@ -91,9 +87,6 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
                 const user = await userManager!.getUser();
                 if (user && !user.expired) {
                     await onUser(user);
-                    if (transformUserProfile) {
-                        user.profile = transformUserProfile(user.profile);
-                    }
                     setUserState(user);
                 } else if (options.autoSignIn) {
                     await userManager.signinRedirect();
@@ -103,9 +96,6 @@ export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
         const updateUserData = async () => {
             const user = await userManager.getUser();
             await onUser(user);
-            if (user && transformUserProfile) {
-                user.profile = transformUserProfile(user.profile);
-            }
             setUserState(user);
             setReady(true);
         };

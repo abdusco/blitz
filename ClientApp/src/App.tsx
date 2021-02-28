@@ -8,6 +8,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { routes } from './routes';
 import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
 import { CenteredFullScreen } from './layout/layout';
+import { fetchUser } from './api';
 
 export default function App() {
     return (
@@ -162,15 +163,16 @@ const authOptions: AuthOptions = {
 
     async onUser(user: User | null): Promise<void> {
         if (user) {
-            axios.defaults.headers['Authorization'] = `Bearer ${user?.access_token}`;
+            axios.defaults.headers['Authorization'] = `Bearer ${user.access_token}`;
+            const info = await fetchUser(user.profile.sub);
+            user.profile = {
+                ...user.profile,
+                roles: info.roles.map(r => r.name),
+                claims: info.claims,
+            };
         } else {
             delete axios.defaults.headers['Authorization'];
         }
-    },
-    transformUserProfile(profile: Profile) {
-        return {
-            ...profile,
-        };
     },
 };
 
