@@ -11,7 +11,7 @@ import { AxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import { fetchCronjobs } from '../api';
-import { CronPopup, QueryProgress } from '../components/feedback';
+import { CronPopup, QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
 
 export default function Cronjobs() {

@@ -43,7 +43,7 @@ import {
     UserListDto,
 } from '../api';
 import DataTable from '../components/DataTable';
-import { QueryProgress } from '../components/feedback';
+import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';
@@ -74,14 +74,13 @@ export default function Users() {
     );
 }
 
-
 const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
     const [user, setUser] = useState<UserListDto | null>();
     const claimsPopup = useDisclosure();
     const rolesPopup = useDisclosure();
     const confirmDeleteDialog = useDisclosure();
     const authUser = useUserProfile();
-    
+
     const openRolesPopup = (user: UserListDto) => {
         setUser(user);
         rolesPopup.onOpen();

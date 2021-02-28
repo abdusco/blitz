@@ -8,7 +8,7 @@ import { fetchExecution } from '../api';
 import { ExecutionDetailDto, ExecutionStatusUpdate } from '../api';
 import DataTable from '../components/DataTable';
 import { ExecutionStatePill } from '../components/ExecutionStatePill';
-import { QueryProgress } from '../components/feedback';
+import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';

@@ -25,7 +25,7 @@ import { createCronjob, CronJobOverviewDto, fetchProject, sleep } from '../api';
 import { CronjobCreateDto, ProjectDetailsDto } from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import DataTable from '../components/DataTable';
-import { CronPopup, QueryProgress } from '../components/feedback';
+import { CronPopup, QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';

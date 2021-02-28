@@ -10,7 +10,7 @@ import DataTable from '../components/DataTable';
 import { Column } from 'react-table';
 import { ExecutionStatePill } from '../components/ExecutionStatePill';
 import { Link } from 'react-router-dom';
-import { QueryProgress } from '../components/feedback';
+import { QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
 
 export default function Executions() {

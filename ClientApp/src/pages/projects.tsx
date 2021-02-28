@@ -20,7 +20,7 @@ import { Column } from 'react-table';
 import { createProject, fetchProjects, ProjectCreateInput } from '../api';
 import { ProjectListDto } from '../api';
 import DataTable from '../components/DataTable';
-import { QueryProgress } from '../components/feedback';
+import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
