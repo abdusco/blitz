@@ -37,7 +37,7 @@ export default function Cronjob() {
         onSuccess(executionId) {
             toast({
                 title: 'Triggered',
-                status: 'success',
+                duration: 1000,
             });
             history.push(`/executions/${executionId}`);
         },
