@@ -74,14 +74,14 @@ export default function Users() {
     );
 }
 
+
 const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
     const [user, setUser] = useState<UserListDto | null>();
     const claimsPopup = useDisclosure();
     const rolesPopup = useDisclosure();
     const confirmDeleteDialog = useDisclosure();
     const authUser = useUserProfile();
-    console.log(authUser);
-
+    
     const openRolesPopup = (user: UserListDto) => {
         setUser(user);
         rolesPopup.onOpen();
@@ -118,7 +118,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
                     Cell: ({ value }) => (
                         <>
                             {value.map((r) => (
-                                <Tag key={r.id} rounded="lg" size="sm">
+                                <Tag key={r.id} rounded="lg" size="sm" mr={2}>
                                     {r.title || r.name}
                                 </Tag>
                             ))}
