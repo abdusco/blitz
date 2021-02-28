@@ -146,7 +146,6 @@ const authOptions: AuthOptions = {
     transformUserProfile(profile: Profile) {
         return {
             ...profile,
-            name: profile.name || `${profile.first_name} ${profile.surname}`,
         };
     },
 };
