@@ -1,11 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Ardalis.SmartEnum;
+using AutoMapper;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
+using Blitz.Web.Persistence;
 using Blitz.Web.Projects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,27 +17,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
 {
-    /*[Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
     public class UsersController : ApiController
     {
-        private readonly AppUserManager _userManager;
+        private readonly BlitzDbContext _dbContext;
+        private readonly IMapper _mapper;
 
-        public UsersController(AppUserManager userManager)
+        public UsersController(BlitzDbContext dbContext, IMapper mapper)
         {
-            _userManager = userManager;
+            _dbContext = dbContext;
+            _mapper = mapper;
         }
 
-        public record UserOverview(string Id, string Name, IList<string> RoleIds);
+        [AutoMap(typeof(User), ReverseMap = true)]
+        public record UserListDto(Guid Id, string Name, List<RoleListDto> Roles, List<UserClaimListDto> Claims);
+        [AutoMap(typeof(Role), ReverseMap = true)]
+        public record RoleListDto(Guid Id, string Name);
+        [AutoMap(typeof(UserClaim), ReverseMap = true)]
+        public record UserClaimListDto(Guid Id, string Name);
 
         [HttpGet]
-        public async Task<ActionResult<List<UserOverview>>> ListAllUsers()
+        public async Task<ActionResult<List<UserListDto>>> ListAllUsers(CancellationToken cancellationToken)
         {
-            var users = await _userManager.Users.Include(e => e.Roles)
+            var users = await _dbContext.Users
                 .Include(e => e.Roles)
-                .Select(e => new UserOverview(e.Id, e.Name, e.Roles.Select(r => r.RoleId).ToList())).ToListAsync();
-            return users;
+                .Include(e => e.Claims)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<UserListDto>>(users);
         }
-
+    }
+    /*
         [HttpGet("roles")]
         public async Task<ActionResult<IList<AppUserManager.RoleOverview>>> ListAllRoles()
         {
