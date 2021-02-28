@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+    CronjobCreateDto,
     CronjobDetailDto,
     CronjobExecutionsListDto,
     CronjobListDto,
@@ -28,6 +29,12 @@ export const toggleCronjobEnabled = async ({ id, enabled }: { id: string; enable
     return enabled;
 };
 
+export const createCronjob = async (payload: CronjobCreateDto) => {
+    const { data } = await axios.post<CronjobDetailDto>(`/cronjobs`, payload);
+    await sleep();
+    return data;
+}
+
 export const fetchCronjobs = async () => {
     const { data } = await axios.get<CronjobListDto[]>('/cronjobs');
     await sleep();
@@ -52,6 +59,12 @@ export const fetchProject = async (id: string) => {
     return data;
 };
 
+
+export const createProject = async (payload: ProjectCreateInput) => {
+    const { data } = await axios.post<string>(`/projects`, payload);
+    return data;
+}
+
 export const fetchExecution = async (id: string) => {
     const { data } = await axios.get<ExecutionDetailDto>(`/executions/${id}`);
     await sleep();
@@ -64,11 +77,37 @@ export const fetchLatestExecutions = async () => {
     return data;
 };
 
+interface UserClaimListDto {
+    id: string;
+    claimType: string;
+    claimValue: string;
+}
+
+
+export interface UserListDto {
+    id: string;
+    name: string;
+    roles: RoleListDto[];
+    claims: UserClaimListDto[]
+}
+
 export const fetchUsers = async () => {
-    const { data } = await axios.get<UserOverview[]>(`/users`);
+    const { data } = await axios.get<UserListDto[]>(`/users`);
     await sleep();
     return data;
 };
+
+
+
+export interface RoleListDto {
+    id: string;
+    name: string;
+}
+
+export const fetchRoles = async () => {
+    const { data } = await axios.get<RoleListDto[]>(`/users/roles`);
+    return data;
+}
 
 export const fetchUserRoles = async (userId: string) => {
     const { data } = await axios.get<UserGrant[]>(`/users/${userId}/roles`);
@@ -81,13 +120,17 @@ export const updateUserRoles = async (userId: string, req: RoleUpdateRequest) =>
     await sleep();
 };
 
-export const fetchUserGrants = async (userId: string) => {
-    const { data } = await axios.get<UserGrant[]>(`/users/${userId}/grants`);
+export const fetchUserClaims = async (userId: string) => {
+    const { data } = await axios.get<UserGrant[]>(`/users/${userId}/claims`);
     await sleep();
     return data;
 };
 
-export const updateUserGrants = async (userId: string, req: GrantUpdateRequest) => {
-    await axios.put(`/users/${userId}/grants`, req);
+export interface UserClaimsUpdateRequest {
+    projectIds: string[];
+}
+
+export const updateUserClaims = async (userId: string, req: GrantUpdateRequest) => {
+    await axios.put(`/users/${userId}/claims`, req);
     await sleep();
 };
