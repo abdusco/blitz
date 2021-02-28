@@ -33,7 +33,7 @@ export const createCronjob = async (payload: CronjobCreateDto) => {
     const { data } = await axios.post<CronjobDetailDto>(`/cronjobs`, payload);
     await sleep();
     return data;
-}
+};
 
 export const fetchCronjobs = async () => {
     const { data } = await axios.get<CronjobListDto[]>('/cronjobs');
@@ -59,11 +59,10 @@ export const fetchProject = async (id: string) => {
     return data;
 };
 
-
 export const createProject = async (payload: ProjectCreateInput) => {
     const { data } = await axios.post<string>(`/projects`, payload);
     return data;
-}
+};
 
 export const fetchExecution = async (id: string) => {
     const { data } = await axios.get<ExecutionDetailDto>(`/executions/${id}`);
@@ -83,12 +82,11 @@ interface UserClaimListDto {
     claimValue: string;
 }
 
-
 export interface UserListDto {
     id: string;
     name: string;
     roles: RoleListDto[];
-    claims: UserClaimListDto[]
+    claims: UserClaimListDto[];
 }
 
 export const fetchUsers = async () => {
@@ -96,8 +94,6 @@ export const fetchUsers = async () => {
     await sleep();
     return data;
 };
-
-
 
 export interface RoleListDto {
     id: string;
@@ -107,7 +103,7 @@ export interface RoleListDto {
 export const fetchRoles = async () => {
     const { data } = await axios.get<RoleListDto[]>(`/users/roles`);
     return data;
-}
+};
 
 export const fetchUserRoles = async (userId: string) => {
     const { data } = await axios.get<UserGrant[]>(`/users/${userId}/roles`);
@@ -121,7 +117,7 @@ export const updateUserRoles = async (userId: string, req: RoleUpdateRequest) =>
 };
 
 export const fetchUserClaims = async (userId: string) => {
-    const { data } = await axios.get<UserGrant[]>(`/users/${userId}/claims`);
+    const { data } = await axios.get<UserClaimListDto[]>(`/users/${userId}/claims`);
     await sleep();
     return data;
 };

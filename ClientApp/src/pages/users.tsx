@@ -23,10 +23,20 @@ import {
     ModalHeader,
     ModalOverlay,
     Progress,
+    Stack,
     useDisclosure,
     UseDisclosureReturn,
 } from '@chakra-ui/react';
-import { fetchProjects, fetchRoles, fetchUserClaims, fetchUserRoles, updateUserClaims, UserClaimsUpdateRequest, UserListDto, UserOverview } from '../api';
+import {
+    fetchProjects,
+    fetchRoles,
+    fetchUserClaims,
+    fetchUserRoles,
+    updateUserClaims,
+    UserClaimsUpdateRequest,
+    UserListDto,
+    UserOverview,
+} from '../api';
 import DataTable from '../components/DataTable';
 import { Column } from 'react-table';
 import { fetchUsers } from '../api';
@@ -36,6 +46,7 @@ import { useUserProfile } from '../lib/auth';
 import { useForm } from 'react-hook-form';
 import Head from '../components/head';
 import Hero from '../components/hero';
+import styled from '@emotion/styled';
 
 export default function Users() {
     // useCheckAuth()
@@ -88,6 +99,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
         () =>
             [
                 { Header: 'Name', accessor: 'name' },
+                { Header: 'Identity Provider', accessor: 'idProvider' },
                 {
                     Header: '',
                     id: 'actions',
@@ -131,37 +143,69 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
 
 const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (props) => {
     const { user } = props;
-    const claimsQuery = useQuery(['users', user.id, 'claims'], () => fetchUserClaims(user.id));
+    const claimsQuery = useQuery(['users', user.id, 'claims'], () => fetchUserClaims(user.id), {
+        refetchOnMount: true,
+    });
     const projectsQuery = useQuery('projects', fetchProjects);
     const queryClient = useQueryClient();
-    const mutation = useMutation((req: UserClaimsUpdateRequest) => updateUserClaims(user.id, req), { onSettled: () => queryClient.invalidateQueries('users') });
-    const form = useForm();
 
-    const onSubmit = async (data) => {
-        console.log(data);
-        // await mutation.mutateAsync(data);
-    }
+    const userClaims = claimsQuery.data?.filter((c) => c.claimType === 'project').map((c) => c.claimValue);
+    const form = useForm<UserClaimsUpdateRequest>({
+        defaultValues: {
+            projectIds: userClaims,
+        },
+    });
+
+    const mutation = useMutation((req: UserClaimsUpdateRequest) => updateUserClaims(user.id, req), {
+        onSettled: () => {
+            queryClient.invalidateQueries('users');
+            queryClient.invalidateQueries(['users', user.id, 'claims'], { refetchActive: true });
+        },
+        onSuccess: () => props.onClose(),
+    });
+
+    const onSubmit = async (data: UserClaimsUpdateRequest) => {
+        await mutation.mutateAsync(data);
+    };
 
     return (
-        <Modal isOpen={props.isOpen} onClose={props.onClose}>
+        <Modal isOpen={props.isOpen} onClose={props.onClose} size="xl">
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>Update claims for </ModalHeader>
+                <ModalHeader>Update claims {user && `for ${user.name}`}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
-                    <form onSubmit={form.handleSubmit(onSubmit)} id='userclaimsForm'>
+                    <form onSubmit={form.handleSubmit(onSubmit)} id="userclaimsForm">
                         <QueryProgress query={projectsQuery} />
-                        {projectsQuery.data && (
-                            projectsQuery.data.map(p => <Checkbox name='projects' ref={form.register} value={p.id} key={p.id}>{p.title}</Checkbox>)
-                        )}
-                        {projectsQuery.data && (
-                            projectsQuery.data.map(p => <Checkbox name='projects' ref={form.register} value={p.id} key={p.id}>{p.title}</Checkbox>)
-                        )}
+                        <ProjectClaimList>
+                            {projectsQuery.data &&
+                                projectsQuery.data.map((p) => {
+                                    const checked = userClaims?.includes(p.id);
+                                    return (
+                                        <li key={p.id}>
+                                            <Checkbox
+                                                defaultChecked={checked}
+                                                name="projectIds"
+                                                ref={form.register}
+                                                value={p.id}
+                                            >
+                                                {p.title}
+                                            </Checkbox>
+                                        </li>
+                                    );
+                                })}
+                        </ProjectClaimList>
                     </form>
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button colorScheme="blue" mr={3} form='userclaimsForm' isLoading={mutation.isLoading} type='submit'>
+                    <Button
+                        colorScheme="blue"
+                        mr={3}
+                        form="userclaimsForm"
+                        isLoading={mutation.isLoading}
+                        type="submit"
+                    >
                         Save
                     </Button>
                     <Button variant="ghost" onClick={props.onClose}>
@@ -172,6 +216,15 @@ const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (
         </Modal>
     );
 };
+
+const ProjectClaimList = styled.ol`
+    list-style: none;
+    margin: 1rem 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    grid-gap: 1rem 2rem;
+`;
 
 const UserRolesPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (props) => {
     const { user, isOpen, onClose } = props;
