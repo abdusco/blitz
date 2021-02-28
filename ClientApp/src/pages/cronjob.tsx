@@ -1,18 +1,33 @@
-import { Progress, Stack, Table, Td, Th, Tr } from '@chakra-ui/react';
+import {
+    Button,
+    ButtonGroup,
+    IconButton,
+    Progress,
+    Stack,
+    Table,
+    Td,
+    Th,
+    Tr,
+    useToast,
+    useTooltip,
+} from '@chakra-ui/react';
 import React, { useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { Link, useLocation, useRouteMatch } from 'react-router-dom';
+import { useMutation, useQuery } from 'react-query';
+import { Link, useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
-import { fetchCronjob, fetchCronjobExecutions } from '../api';
+import { fetchCronjob, fetchCronjobExecutions, triggerCronjob } from '../api';
 import { CronjobDetailDto, CronjobExecutionsListDto } from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import DataTable from '../components/DataTable';
 import { ExecutionStatePill } from '../components/ExecutionStatePill';
-import { CronPopup, QueryProgress } from '../components/QueryProgress';
+import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import DefaultLayout, { Clamp } from '../layout/layout';
+import { CronPopup } from '../components/CronPopup';
+import { ChevronDownIcon } from '@chakra-ui/icons';
+import { formatDateISO } from '../lib/date';
 
 export default function Cronjob() {
     const {
@@ -23,6 +38,18 @@ export default function Cronjob() {
     const executionsQuery = useQuery(['cronjobs', id, 'executions'], () => fetchCronjobExecutions(id), {
         placeholderData: [] as CronjobExecutionsListDto[],
     });
+    const history = useHistory();
+    const toast = useToast();
+
+    const mutation = useMutation(() => triggerCronjob(id), {
+        onSuccess(executionId) {
+            toast({
+                title: 'Triggered',
+                status: 'success',
+            });
+            history.push(`/executions/${executionId}`);
+        },
+    });
 
     return (
         <DefaultLayout>
@@ -31,7 +58,18 @@ export default function Cronjob() {
             </Head>
 
             <Hero>
-                <Hero.Title>{cronjobQuery.data?.title}</Hero.Title>
+                <Hero.Title>
+                    {cronjobQuery.data?.title}{' '}
+                    <Button
+                        ml={4}
+                        size="sm"
+                        colorScheme="blue"
+                        isLoading={mutation.isLoading}
+                        onClick={() => mutation.mutate()}
+                    >
+                        Trigger
+                    </Button>
+                </Hero.Title>
                 <Hero.Body>
                     <QueryProgress query={cronjobQuery} />
                     {!cronjobQuery.isPlaceholderData && cronjobQuery.data && (
@@ -106,8 +144,8 @@ export const RecentExecutions: React.FC<{ data: CronjobExecutionsListDto[] }> = 
                     Header: 'Date',
                     accessor: 'createdAt',
                     Cell: ({ value, row }) => (
-                        <LinkWithState emphasize pathname={`/executions/${row.original.id}`}>
-                            {value}
+                        <LinkWithState isEmphasized={true} pathname={`/executions/${row.original.id}`}>
+                            {formatDateISO(value)}
                         </LinkWithState>
                     ),
                 },

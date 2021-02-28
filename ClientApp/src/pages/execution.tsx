@@ -14,6 +14,7 @@ import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { flattenObject } from '../lib/objects';
 import styles from './execution.module.scss';
+import { formatDateISO } from '../lib/date';
 
 export default function Execution() {
     const {
@@ -82,7 +83,7 @@ const ExecutionSummary: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                 </Tr>
                 <Tr>
                     <Th>Triggered at</Th>
-                    <Td>{data.createdAt}</Td>
+                    <Td>{formatDateISO(data.createdAt)}</Td>
                 </Tr>
                 <Tr>
                     <Th>State</Th>
@@ -119,7 +120,7 @@ const StatusUpdates: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                         },
                     },
                 },
-                { Header: 'Date', accessor: 'createdAt' },
+                { Header: 'Date', accessor: 'createdAt', Cell: ({ value }) => formatDateISO(value) },
                 { Header: 'State', accessor: 'state', Cell: ({ value }) => <ExecutionStatePill state={value} /> },
             ] as Column<ExecutionStatusUpdate>[],
         []

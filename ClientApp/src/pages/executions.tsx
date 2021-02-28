@@ -12,6 +12,7 @@ import { ExecutionStatePill } from '../components/ExecutionStatePill';
 import { Link } from 'react-router-dom';
 import { QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
+import { formatDateISO } from '../lib/date';
 
 export default function Executions() {
     const query = useQuery('executions', fetchLatestExecutions);
@@ -43,7 +44,11 @@ const ExecutionsList: React.FC<{ data: ExecutionDetailDto[] }> = ({ data }) => {
                 {
                     Header: 'Date',
                     accessor: 'createdAt',
-                    Cell: ({ row, value }) => <Link to={`/executions/${row.original.id}`}>{value}</Link>,
+                    Cell: ({ row, value }) => (
+                        <LinkWithState isEmphasized={true} pathname={`/executions/${row.original.id}`}>
+                            {formatDateISO(value)}
+                        </LinkWithState>
+                    ),
                 },
                 {
                     Header: 'Cronjob',
