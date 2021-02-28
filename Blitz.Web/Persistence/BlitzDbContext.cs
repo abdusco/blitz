@@ -20,6 +20,10 @@ namespace Blitz.Web.Persistence
         public DbSet<Cronjob> Cronjobs { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStatus> StatusUpdates { get; set; }
+        
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserClaim> UserClaims { get; set; }
 
         public BlitzDbContext(DbContextOptions<BlitzDbContext> options)
             : base(options)

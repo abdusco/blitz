@@ -144,17 +144,19 @@ namespace Blitz.Web
                 };
             });*/
 
-            services.AddTransient<PermissionClaimsUserInfoHandler>();
             services.AddOpenIddict()
                 .AddServer(builder =>
                 {
                     builder.EnableDegradedMode();
-                    builder.UseAspNetCore();
-
                     builder
                         .SetAuthorizationEndpointUris("/connect/authorize")
                         .SetTokenEndpointUris("/connect/token")
                         .SetUserinfoEndpointUris("/connect/userinfo");
+
+                    builder.UseAspNetCore()
+                        // .EnableTokenEndpointPassthrough()
+                        // .EnableAuthorizationEndpointPassthrough()
+                        .EnableUserinfoEndpointPassthrough();
 
                     builder
                         .AddDevelopmentEncryptionCertificate()
@@ -210,10 +212,6 @@ namespace Blitz.Web
                             return ValueTask.CompletedTask;
                         });
                     });*/
-                    builder.AddEventHandler<OpenIddictServerEvents.HandleUserinfoRequestContext>(reqBuilder =>
-                    {
-                        reqBuilder.UseScopedHandler<PermissionClaimsUserInfoHandler>();
-                    });
                     /*builder.AddEventHandler<OpenIddictServerEvents.ApplyAuthorizationResponseContext>(resBuilder =>
                     {
                         resBuilder.UseInlineHandler(context =>
@@ -246,6 +244,7 @@ namespace Blitz.Web
                                 context.HandleRequest();
                                 return;
                             }
+                            
 
                             var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType);
                             identity.AddClaim(new Claim(OpenIddictConstants.Claims.Subject, principal.GetClaim(ClaimTypes.NameIdentifier)));
@@ -256,7 +255,10 @@ namespace Blitz.Web
                                 claim.SetDestinations(OpenIddictConstants.Destinations.IdentityToken);
                             }
 
-                            context.Principal = new ClaimsPrincipal(identity);
+                            principal = new ClaimsPrincipal(identity);
+                            principal.SetScopes(context.Request.GetScopes());
+                            
+                            context.Principal = principal;
                         });
                     });
                 }).AddValidation(builder =>
@@ -269,10 +271,10 @@ namespace Blitz.Web
             services.AddScoped<IExternalUserImporter, ThyExternalUserImporter>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
-                .AddOpenIdConnect(o =>
+                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme,  "thy",o =>
                 {
                     o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    
+
                     o.Authority = "https://devauth.thyteknik.com.tr";
                     o.ClientId = "demoapp";
                     o.ClientSecret = "ed6fa02b-aee0-7d5a-1b04-848b13085a6f";
@@ -288,13 +290,14 @@ namespace Blitz.Web
                     // we only need name, employee id and email
                     o.ClaimActions.Clear();
                     o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
+                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
                     o.ClaimActions.MapJsonKey(ClaimTypes.Email, JwtClaimTypes.Email);
                     o.ClaimActions.Add(new ThyAuthUserClaimsAction(default, default));
 
                     o.Events.OnTicketReceived = async context =>
                     {
                         var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
-                        context.Principal = await importer.ImportUserAsync(context.Principal);
+                        context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
                 })
                 .AddJwtBearer(options =>
@@ -314,7 +317,6 @@ namespace Blitz.Web
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .AddAuthenticationSchemes(
-                        IdentityConstants.ApplicationScheme,
                         JwtBearerDefaults.AuthenticationScheme
                     )
                     .Build();

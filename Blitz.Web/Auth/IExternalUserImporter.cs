@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
@@ -13,7 +14,7 @@ namespace Blitz.Web.Auth
         /// </summary>
         /// <param name="principal"></param>
         /// <returns></returns>
-        Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal);
+        Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal, AuthenticationScheme authenticationScheme);
     }
 
     class ThyExternalUserImporter : IExternalUserImporter
@@ -25,9 +26,9 @@ namespace Blitz.Web.Auth
             _dbContext = dbContext;
         }
 
-        public async Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal)
+        public async Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal, AuthenticationScheme authenticationScheme)
         {
-            var user = await _dbContext.Set<User>().FirstOrDefaultAsync(e => e.IdProvider == principal.Identity.AuthenticationType
+            var user = await _dbContext.Set<User>().FirstOrDefaultAsync(e => e.IdProvider == authenticationScheme.Name
                                                                              && e.IdProviderSub ==
                                                                              principal.FindFirstValue(ClaimTypes.NameIdentifier));
             if (user != null)
@@ -41,7 +42,7 @@ namespace Blitz.Web.Auth
                 {
                     Name = principal.FindFirstValue(ClaimTypes.Name),
                     Email = principal.FindFirstValue(ClaimTypes.Email),
-                    IdProvider = principal.Identity.AuthenticationType,
+                    IdProvider = authenticationScheme.Name,
                     IdProviderSub = principal.FindFirstValue(ClaimTypes.NameIdentifier),
                 };
                 await _dbContext.AddAsync(user);
