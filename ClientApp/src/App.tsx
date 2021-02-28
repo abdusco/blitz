@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AuthOptions, AuthProvider, useAuth, useUserProfile } from './lib/auth';
-import { BrowserRouter as Router, Switch, useHistory } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Profile, User } from 'oidc-client';
@@ -17,14 +17,14 @@ export default function App() {
                 <AuthProvider options={authOptions}>
                     <QueryClientProvider client={queryClient}>
                         <ChakraProvider theme={theme} resetCSS={false}>
-                            <LoadingApp>
-                                <FailedQueryNotifier>
+                            <FailedQueryNotifier>
+                                <LoadingApp>
                                     <Switch>
                                         {/* attach key prop to stop react from complaining */}
                                         {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
                                     </Switch>
-                                </FailedQueryNotifier>
-                            </LoadingApp>
+                                </LoadingApp>
+                            </FailedQueryNotifier>
                         </ChakraProvider>
                     </QueryClientProvider>
                 </AuthProvider>
@@ -47,9 +47,11 @@ const FailedQueryNotifier: React.FC = (props) => {
             (val) => val,
             (err: AxiosError) => {
                 if (err.response?.status === 401) {
+                    console.log('got a 401', err);
+
                     // let user return back to where he was, unless he was already on unauthenticated page.
                     const next = history.location.pathname !== '/unauthenticated' ? history.location.pathname : '/';
-                    history.push('/unauthenticated', { next });
+                    history.push('/unauthenticated', { next, reason: 'The session has expired.' });
                     return;
                 }
 
@@ -96,6 +98,9 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     const [loaded, setLoaded] = useState(false);
     const toast = useToast();
     const welcomeRef = useRef(false);
+    const location = useLocation();
+    const isReturning = !!location.state?.next;
+    console.log(isReturning, location.state);
 
     // welcome user
     useEffect(() => {
@@ -104,8 +109,12 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
         }
 
         if (ready && user) {
+            let greetings = `Welcome, ${user.name}`;
+            if (isReturning) {
+                greetings = `Welcome back, ${user.name}`;
+            }
             toast({
-                title: `Welcome, ${user.name}`,
+                title: greetings,
                 duration: 1500,
                 status: 'info',
                 position: 'top',
