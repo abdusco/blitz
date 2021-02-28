@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Policy;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AspNet.Security.OAuth.GitHub;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Hangfire;
@@ -117,33 +118,6 @@ namespace Blitz.Web
             );
             // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
 
-            /*services.ConfigureApplicationCookie(options =>
-            {
-                options.LoginPath = "/auth/login";
-                options.LogoutPath = "/auth/logout";
-                // options.ForwardDefaultSelector = context =>
-                // {
-                //     return context.Request.IsApiRequest()
-                //         ? JwtBearerDefaults.AuthenticationScheme
-                //         : IdentityConstants.ApplicationScheme;
-                // };
-
-                options.Events.OnRedirectToLogin = context =>
-                {
-                    if (context.Request.IsApiRequest())
-                    {
-                        context.Response.Headers[HeaderNames.Location] = context.RedirectUri;
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    }
-                    else
-                    {
-                        context.Response.Redirect(context.RedirectUri, false, true);
-                    }
-
-                    return Task.CompletedTask;
-                };
-            });*/
-
             services.AddOpenIddict()
                 .AddServer(builder =>
                 {
@@ -205,42 +179,17 @@ namespace Blitz.Web
                             return ValueTask.CompletedTask;
                         });
                     });
-                    /*builder.AddEventHandler<OpenIddictServerEvents.HandleConfigurationRequestContext>(builder1 =>
-                    {
-                        builder1.UseInlineHandler(context =>
-                        {
-                            return ValueTask.CompletedTask;
-                        });
-                    });*/
-                    /*builder.AddEventHandler<OpenIddictServerEvents.ApplyAuthorizationResponseContext>(resBuilder =>
-                    {
-                        resBuilder.UseInlineHandler(context =>
-                        {
-                            var httpContext = context.Transaction.GetHttpRequest()?.HttpContext ??
-                                              throw new InvalidOperationException("The ASP.NET Core response cannot be retrieved.");
-                            var linkGenerator = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
-                            var originalRedirectUri = context.RedirectUri;
-                            var callbackUri = linkGenerator.GetUriByAction(httpContext, nameof(AuthController.ExternalCallback),
-                                "Auth", new
-                                {
-                                    returnUrl = originalRedirectUri
-                                });
-                            context.RedirectUri = callbackUri;
-
-                            return ValueTask.CompletedTask;
-                        });
-                    });*/
                     builder.AddEventHandler<OpenIddictServerEvents.HandleAuthorizationRequestContext>(reqBuilder =>
                     {
                         reqBuilder.UseInlineHandler(async context =>
                         {
                             var request = context.Transaction.GetHttpRequest() ??
                                           throw new InvalidOperationException("The ASP.NET Core request cannot be retrieved.");
-                            var principal = (await request.HttpContext.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme))
+                            var principal = (await request.HttpContext.AuthenticateAsync(GitHubAuthenticationDefaults.AuthenticationScheme))
                                 ?.Principal;
                             if (principal == null)
                             {
-                                await request.HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme);
+                                await request.HttpContext.ChallengeAsync(GitHubAuthenticationDefaults.AuthenticationScheme);
                                 context.HandleRequest();
                                 return;
                             }
@@ -268,9 +217,21 @@ namespace Blitz.Web
                 });
 
 
-            services.AddScoped<IExternalUserImporter, ThyExternalUserImporter>();
+            // services.AddScoped<IExternalUserImporter, ThyExternalUserImporter>();
+            services.AddScoped<IExternalUserImporter, GithubExternalUserImporter>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
+                .AddGitHub(o => {
+                    o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    o.ClientId = "b490f873d28551214a13";
+                    o.ClientSecret = "ae08a9dc20e7031474cfe7087265dd9ea9a08bb6";
+                    o.CallbackPath = "/-/auth/callback";
+                    o.ClaimActions.MapAll();
+                    o.Events.OnTicketReceived = async context => {
+                        var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
+                        context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
+                    };
+                })
                 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme,  "thy",o =>
                 {
                     o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;

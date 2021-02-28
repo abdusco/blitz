@@ -6,6 +6,7 @@
 
     <ItemGroup>
         <PackageReference Include="Ardalis.SmartEnum" Version="2.0.0" />
+        <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="5.0.1" />
         <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
         <PackageReference Include="Hangfire.AspNetCore" Version="1.7.19" />
         <PackageReference Include="Hangfire.EntityFrameworkCore" Version="0.3.0" />
