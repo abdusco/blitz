@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Security.Policy;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.GitHub;
@@ -67,13 +69,14 @@ namespace Blitz.Web
             // services.AddTransient<IdentitySeeder>();
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddDbContext<BlitzDbContext>(ConfigureDbContext);
+            services.AddTransient<IdentitySeeder>();
 
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers(options => options.Filters.Add<MappingExceptionFilter>());
             services.AddSwaggerGen(
                 options =>
                 {
-                    const string scope = "demo_api";
+                    const string scope = "api";
                     options.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
                     options.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz", Version = "v1"});
                     options.OperationFilter<PopulateMethodMetadataOperationFilter>();
@@ -116,7 +119,7 @@ namespace Blitz.Web
                         new EFCoreStorageOptions());
                 }
             );
-            // services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
 
             services.AddOpenIddict()
                 .AddServer(builder =>
@@ -133,8 +136,8 @@ namespace Blitz.Web
                         .EnableUserinfoEndpointPassthrough();
 
                     builder
-                        .AddDevelopmentEncryptionCertificate()
-                        .AddDevelopmentSigningCertificate()
+                        .AddEphemeralEncryptionKey()
+                        .AddEphemeralSigningKey()
                         .DisableAccessTokenEncryption();
 
                     builder
@@ -226,7 +229,8 @@ namespace Blitz.Web
                     o.ClientId = "b490f873d28551214a13";
                     o.ClientSecret = "ae08a9dc20e7031474cfe7087265dd9ea9a08bb6";
                     o.CallbackPath = "/-/auth/callback";
-                    o.ClaimActions.MapAll();
+                    o.ClaimActions.Remove(ClaimTypes.Name);
+                    o.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
                     o.Events.OnTicketReceived = async context => {
                         var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
