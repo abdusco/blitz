@@ -18,8 +18,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { Link, useHistory } from 'react-router-dom';
 import { Column } from 'react-table';
 import { createProject, fetchProjects, ProjectCreateInput } from '../api';
-import { ApiError, ProjectListDto } from '../api';
-import { useTranslateApiError } from '../api/utils';
+import { ProjectListDto } from '../api';
 import DataTable from '../components/DataTable';
 import { QueryProgress } from '../components/feedback';
 import Head from '../components/Head';
@@ -29,7 +28,7 @@ import DefaultLayout, { Clamp } from '../layout/layout';
 import { useRequireAuth } from '../lib/useCheckAuth';
 
 export default function Projects() {
-    useRequireAuth()
+    useRequireAuth();
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (
@@ -67,12 +66,12 @@ const CreateProjectDialog: React.FC<{
         onSuccess: (id: string) => {
             queryClient.invalidateQueries('projects');
             history.push(`/projects/${id}`);
-        }
+        },
     });
 
     const onSubmit = async (data: ProjectCreateInput) => {
         await mutation.mutateAsync(data);
-    }
+    };
 
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
@@ -81,20 +80,22 @@ const CreateProjectDialog: React.FC<{
                 <ModalHeader>Create a new project</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} id='createProjectForm'>
+                    <form onSubmit={form.handleSubmit(onSubmit)} id="createProjectForm">
                         <FormControl>
                             <FormLabel>Title</FormLabel>
-                            <Input name='title' ref={form.register} placeholder="project title" required />
+                            <Input name="title" ref={form.register} placeholder="project title" required />
                         </FormControl>
                     </form>
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button form='createProjectForm'
+                    <Button
+                        form="createProjectForm"
                         isLoading={mutation.isLoading}
                         colorScheme="blue"
-                        type='submit'
-                        mr={3}>
+                        type="submit"
+                        mr={3}
+                    >
                         Save
                     </Button>
                     <Button onClick={props.onClose}>Cancel</Button>
@@ -105,7 +106,7 @@ const CreateProjectDialog: React.FC<{
 };
 
 const ProjectList: React.FC = () => {
-    const query = useQuery<ProjectListDto[], ApiError>('projects', fetchProjects);
+    const query = useQuery<ProjectListDto[]>('projects', fetchProjects);
     const { data, error } = query;
 
     const columns = React.useMemo(
@@ -115,7 +116,11 @@ const ProjectList: React.FC = () => {
                     Header: 'Title',
                     accessor: 'title',
                     Cell: ({ row, value }) => (
-                        <LinkWithState emphasize pathname={`/projects/${(row as any).original.id}`} state={{ title: value }}>
+                        <LinkWithState
+                            emphasize
+                            pathname={`/projects/${(row as any).original.id}`}
+                            state={{ title: value }}
+                        >
                             {value}
                         </LinkWithState>
                     ),

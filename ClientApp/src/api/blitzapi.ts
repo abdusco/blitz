@@ -1,18 +1,84 @@
 import axios from 'axios';
-import {
-    CronjobCreateDto,
-    CronjobDetailDto,
-    CronjobExecutionsListDto,
-    CronjobListDto,
-    ExecutionDetailDto,
-    GrantUpdateRequest,
-    ProjectCreateInput,
-    ProjectDetailsDto,
-    ProjectListDto,
-    UserRolesUpdateRequest,
-    UserGrant,
-    UserOverview,
-} from './types';
+
+export interface ProjectListDto {
+    id: string;
+    title: string;
+    cronjobsCount: number;
+}
+
+export interface ProjectCreateInput {
+    title: string;
+}
+
+export interface CronjobCreateDto {
+    projectId: string;
+    title: string;
+    url: string;
+    cron: string;
+    httpMethod: string;
+}
+
+export interface CronjobListDto {
+    id: string;
+    projectId: string;
+    title: string;
+    url: string;
+    cron: string;
+    httpMethod: string;
+}
+
+export interface CronjobDetailDto {
+    id: string;
+    projectId: string;
+    projectTitle: string;
+    title: string;
+    cron: string;
+    url: string;
+    httpMethod: string;
+    enabled: boolean;
+}
+
+export interface CronJobOverviewDto {
+    id: string;
+    title: string;
+    cron: string;
+    enabled: boolean;
+}
+
+export interface ProjectDetailsDto {
+    id: string;
+    title: string;
+    cronjobs: CronJobOverviewDto[];
+}
+
+export interface CronjobExecutionsListDto {
+    id: string;
+    cronjobId: string;
+    createdAt: string;
+    state?: ExecutionState;
+}
+
+export type ExecutionState = 'unknown' | 'pending' | 'triggered' | 'started' | 'finished' | 'failed' | 'timedout';
+
+export interface ExecutionDetailDto {
+    id: string;
+    createdAt: string;
+    cronjob: {
+        id: string;
+        projectId: string;
+        projectTitle: string;
+        title: string;
+    };
+    state: ExecutionState;
+    updates: ExecutionStatusUpdate[];
+}
+
+export interface ExecutionStatusUpdate {
+    id: string;
+    createdAt: string;
+    state: ExecutionState;
+    details: Record<string, any>;
+}
 
 export const fetchCronjob = async (id: string) => {
     const { data } = await axios.get<CronjobDetailDto>(`/cronjobs/${id}`);
@@ -76,7 +142,7 @@ export const fetchLatestExecutions = async () => {
     return data;
 };
 
-interface UserClaimListDto {
+export interface UserClaimListDto {
     id: string;
     claimType: string;
     claimValue: string;
@@ -119,11 +185,11 @@ export const fetchUser = async (userId: string) => {
     return data;
 };
 
-interface RolesUpdateRequest {
+export interface RoleUpdateRequest {
     roleNames: string[];
 }
 
-export const updateUserRoles = async (userId: string, req: RolesUpdateRequest) => {
+export const updateUserRoles = async (userId: string, req: RoleUpdateRequest) => {
     await axios.put(`/users/${userId}/roles`, req);
     await sleep();
 };
@@ -132,7 +198,7 @@ export interface UserClaimsUpdateRequest {
     projectIds: string[];
 }
 
-export const updateUserClaims = async (userId: string, req: GrantUpdateRequest) => {
+export const updateUserClaims = async (userId: string, req: UserClaimsUpdateRequest) => {
     await axios.put(`/users/${userId}/claims`, req);
     await sleep();
 };

@@ -36,12 +36,11 @@ import {
     fetchRoles,
     fetchUser,
     fetchUsers,
+    RoleUpdateRequest,
     updateUserClaims,
     updateUserRoles,
     UserClaimsUpdateRequest,
     UserListDto,
-    UserProfile,
-    UserRolesUpdateRequest,
 } from '../api';
 import DataTable from '../components/DataTable';
 import { QueryProgress } from '../components/feedback';
@@ -144,7 +143,9 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
                                         <MenuItem onClick={() => openRolesPopup(user)}>Update roles</MenuItem>
                                         <MenuItem onClick={() => openClaimsPopup(user)}>Update claims</MenuItem>
                                         <Divider />
-                                        {!isSelf(row) && <MenuItem onClick={() => openDeletePopup(user)}>Delete</MenuItem>}
+                                        {!isSelf(row) && (
+                                            <MenuItem onClick={() => openDeletePopup(user)}>Delete</MenuItem>
+                                        )}
                                     </MenuList>
                                 </Menu>
                             </>
@@ -261,7 +262,7 @@ const UserRolesPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (p
         // optimisticResults: false,
         placeholderData: user,
     });
-    const mutation = useMutation((req: UserRolesUpdateRequest) => updateUserRoles(user.id, req), {
+    const mutation = useMutation((req: RoleUpdateRequest) => updateUserRoles(user.id, req), {
         onSettled: () => {
             queryClient.invalidateQueries('users', { exact: true });
             queryClient.invalidateQueries(['users', user.id]);
@@ -269,9 +270,9 @@ const UserRolesPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (p
         onSuccess: () => props.onClose(),
     });
 
-    const form = useForm<UserRolesUpdateRequest>();
+    const form = useForm<RoleUpdateRequest>();
 
-    const onSubmit = async (data: UserRolesUpdateRequest) => {
+    const onSubmit = async (data: RoleUpdateRequest) => {
         await mutation.mutateAsync(data);
     };
 
