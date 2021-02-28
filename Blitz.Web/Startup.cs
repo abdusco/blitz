@@ -17,6 +17,7 @@ using Humanizer;
 using IdentityModel;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -265,10 +266,13 @@ namespace Blitz.Web
                 });
 
 
-            services.AddScoped<IExternalUserRegistry, ThyExternalUserRegistry>();
+            services.AddScoped<IExternalUserImporter, ThyExternalUserImporter>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
+                .AddCookie()
                 .AddOpenIdConnect(o =>
                 {
+                    o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    
                     o.Authority = "https://devauth.thyteknik.com.tr";
                     o.ClientId = "demoapp";
                     o.ClientSecret = "ed6fa02b-aee0-7d5a-1b04-848b13085a6f";
@@ -284,12 +288,13 @@ namespace Blitz.Web
                     // we only need name, employee id and email
                     o.ClaimActions.Clear();
                     o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
+                    o.ClaimActions.MapJsonKey(ClaimTypes.Email, JwtClaimTypes.Email);
                     o.ClaimActions.Add(new ThyAuthUserClaimsAction(default, default));
 
                     o.Events.OnTicketReceived = async context =>
                     {
-                        var userRegistry = context.HttpContext.RequestServices.GetRequiredService<IExternalUserRegistry>();
-                        await userRegistry.SaveExternalUserAsync(context.Principal);
+                        var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
+                        context.Principal = await importer.ImportUserAsync(context.Principal);
                     };
                 })
                 .AddJwtBearer(options =>
