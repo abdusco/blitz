@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -96,6 +97,11 @@ namespace Blitz.Web.Auth
             if (user == null)
             {
                 return NotFound(new ProblemDetails {Detail = "No such user"});
+            }
+
+            if (user.Id.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
+            {
+                return BadRequest(new ProblemDetails {Detail = "You cannot delete yourself"});
             }
 
             _dbContext.Remove(user);
