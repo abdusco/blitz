@@ -4,13 +4,13 @@ import { PropsWithChildren } from 'react';
 import { Link, LinkProps } from 'react-router-dom';
 import styles from './components.module.scss';
 
-export default function ListWithState(
-    props: PropsWithChildren<{ pathname: string; state?: any; emphasize?: boolean } & Omit<LinkProps, 'to'>>
+function LinkWithState(
+    props: PropsWithChildren<{ pathname: string; state?: any; isEmphasized?: boolean } & Omit<LinkProps, 'to'>>
 ) {
     const { pathname, state, className, ...remaining } = props;
     return (
         <Link
-            className={clsx(className, props.emphasize && styles.emphasizedLink)}
+            className={clsx(className, props.isEmphasized && styles.emphasizedLink)}
             to={{ pathname, state }}
             {...remaining}
         >
@@ -18,3 +18,5 @@ export default function ListWithState(
         </Link>
     );
 }
+export default LinkWithState;
+

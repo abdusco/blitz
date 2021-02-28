@@ -9,13 +9,17 @@ import { useAuth, useUserProfile } from '../lib/auth';
 import styles from './layout.module.scss';
 import Nav from './nav';
 
+const PaddedLayout = styled.div`
+    padding-bottom: 4rem;
+`;
+
 export default function DefaultLayout(props) {
     return (
-        <div>
+        <PaddedLayout>
             <GlobalSpinner />
             <TopBar />
             {props.children}
-        </div>
+        </PaddedLayout>
     );
 }
 

@@ -25,9 +25,10 @@ export default function Forbidden() {
 
                 <div>
                     {/* Redirect user to the page before the one that caused him to come here */}
-                    <Button colorScheme="purple" onClick={() => history?.go(-2)}>
+                    <Button colorScheme="purple" onClick={() => history.go(-2)} mr={2}>
                         Go back
-                    </Button>
+                    </Button>{' '}
+                    <Button onClick={() => history.push('/')}>Go home</Button>
                 </div>
             </Centered>
         </CenteredFullScreen>
