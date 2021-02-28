@@ -26,9 +26,15 @@ namespace Blitz.Web.Auth
         }
 
         [AutoMap(typeof(User), ReverseMap = true)]
-        public record UserListDto(Guid Id, string Name, string IdProvider, List<RoleListDto> Roles, List<UserClaimListDto> Claims);
+        public record UserListDto(Guid Id,
+                                  string Name,
+                                  string IdProvider,
+                                  List<RoleListDto> Roles,
+                                  List<UserClaimListDto> Claims);
+
         [AutoMap(typeof(Role), ReverseMap = true)]
         public record RoleListDto(Guid Id, string Name, string Title);
+
         [AutoMap(typeof(UserClaim), ReverseMap = true)]
         public record UserClaimListDto(Guid Id, string ClaimType, string ClaimValue);
 
@@ -48,52 +54,101 @@ namespace Blitz.Web.Auth
             return Ok(_mapper.Map<List<RoleListDto>>(roles));
         }
 
-        public record UserRoleUpdateRequest(List<Guid> RoleIds);
+        public record UserRoleUpdateRequest(List<string> RoleNames);
 
-        [HttpPut("{userId}/roles")]
-        public async Task<ActionResult<IList<string>>> UpdateUserRoles(Guid userId, UserRoleUpdateRequest request)
+        [HttpPut("{userId:guid}/roles")]
+        public async Task<IActionResult> UpdateUserRoles(Guid userId, UserRoleUpdateRequest request, CancellationToken cancellationToken)
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == userId);
+            var user = await _dbContext.Users
+                .Include(e => e.Roles)
+                .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken: cancellationToken);
             if (user == null)
             {
-                return NotFound(new ProblemDetails { Detail = "No such user" });
+                return NotFound(new ProblemDetails {Detail = "No such user"});
             }
-            var roles = await _dbContext.Roles.Where(r => request.RoleIds.Contains(r.Id)).ToListAsync();
+
+            var otherAdminsPresent = await _dbContext.Users
+                .Where(e => e.Id != user.Id)
+                .AnyAsync(e => e.Roles.Any(r => r.Name == "admin"), cancellationToken);
+            if (!request.RoleNames.Contains("admin") && !otherAdminsPresent)
+            {
+                return BadRequest(new ProblemDetails {Detail = "There must be at least one user with admin role"});
+            }
+
             user.Roles.Clear();
-            foreach (var role in roles)
+            var requestedRoles = await _dbContext.Roles.Where(r => request.RoleNames.Contains(r.Name))
+                .ToListAsync(cancellationToken: cancellationToken);
+            foreach (var role in requestedRoles)
             {
                 user.Roles.Add(role);
             }
-            await _dbContext.SaveChangesAsync();
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
             return NoContent();
         }
 
-        [HttpGet("{userId}/claims")]
-        public async Task<ActionResult<List<UserClaimListDto>>> ListUserClaims(Guid userId)
+        [HttpDelete("{userId:guid}")]
+        public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
         {
-            var claims = await _dbContext.UserClaims.Where(e => e.UserId == userId).ToListAsync();
-            return Ok(_mapper.Map<List<UserClaimListDto>>(claims));
+            var user = await _dbContext.Users
+                .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken: cancellationToken);
+            if (user == null)
+            {
+                return NotFound(new ProblemDetails {Detail = "No such user"});
+            }
+
+            _dbContext.Remove(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+
+        [AutoMap(typeof(User), ReverseMap = true)]
+        public record UserDto(Guid Id,
+                              string Name,
+                              List<RoleListDto> Roles,
+                              List<UserClaimListDto> Claims);
+
+        [HttpGet("{userId:guid}")]
+        public async Task<ActionResult<UserDto>> GetUserInfo(Guid userId)
+        {
+            var user = await _dbContext.Users
+                .Include(e => e.Claims)
+                .Include(e => e.Roles)
+                .FirstOrDefaultAsync(e => e.Id == userId);
+            if (user == null)
+            {
+                return NotFound(new ProblemDetails {Detail = "No such user"});
+            }
+
+            return Ok(_mapper.Map<UserDto>(user));
         }
 
         public record UserClaimsUpdateRequest(List<Guid> ProjectIds);
 
-        [HttpPut("{userId}/claims")]
-        public async Task<IActionResult> UpdateUserClaims(Guid userId, UserClaimsUpdateRequest updateRequest)
+        [HttpPut("{userId:guid}/claims")]
+        public async Task<IActionResult> UpdateUserClaims(Guid userId, UserClaimsUpdateRequest updateRequest, CancellationToken cancellationToken)
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(e => e.Id == userId);
+            var user = await _dbContext.Users
+                .Include(e => e.Claims)
+                .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken: cancellationToken);
             if (user == null)
             {
-                return NotFound(new ProblemDetails { Detail = "No such user" });
-            } 
+                return NotFound(new ProblemDetails {Detail = "No such user"});
+            }
 
-            var projects = await _dbContext.Projects.Where(e => updateRequest.ProjectIds.Contains(e.Id)).ToListAsync();
-            user.RemoveClaimsOfType(Project.ClaimType);
+            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var projects = await _dbContext.Projects.Where(e => updateRequest.ProjectIds.Contains(e.Id))
+                .ToListAsync(cancellationToken: cancellationToken);
+            _dbContext.RemoveRange(user.GetClaimsOfType(Project.ClaimType));
             foreach (var item in projects)
             {
                 user.AddControlledEntity(item);
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
             return NoContent();
         }
     }

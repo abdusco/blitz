@@ -12,7 +12,7 @@ namespace Blitz.Web.Identity
         public string Email { get; set; }
 
         public string IdProvider { get; set; }
-        
+
         public string IdProviderSub { get; set; }
 
         /// <summary>
@@ -25,16 +25,14 @@ namespace Blitz.Web.Identity
         /// </summary>
         public virtual ICollection<UserClaim> Claims { get; } = new List<UserClaim>();
 
-        public void AddControlledEntity(IControlledEntity entity) {
+        public void AddControlledEntity(IControlledEntity entity)
+        {
             Claims.Add(entity.ToUserClaim(this));
         }
 
-        public void RemoveClaimsOfType(string claimType) {
-            foreach (var claim in Claims.Where(c => c.ClaimType == claimType))
-            {
-                Claims.Remove(claim);
-            }
+        public List<UserClaim> GetClaimsOfType(string claimType)
+        {
+            return Claims.Where(c => c.ClaimType == claimType).ToList();
         }
-
     }
 }
