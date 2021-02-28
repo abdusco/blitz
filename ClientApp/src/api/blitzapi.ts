@@ -87,12 +87,12 @@ export const fetchCronjob = async (id: string) => {
 };
 
 export const triggerCronjob = async (id: string) => {
-    const {data} = await axios.post<string>(`/cronjobs/${id}/trigger`);
+    const { data } = await axios.post<string>(`/cronjobs/${id}/trigger`);
     await sleep();
     return data;
-}
+};
 
-export const sleep = async (duration: number = Math.random() * 300 + 700) =>
+export const sleep = async (duration: number = 300) =>
     new Promise((resolve) => setTimeout(resolve, duration));
 
 export const toggleCronjobEnabled = async ({ id, enabled }: { id: string; enabled: boolean }) => {

@@ -16,19 +16,19 @@ import {
     Stack,
     useDisclosure,
 } from '@chakra-ui/react';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { Link, useHistory, useLocation, useRouteMatch } from 'react-router-dom';
+import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
-import { createCronjob, CronJobOverviewDto, fetchProject, sleep } from '../api';
-import { CronjobCreateDto, ProjectDetailsDto } from '../api';
+import { createCronjob, CronjobCreateDto, CronJobOverviewDto, fetchProject, ProjectDetailsDto } from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
+import { CronPopup } from '../components/CronPopup';
 import DataTable from '../components/DataTable';
-import { CronPopup, QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
+import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Project() {
@@ -90,11 +90,11 @@ export const CreateCronjobDialog: React.FC<{
             queryClient.invalidateQueries(['projects', data.projectId]);
             history.push(`/cronjobs/${data.id}`, data);
             props.onClose();
-        }
+        },
     });
     const onSubmit = async (form: CronjobCreateDto) => {
         await mutation.mutateAsync(form);
-    }
+    };
 
     const currentCron = form.watch('cron');
     return (
@@ -106,7 +106,7 @@ export const CreateCronjobDialog: React.FC<{
                 <ModalBody pb={6}>
                     <form onSubmit={form.handleSubmit(onSubmit)} id={'createCronjob'}>
                         <Stack spacing={4}>
-                            <input type="hidden" ref={form.register} name='projectId' value={props.projectId} />
+                            <input type="hidden" ref={form.register} name="projectId" value={props.projectId} />
                             <FormControl isRequired>
                                 <FormLabel>Title</FormLabel>
                                 <Input placeholder="e.g. warm up cache" name="title" ref={form.register} required />
@@ -155,7 +155,13 @@ export const CreateCronjobDialog: React.FC<{
                     </form>
                 </ModalBody>
                 <ModalFooter>
-                    <Button colorScheme="blue" form={'createCronjob'} type={'submit'} isLoading={mutation.isLoading} mr={3}>
+                    <Button
+                        colorScheme="blue"
+                        form={'createCronjob'}
+                        type={'submit'}
+                        isLoading={mutation.isLoading}
+                        mr={3}
+                    >
                         Save
                     </Button>
                     <Button onClick={props.onClose}>Cancel</Button>
@@ -165,7 +171,7 @@ export const CreateCronjobDialog: React.FC<{
     );
 };
 
-const ProjectDetail: React.FC<{ project: ProjectDetailsDto }> = ({ }) => {
+const ProjectDetail: React.FC<{ project: ProjectDetailsDto }> = ({}) => {
     return <div></div>;
 };
 
@@ -177,7 +183,11 @@ const CronjobList: React.FC<{ data: ProjectDetailsDto }> = ({ data }) => {
                     Header: 'Title',
                     accessor: 'title',
                     Cell: ({ row, value }) => (
-                        <LinkWithState emphasize pathname={`/cronjobs/${(row as any).original.id}`} state={{ title: value }}>
+                        <LinkWithState
+                            isEmphasized={true}
+                            pathname={`/cronjobs/${(row as any).original.id}`}
+                            state={{ title: value }}
+                        >
                             {value}
                         </LinkWithState>
                     ),
@@ -185,7 +195,11 @@ const CronjobList: React.FC<{ data: ProjectDetailsDto }> = ({ data }) => {
                 {
                     Header: 'Schedule',
                     accessor: 'cron',
-                    Cell: ({ value }) => <code>{value}</code>,
+                    Cell: ({ value }) => (
+                        <CronPopup cron={value}>
+                            <code>{value}</code>
+                        </CronPopup>
+                    ),
                 },
                 {
                     Header: 'Enabled',

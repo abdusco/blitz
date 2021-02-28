@@ -1,19 +1,16 @@
+import { AxiosError } from 'axios';
 import React from 'react';
-import DefaultLayout, { Clamp } from '../layout/layout';
+import { useQuery } from 'react-query';
+import { Column } from 'react-table';
+import { CronjobListDto, fetchCronjobs, useTranslateApiError } from '../api';
+import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
+import { CronPopup } from '../components/CronPopup';
+import DataTable from '../components/DataTable';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
-import { useQuery } from 'react-query';
-import { CronjobListDto } from '../api';
-import { useTranslateApiError } from '../api';
-import { Column } from 'react-table';
-import DataTable from '../components/DataTable';
-import { AxiosError } from 'axios';
-import { Link } from 'react-router-dom';
-import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
-import { fetchCronjobs } from '../api';
-import { QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
-import { CronPopup } from '../components/CronPopup';
+import { QueryProgress } from '../components/QueryProgress';
+import DefaultLayout, { Clamp } from '../layout/layout';
 
 export default function Cronjobs() {
     return (

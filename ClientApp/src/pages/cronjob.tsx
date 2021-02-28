@@ -1,32 +1,24 @@
-import {
-    Button,
-    ButtonGroup,
-    IconButton,
-    Progress,
-    Stack,
-    Table,
-    Td,
-    Th,
-    Tr,
-    useToast,
-    useTooltip,
-} from '@chakra-ui/react';
+import { Button, Stack, Table, Td, Th, Tr, useToast } from '@chakra-ui/react';
 import React, { useMemo } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { Link, useHistory, useLocation, useRouteMatch } from 'react-router-dom';
+import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
-import { fetchCronjob, fetchCronjobExecutions, triggerCronjob } from '../api';
-import { CronjobDetailDto, CronjobExecutionsListDto } from '../api';
+import {
+    CronjobDetailDto,
+    CronjobExecutionsListDto,
+    fetchCronjob,
+    fetchCronjobExecutions,
+    triggerCronjob,
+} from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
+import { CronPopup } from '../components/CronPopup';
 import DataTable from '../components/DataTable';
 import { ExecutionStatePill } from '../components/ExecutionStatePill';
-import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
+import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
-import { CronPopup } from '../components/CronPopup';
-import { ChevronDownIcon } from '@chakra-ui/icons';
 import { formatDateISO } from '../lib/date';
 
 export default function Cronjob() {
