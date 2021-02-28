@@ -48,11 +48,11 @@ namespace Blitz.Web.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
                 .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
             // OPTIMIZE: dont load everything before authorization
-            var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
-            if (!result.Succeeded)
-            {
-                return Forbid();
-            }
+            // var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
+            // if (!result.Succeeded)
+            // {
+            //     return Forbid();
+            // }
 
             return _mapper.Map<ProjectDetailsDto>(project);
         }
