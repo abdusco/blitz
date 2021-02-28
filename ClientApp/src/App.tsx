@@ -47,11 +47,19 @@ const FailedQueryNotifier: React.FC = (props) => {
             (val) => val,
             (err: AxiosError) => {
                 if (err.response?.status === 401) {
-                    console.log('got a 401', err);
-
                     // let user return back to where he was, unless he was already on unauthenticated page.
                     const next = history.location.pathname !== '/unauthenticated' ? history.location.pathname : '/';
                     history.push('/unauthenticated', { next, reason: 'The session has expired.' });
+                    return;
+                }
+
+                if (err.response?.status === 400) {
+                    toast({
+                        title: 'Oops',
+                        status: 'error',
+                        description: err.response.data.detail || `That doesn't seem to be allowed.`,
+                        duration: 3000,
+                    });
                     return;
                 }
 
@@ -100,7 +108,6 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     const welcomeRef = useRef(false);
     const location = useLocation();
     const isReturning = !!location.state?.next;
-    console.log(isReturning, location.state);
 
     // welcome user
     useEffect(() => {
