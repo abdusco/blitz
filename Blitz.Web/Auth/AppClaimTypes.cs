@@ -1,7 +1,9 @@
-﻿namespace Blitz.Web.Auth
+﻿using Blitz.Web.Projects;
+
+namespace Blitz.Web.Auth
 {
     internal static class AppClaimTypes
     {
-        public const string ProjectManager = nameof(ProjectManager);
+        public const string Project = nameof(Project);
     }
 }

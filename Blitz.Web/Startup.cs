@@ -219,8 +219,9 @@ namespace Blitz.Web
                 });
 
 
-            // services.AddScoped<IExternalUserImporter, ThyExternalUserImporter>();
-            services.AddScoped<IExternalUserImporter, GithubExternalUserImporter>();
+            services.AddTransient<IExternalUserImporter, ThyExternalUserImporter>();
+            services.AddTransient<IExternalUserImporter, GithubExternalUserImporter>();
+            services.AddTransient<IClaimsTransformation, LoadAuthorizationClaimsTransformer>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
                 .AddGitHub(o =>
@@ -233,7 +234,7 @@ namespace Blitz.Web
                     o.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
                     o.Events.OnTicketReceived = async context =>
                     {
-                        var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
+                        var importer = context.HttpContext.RequestServices.GetRequiredService<GithubExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
                 })
@@ -262,7 +263,7 @@ namespace Blitz.Web
 
                     o.Events.OnTicketReceived = async context =>
                     {
-                        var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
+                        var importer = context.HttpContext.RequestServices.GetRequiredService<ThyExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
                 })
@@ -277,7 +278,6 @@ namespace Blitz.Web
 
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
-            // services.AddScoped<IClaimsTransformation, AuthorizationClaimsTransformer>();
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
