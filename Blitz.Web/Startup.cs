@@ -89,8 +89,8 @@ namespace Blitz.Web
                         {
                             AuthorizationCode = new OpenApiOAuthFlow
                             {
-                                AuthorizationUrl = new Uri("https://devauth.thyteknik.com.tr/connect/authorize"),
-                                TokenUrl = new Uri("https://devauth.thyteknik.com.tr/connect/token"),
+                                AuthorizationUrl = new Uri("https://localhost:5001/connect/authorize"),
+                                TokenUrl = new Uri("https://localhost:5001/connect/token"),
                                 Scopes = new Dictionary<string, string>
                                 {
                                     [scope] = "read + write",
@@ -188,15 +188,14 @@ namespace Blitz.Web
                         {
                             var request = context.Transaction.GetHttpRequest() ??
                                           throw new InvalidOperationException("The ASP.NET Core request cannot be retrieved.");
-                            var principal = (await request.HttpContext.AuthenticateAsync(GitHubAuthenticationDefaults.AuthenticationScheme))
-                                ?.Principal;
+                            var principal = (await request.HttpContext.AuthenticateAsync(AppAuthenticationDefaults.AuthenticationScheme)).Principal;
                             if (principal == null)
                             {
-                                await request.HttpContext.ChallengeAsync(GitHubAuthenticationDefaults.AuthenticationScheme);
+                                await request.HttpContext.ChallengeAsync(AppAuthenticationDefaults.AuthenticationScheme);
                                 context.HandleRequest();
                                 return;
                             }
-                            
+
 
                             var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType);
                             identity.AddClaim(new Claim(OpenIddictConstants.Claims.Subject, principal.GetClaim(ClaimTypes.NameIdentifier)));
@@ -209,7 +208,7 @@ namespace Blitz.Web
 
                             principal = new ClaimsPrincipal(identity);
                             principal.SetScopes(context.Request.GetScopes());
-                            
+
                             context.Principal = principal;
                         });
                     });
@@ -224,19 +223,21 @@ namespace Blitz.Web
             services.AddScoped<IExternalUserImporter, GithubExternalUserImporter>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
-                .AddGitHub(o => {
+                .AddGitHub(o =>
+                {
                     o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     o.ClientId = "b490f873d28551214a13";
                     o.ClientSecret = "ae08a9dc20e7031474cfe7087265dd9ea9a08bb6";
-                    o.CallbackPath = "/-/auth/callback";
+                    o.CallbackPath = "/-/auth/callback/github";
                     o.ClaimActions.Remove(ClaimTypes.Name);
                     o.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-                    o.Events.OnTicketReceived = async context => {
+                    o.Events.OnTicketReceived = async context =>
+                    {
                         var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
                 })
-                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme,  "thy",o =>
+                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "thy", o =>
                 {
                     o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 
@@ -335,7 +336,7 @@ namespace Blitz.Web
                     c.DisplayOperationId();
                     c.RoutePrefix = "api";
                     c.SwaggerEndpoint("/openapi/v1.json", "Blitz API");
-                    c.OAuthConfigObject.Scopes = new[] {"demo_api"};
+                    c.OAuthConfigObject.Scopes = new[] {"api"};
                     c.OAuthConfigObject.ClientId = "demoapp";
                     c.OAuthUsePkce();
                 }
