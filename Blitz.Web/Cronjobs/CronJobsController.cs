@@ -59,7 +59,7 @@ namespace Blitz.Web.Cronjobs
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
-            
+
             // OPTIMIZE: dont load everything before authorization
             // var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
             // if (!result.Succeeded)
@@ -102,9 +102,7 @@ namespace Blitz.Web.Cronjobs
                 await _cronjobRegistrationService.Add(cronjob);
             }
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
 
             return NoContent();
         }
@@ -121,7 +119,7 @@ namespace Blitz.Web.Cronjobs
             {
                 return BadRequest(new ProblemDetails {Detail = "No such project"});
             }
-            
+
             // var result = await _authorizationService.AuthorizeAsync(User, new Project{Id = request.ProjectId}, AuthorizationPolicies.RequireProjectManagerPolicy);
             // if (!result.Succeeded)
             // {
@@ -147,7 +145,7 @@ namespace Blitz.Web.Cronjobs
             {
                 return NotFound();
             }
-            
+
             var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
             if (!result.Succeeded)
             {
@@ -173,7 +171,7 @@ namespace Blitz.Web.Cronjobs
             {
                 return NotFound();
             }
-            
+
             // OPTIMIZE: dont load everything before authorization
             // var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
             // if (!result.Succeeded)
@@ -202,7 +200,7 @@ namespace Blitz.Web.Cronjobs
             {
                 return NotFound();
             }
-            
+
             // OPTIMIZE: dont load everything before authorization
             // var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
             // if (!result.Succeeded)
@@ -232,7 +230,7 @@ namespace Blitz.Web.Cronjobs
             {
                 return NotFound();
             }
-            
+
             // OPTIMIZE: dont load everything before authorization
             var result = await _authorizationService.AuthorizeAsync(User, cronjob, AuthorizationPolicies.RequireProjectManagerPolicy);
             if (!result.Succeeded)
@@ -243,10 +241,8 @@ namespace Blitz.Web.Cronjobs
             var removables = await _db.Executions.Where(e => e.CronjobId == id)
                 .ToListAsync(cancellationToken);
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             _db.RemoveRange(removables);
             await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
 
             return NoContent();
         }

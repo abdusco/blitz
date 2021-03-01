@@ -70,10 +70,8 @@ namespace Blitz.Web.Projects
                 return BadRequest();
             }
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.AddAsync(project, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
 
             return project.Id;
         }
@@ -90,10 +88,8 @@ namespace Blitz.Web.Projects
                 return NotFound();
             }
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             _db.Remove(existing);
             await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
 
             return NoContent();
         }
