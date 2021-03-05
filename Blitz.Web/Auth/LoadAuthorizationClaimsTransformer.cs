@@ -2,9 +2,8 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
-using Blitz.Web.Projects;
+using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -24,7 +23,13 @@ namespace Blitz.Web.Auth
 
         public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
         {
-            var id = new Guid(principal.FindFirstValue(ClaimTypes.NameIdentifier));
+            var alreadyPopulated = principal.GetClaimsOfType(ClaimTypes.Role).Any();
+            if (alreadyPopulated)
+            {
+                return principal;
+            }
+
+            var id = new Guid(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue(JwtClaimTypes.Subject));
             var user = await _dbContext.Users
                 .Include(e => e.Roles)
                 .Include(e => e.Claims)
