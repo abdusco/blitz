@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+  blitz:
+    command: --seed
+    environment:
+      - ConnectionStrings__BlitzPostgres=Server=db;Database=blitz;UserId=blitz;Password=blitz
+    build:
+      context: .
+      target: app
+    ports:
+      - '5001:80'
+    depends_on:
+      - db
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_USER=blitz
+      - POSTGRES_PASSWORD=blitz
+      - POSTGRES_DB=blitz
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data:/var/lib/postgresql/data/pgdata
+    
