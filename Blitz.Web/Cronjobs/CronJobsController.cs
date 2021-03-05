@@ -110,7 +110,7 @@ namespace Blitz.Web.Cronjobs
         // [Authorize(Roles = "pm")]
         [HttpPost]
         public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
-            CronjobCreateDto request,
+            CronjobCreateRequest request,
             CancellationToken cancellationToken
         )
         {
@@ -273,7 +273,7 @@ namespace Blitz.Web.Cronjobs
     }
 
     [AutoMap(typeof(Cronjob), ReverseMap = true)]
-    public class CronjobCreateDto
+    public class CronjobCreateRequest
     {
         public Guid ProjectId { get; set; }
         public string Title { get; set; }
