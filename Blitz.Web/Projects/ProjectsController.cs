@@ -15,38 +15,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Projects
 {
+    [Authorize(Roles = "admin,pm")]
     public class ProjectsController : ApiController
     {
-        private readonly IAuthorizationService _authorizationService;
         private readonly BlitzDbContext _db;
         private readonly IMapper _mapper;
 
-        public ProjectsController(BlitzDbContext db, IMapper mapper, IAuthorizationService authorizationService)
+        public ProjectsController(BlitzDbContext db,
+                                  IMapper mapper)
         {
             _db = db;
             _mapper = mapper;
-            _authorizationService = authorizationService;
         }
 
-        // [Authorize(Roles = "pm")]
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
         {
-            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             return await _db.Projects
-                // .Where(p => User.IsAdmin() || projectGrants.Contains(p.Id.ToString()))
+                .Where(p => User.IsInRole("admin") || projectGrants.Contains(p.Id.ToString()))
                 .OrderBy(p => p.Title)
                 .ProjectTo<ProjectListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
 
-        // [Authorize(Roles = "pm")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
             var project = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
                 .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
+
             // OPTIMIZE: dont load everything before authorization
             // var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
             // if (!result.Succeeded)
@@ -57,7 +56,6 @@ namespace Blitz.Web.Projects
             return _mapper.Map<ProjectDetailsDto>(project);
         }
 
-        // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
         [HttpPost]
         public async Task<ActionResult<Guid>> CreateProject(
             ProjectCreateDto request,
@@ -76,7 +74,7 @@ namespace Blitz.Web.Projects
             return project.Id;
         }
 
-        // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
         {
