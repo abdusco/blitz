@@ -30,10 +30,21 @@ namespace Blitz.Web.Cronjobs
         public Guid ProjectId { get; set; }
         public Project Project { get; set; }
         public string Title { get; set; }
+
+        public string Description { get; set; }
         public CronExpression Cron { get; set; }
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; } = true;
+
+        private Cronjob()
+        {
+        }
+
+        public Cronjob(Project project)
+        {
+            Project = project;
+        }
 
         public List<Execution> Executions { get; set; } = new();
         public Execution LastExecution => Executions.OrderByDescending(e => e.CreatedAt).FirstOrDefault();
