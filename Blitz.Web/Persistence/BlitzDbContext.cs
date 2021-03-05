@@ -57,7 +57,11 @@ namespace Blitz.Web.Persistence
                         .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
                 }
             );
-            modelBuilder.Entity<Project>(builder => builder.HasIndex(p => p.Title).IsUnique());
+            modelBuilder.Entity<Project>(builder =>
+            {
+                builder.HasIndex(p => p.Title).IsUnique();
+                builder.HasIndex(e => new {e.Title, e.Version}).IsUnique();
+            });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
                 {
