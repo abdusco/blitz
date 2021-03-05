@@ -11,10 +11,10 @@ namespace Blitz.Web.Http
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            operation.Summary = context.MethodInfo.Name.Titleize();
+            operation.Summary ??= context.MethodInfo.Name.Titleize();
 
             operation.Responses.Add("401", new OpenApiResponse {Description = "Unauthorized"});
-            
+
             var appliedAuthPolicies = context.ApiDescription.ActionDescriptor.EndpointMetadata
                 .OfType<AuthorizeAttribute>()
                 .Where(a => a.Policy != null)
@@ -22,7 +22,7 @@ namespace Blitz.Web.Http
             if (appliedAuthPolicies.Any())
             {
                 operation.Responses.Add("403", new OpenApiResponse {Description = "Forbidden"});
-                operation.Description = $"<b>Authorized ({string.Join(", ", appliedAuthPolicies)})</b>";
+                operation.Description ??= $"<b>Authorized ({string.Join(", ", appliedAuthPolicies)})</b>";
             }
         }
     }
