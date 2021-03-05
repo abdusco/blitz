@@ -32,8 +32,8 @@ namespace Blitz.Web.Cronjobs
             CancellationToken cancellationToken = default
         )
         {
-            limit = Math.Clamp(limit, 0, 20);
-            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
+            limit = Math.Clamp(limit, 0, 50);
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             var results = await _db.Executions
                 .Include(e => e.Cronjob)
                 .ThenInclude(c => c.Project)
