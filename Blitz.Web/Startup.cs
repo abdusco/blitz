@@ -68,7 +68,19 @@ namespace Blitz.Web
 
             // services.AddTransient<IdentitySeeder>();
             services.AddAutoMapper(typeof(Startup).Assembly);
-            services.AddDbContext<BlitzDbContext>(ConfigureDbContext);
+            services.AddDbContext<BlitzDbContext>(builder =>
+            {
+                builder = builder
+                    .EnableDetailedErrors(Environment.IsDevelopment())
+                    .EnableSensitiveDataLogging(Environment.IsDevelopment());
+                if (Configuration.GetConnectionString("BlitzPostgres") is { } postgresDsn)
+                {
+                    builder = builder.UseNpgsql(
+                        postgresDsn,
+                        pg => pg.MigrationsHistoryTable("__ef_migrations")
+                    );
+                }
+            });
             services.AddTransient<IdentitySeeder>();
 
             services.AddRouting(o => o.LowercaseUrls = true);
@@ -166,7 +178,6 @@ namespace Blitz.Web
                                 // {
                                 // }
 
-
                                 return ValueTask.CompletedTask;
                             });
                         });
@@ -238,7 +249,7 @@ namespace Blitz.Web
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
                 })
-                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "thy", o =>
+                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "THY", o =>
                 {
                     o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 
@@ -321,6 +332,10 @@ namespace Blitz.Web
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.All
+            });
             app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseStaticFiles();
 
@@ -360,27 +375,6 @@ namespace Blitz.Web
             //         spa.Options.SourcePath = "ClientApp";
             //         spa.UseProxyToSpaDevelopmentServer("http://localhost:5002");
             //     });
-            // }
-        }
-
-        private void ConfigureDbContext(DbContextOptionsBuilder builder)
-        {
-            builder = builder
-                .EnableDetailedErrors()
-                .EnableSensitiveDataLogging();
-
-            if (Configuration.GetConnectionString("BlitzPostgres") is { } postgresDsn)
-            {
-                builder = builder.UseNpgsql(postgresDsn, pg => pg.MigrationsHistoryTable("__ef_migrations"));
-            }
-
-            // else if (Configuration.GetConnectionString("BlitzSqlServer") is { } sqlServerDsn)
-            // {
-            //     builder = builder.UseSqlServer(sqlServerDsn);
-            // }
-            // else if (Configuration.GetConnectionString("BlitzSqlite") is { } sqliteDsn)
-            // {
-            //     builder = builder.UseSqlite(sqliteDsn);
             // }
         }
     }
