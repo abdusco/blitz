@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Cronjobs
 {
+    [Authorize(Roles = "admin,pm")]
     public class CronjobsController : ApiController
     {
         private readonly IAuthorizationService _authorizationService;
@@ -37,13 +38,12 @@ namespace Blitz.Web.Cronjobs
             _authorizationService = authorizationService;
         }
 
-        // [Authorize(Roles = "pm,admin")]
         [HttpGet]
         public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
-            var projectGrants = User.GetClaimsOfType(AppClaimTypes.ProjectManager);
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             var cronjobs = await _db.Cronjobs
-                // .Where(e => User.IsAdmin() || projectGrants.Contains(e.ProjectId.ToString()))
+                .Where(e => User.IsInRole("admin") || projectGrants.Contains(e.ProjectId.ToString()))
                 .Include(c => c.Project)
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .OrderByDescending(p => p.CreatedAt)
@@ -120,11 +120,12 @@ namespace Blitz.Web.Cronjobs
                 return BadRequest(new ProblemDetails {Detail = "No such project"});
             }
 
-            // var result = await _authorizationService.AuthorizeAsync(User, new Project{Id = request.ProjectId}, AuthorizationPolicies.RequireProjectManagerPolicy);
-            // if (!result.Succeeded)
-            // {
-            //     return Forbid();
-            // }
+            var project = await _db.Projects.FindAsync(request.ProjectId);
+            var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
+            if (!result.Succeeded)
+            {
+                return Forbid();
+            }
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.AddAsync(cronjob, cancellationToken);

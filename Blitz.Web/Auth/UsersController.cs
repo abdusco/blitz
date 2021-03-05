@@ -8,13 +8,12 @@ using AutoMapper;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
-using Blitz.Web.Projects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
 {
-    // [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
     public class UsersController : ApiController
     {
         private readonly BlitzDbContext _dbContext;
@@ -39,6 +38,7 @@ namespace Blitz.Web.Auth
         [AutoMap(typeof(UserClaim), ReverseMap = true)]
         public record UserClaimListDto(Guid Id, string ClaimType, string ClaimValue);
 
+        [Authorize(Roles = "admin")]
         [HttpGet]
         public async Task<ActionResult<List<UserListDto>>> ListAllUsers(CancellationToken cancellationToken)
         {
@@ -48,6 +48,7 @@ namespace Blitz.Web.Auth
             return Ok(_mapper.Map<List<UserListDto>>(users));
         }
 
+        [Authorize(Roles = "admin")]
         [HttpGet("roles")]
         public async Task<ActionResult<List<RoleListDto>>> ListAllRoles()
         {
@@ -57,6 +58,7 @@ namespace Blitz.Web.Auth
 
         public record UserRoleUpdateRequest(List<string> RoleNames);
 
+        [Authorize(Roles = "admin")]
         [HttpPut("{userId:guid}/roles")]
         public async Task<IActionResult> UpdateUserRoles(Guid userId, UserRoleUpdateRequest request, CancellationToken cancellationToken)
         {
@@ -89,6 +91,7 @@ namespace Blitz.Web.Auth
             return NoContent();
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{userId:guid}")]
         public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
         {
@@ -133,6 +136,7 @@ namespace Blitz.Web.Auth
 
         public record UserClaimsUpdateRequest(List<Guid> ProjectIds);
 
+        [Authorize(Roles = "admin")]
         [HttpPut("{userId:guid}/claims")]
         public async Task<IActionResult> UpdateUserClaims(Guid userId, UserClaimsUpdateRequest updateRequest, CancellationToken cancellationToken)
         {
@@ -147,7 +151,7 @@ namespace Blitz.Web.Auth
             await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             var projects = await _dbContext.Projects.Where(e => updateRequest.ProjectIds.Contains(e.Id))
                 .ToListAsync(cancellationToken: cancellationToken);
-            _dbContext.RemoveRange(user.GetClaimsOfType(Project.ClaimType));
+            _dbContext.RemoveRange(user.GetClaimsOfType(AppClaimTypes.Project));
             foreach (var item in projects)
             {
                 user.AddControlledEntity(item);
