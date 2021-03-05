@@ -4,6 +4,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Auth
 {
@@ -13,6 +14,7 @@ namespace Blitz.Web.Auth
         /// Imports a user, and returns a transformed <see cref="ClaimsPrincipal"/> that represents user's local identity
         /// </summary>
         /// <param name="principal"></param>
+        /// <param name="authenticationScheme"></param>
         /// <returns></returns>
         Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal, AuthenticationScheme authenticationScheme);
     }
@@ -20,19 +22,24 @@ namespace Blitz.Web.Auth
     class ThyExternalUserImporter : IExternalUserImporter
     {
         private readonly BlitzDbContext _dbContext;
+        private readonly ILogger<ThyExternalUserImporter> _logger;
 
-        public ThyExternalUserImporter(BlitzDbContext dbContext)
+        public ThyExternalUserImporter(BlitzDbContext dbContext, ILogger<ThyExternalUserImporter> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         public async Task<ClaimsPrincipal> ImportUserAsync(ClaimsPrincipal principal, AuthenticationScheme authenticationScheme)
         {
-            var user = await _dbContext.Set<User>().FirstOrDefaultAsync(e => e.IdProvider == authenticationScheme.Name
+            var authScheme = authenticationScheme.DisplayName ?? authenticationScheme.Name;
+
+            var user = await _dbContext.Set<User>().FirstOrDefaultAsync(e => e.IdProvider == authScheme
                                                                              && e.IdProviderSub ==
                                                                              principal.FindFirstValue(ClaimTypes.NameIdentifier));
             if (user != null)
             {
+                _logger.LogInformation("Updating details of {UserName}", user.Name);
                 user.Name = principal.FindFirstValue(ClaimTypes.Name);
                 user.Email = principal.FindFirstValue(ClaimTypes.Email);
             }
@@ -42,20 +49,29 @@ namespace Blitz.Web.Auth
                 {
                     Name = principal.FindFirstValue(ClaimTypes.Name),
                     Email = principal.FindFirstValue(ClaimTypes.Email),
-                    IdProvider = authenticationScheme.Name,
+                    IdProvider = authScheme,
                     IdProviderSub = principal.FindFirstValue(ClaimTypes.NameIdentifier),
                 };
+                var isFirstUser = !await _dbContext.Users.AnyAsync();
+                if (isFirstUser)
+                {
+                    _logger.LogInformation("{User} is the first registered user, promoting to admin role", user);
+                    var adminRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == "admin");
+                    user.Roles.Add(adminRole);
+                }
+
                 await _dbContext.AddAsync(user);
             }
 
             await _dbContext.SaveChangesAsync();
 
-            var localIdentity = new ClaimsIdentity(principal.Identity.AuthenticationType);
+            var localIdentity = new ClaimsIdentity(principal.Identity!.AuthenticationType);
             localIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
             localIdentity.AddClaim(new Claim(ClaimTypes.Name, user.Name));
             return new ClaimsPrincipal(localIdentity);
         }
     }
+
     class GithubExternalUserImporter : IExternalUserImporter
     {
         private readonly BlitzDbContext _dbContext;
