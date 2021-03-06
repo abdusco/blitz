@@ -21,13 +21,9 @@ export default function Forbidden() {
                     <Logo />
                 </Heading>
 
-                <p>You are not allowed to access this page.</p>
+                <p>You are not authorized to access this page.</p>
 
                 <div>
-                    {/* Redirect user to the page before the one that caused him to come here */}
-                    <Button colorScheme="purple" onClick={() => history.go(-2)} mr={2}>
-                        Go back
-                    </Button>{' '}
                     <Button onClick={() => history.push('/')}>Go home</Button>
                 </div>
             </Centered>
