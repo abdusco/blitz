@@ -50,15 +50,15 @@ const FailedQueryNotifier: React.FC = (props) => {
                 if (err.response?.status === 401) {
                     // let user return back to where he was, unless he was already on unauthenticated page.
                     const next = history.location.pathname !== '/unauthenticated' ? history.location.pathname : '/';
-                    history.push('/unauthenticated', { next, reason: 'The session has expired.' });
+                    history.push('/unauthenticated', { next });
                     return;
                 }
 
-                if (err.response?.status === 400) {
+                if ([400, 403].includes(err.response?.status!)) {
                     toast({
                         title: 'Oops',
                         status: 'error',
-                        description: err.response.data.detail || `That doesn't seem to be allowed.`,
+                        description: err.response?.data.detail || `That doesn't seem to be allowed.`,
                         duration: 3000,
                     });
                     return;
@@ -162,17 +162,21 @@ const authOptions: AuthOptions = {
     loadUserInfo: true,
 
     async onUser(user: User | null): Promise<void> {
-        if (user) {
-            axios.defaults.headers['Authorization'] = `Bearer ${user.access_token}`;
+        if (!user) {
+            delete axios.defaults.headers['Authorization'];
+            return;
+        }
+        axios.defaults.headers['Authorization'] = `Bearer ${user.access_token}`;
+        try {
             const info = await fetchUser(user.profile.sub);
             user.profile = {
                 ...user.profile,
-                roles: info.roles.map(r => r.name),
+                roles: info.roles.map((r) => r.name),
                 claims: info.claims,
             };
-        } else {
-            delete axios.defaults.headers['Authorization'];
-        }
+        } catch (e) {}
+
+        console.log('profile', user.profile);
     },
 };
 
