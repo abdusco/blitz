@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, StarIcon } from '@chakra-ui/icons';
 import {
     AlertDialog,
     AlertDialogBody,
@@ -48,9 +48,10 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { useUserProfile } from '../lib/auth';
+import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Users() {
-    // useCheckAuth()
+    useRequireAuth('admin');
     const query = useQuery('users', fetchUsers);
     const { data, isLoading } = query;
 
@@ -62,7 +63,7 @@ export default function Users() {
             <Hero>
                 <Hero.Title>Users</Hero.Title>
                 <Hero.Summary>
-                    Users registered in <b>blitz</b> is listed here.
+                    Users registered in <b>blitz</b> are listed here.
                 </Hero.Summary>
             </Hero>
 
@@ -118,6 +119,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
                         <>
                             {value.map((r) => (
                                 <Tag key={r.id} rounded="lg" size="sm" mr={2}>
+                                    {r.name === 'admin' && <StarIcon color='orange.300' w={2} h={2} mr={1} />}
                                     {r.title || r.name}
                                 </Tag>
                             ))}
@@ -177,7 +179,7 @@ const UserClaimsPopup: React.FC<{ user: UserListDto } & UseDisclosureReturn> = (
     const projectsQuery = useQuery('projects', fetchProjects);
     const queryClient = useQueryClient();
 
-    const userClaims = userQuery.data?.claims.filter((c) => c.claimType === 'project').map((c) => c.claimValue);
+    const userClaims = userQuery.data?.claims.filter((c) => c.claimType === 'Project').map((c) => c.claimValue);
     const form = useForm<UserClaimsUpdateRequest>();
 
     const mutation = useMutation((req: UserClaimsUpdateRequest) => updateUserClaims(user.id, req), {
