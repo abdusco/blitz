@@ -1,23 +1,27 @@
+import { Heading } from '@chakra-ui/react';
+import styled from '@emotion/styled';
+import axios from 'axios';
 import React from 'react';
 import { useQuery } from 'react-query';
-import axios from 'axios';
-import styles from './home.module.scss';
 import { Link } from 'react-router-dom';
-import { Box, Heading } from '@chakra-ui/react';
 import Logo from '../components/Logo';
-import styled from '@emotion/styled';
+import { useUserProfile } from '../lib/auth';
+import { useRequireAuth } from '../lib/useRequireAuth';
+import styles from './home.module.scss';
 
 export default function Home() {
-    // useCheckAuth()
     const { data } = useQuery('home', () => axios.post('https://httpbin.org/delay/1'));
+    const user = useUserProfile();
+
     useQuery('home2', () => axios.post('https://httpbin.org/delay/3'));
 
+    const isAdmin = user?.roles?.includes('admin');
     const links = [
-        { text: 'Projects', pathname: '/projects', icon: <ProjectsIcon /> },
-        { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon /> },
+        { text: 'Projects', pathname: '/projects', icon: <ProjectsIcon />, roles: ['pm'] },
+        { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon />, roles: ['pm'] },
         { text: 'Executions', pathname: '/executions', icon: <ExecutionsIcon /> },
-        { text: 'Users', pathname: '/users', icon: <UsersIcon /> },
-    ];
+        { text: 'Users', pathname: '/users', icon: <UsersIcon />, roles: ['admin'] },
+    ].filter((it) => isAdmin || (it.roles ? it.roles?.some((r) => (user ? user.roles?.includes(r) : true)) : true));
 
     return (
         <div className={styles.home}>
@@ -25,20 +29,22 @@ export default function Home() {
                 <Heading size={'xl'} fontWeight="bold" className={styles.homeTitle} color="purple.500">
                     <Logo />
                 </Heading>
-                <ul className={styles.grid}>
-                    {links.map((link, i) => (
-                        <li key={link.pathname}>
-                            <Link to={link.pathname} className={styles.cardLink}>
-                                <HomeCard>
-                                    <div className="cardIcon">{link.icon}</div>
-                                    <Heading size={'md'} className="cardTitle">
-                                        {link.text}
-                                    </Heading>
-                                </HomeCard>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                {links.length > 0 && (
+                    <ul className={styles.grid}>
+                        {links.map((link, i) => (
+                            <li key={link.pathname}>
+                                <Link to={link.pathname} className={styles.cardLink}>
+                                    <HomeCard>
+                                        <div className="cardIcon">{link.icon}</div>
+                                        <Heading size={'md'} className="cardTitle">
+                                            {link.text}
+                                        </Heading>
+                                    </HomeCard>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         </div>
     );
