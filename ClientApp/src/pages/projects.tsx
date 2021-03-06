@@ -28,7 +28,7 @@ import DefaultLayout, { Clamp } from '../layout/layout';
 import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Projects() {
-    useRequireAuth();
+    useRequireAuth('pm');
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (
@@ -39,11 +39,7 @@ export default function Projects() {
 
             <Hero>
                 <Hero.Title>Projects</Hero.Title>
-                <Hero.Summary>
-                    Cronjobs are filed under a project.
-                    <br />
-                    You need to have created a project before creating a cronjob.
-                </Hero.Summary>
+                <Hero.Summary>Cronjobs are filed under a project.</Hero.Summary>
                 <Hero.Body>
                     <Button onClick={onOpen}>New Project</Button>
                 </Hero.Body>
@@ -117,7 +113,7 @@ const ProjectList: React.FC = () => {
                     accessor: 'title',
                     Cell: ({ row, value }) => (
                         <LinkWithState
-                            emphasize
+                            isEmphasized={true}
                             pathname={`/projects/${(row as any).original.id}`}
                             state={{ title: value }}
                         >

@@ -30,13 +30,18 @@ import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
+import { useRequireAuth } from '../lib/useRequireAuth';
+import { useRequireProjectClaim } from '../lib/useRequireProjectClaim';
 
 export default function Project() {
+    useRequireAuth('pm');
     const location = useLocation();
     const {
         params: { id },
     } = useRouteMatch<{ id: string }>();
     const { state: { title = 'Project' } = {} } = location;
+
+    useRequireProjectClaim(id);
 
     const placeholderData: ProjectDetailsDto = {
         id,
