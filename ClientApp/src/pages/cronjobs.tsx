@@ -11,8 +11,11 @@ import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
+import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Cronjobs() {
+    useRequireAuth('pm')
+    
     return (
         <DefaultLayout>
             <Head>
@@ -75,11 +78,11 @@ const CronjobList: React.FC = () => {
                     ),
                 },
                 {
-                    Header: 'URL',
+                    Header: 'Action',
                     accessor: 'url',
-                    // Cell: ({ value }) => <code>{value}</code>,
+                    Cell: ({ value, row }) => <code><b>{row.original.httpMethod}</b> { value}</code>,
                 },
-                { Header: 'Method', accessor: 'httpMethod' },
+                // { Header: 'Method', accessor: 'httpMethod' },
                 {
                     Header: 'Enabled',
                     accessor: 'enabled',

@@ -17,7 +17,7 @@ export default function Nav() {
         { pathname: '/cronjobs', text: 'Cronjobs', roles: ['pm'] },
         { pathname: '/executions', text: 'Executions', roles: ['pm'] },
         { pathname: '/users', text: 'Users', roles: ['admin'] },
-    ].filter((it) => it.roles.some((r) => (user ? user.roles?.includes(r) || isAdmin : true)));
+    ].filter((it) => isAdmin || (it.roles ? it.roles.some((r) => (user ? user.roles?.includes(r) : true)) : true));
 
     return (
         <nav className={styles.nav}>

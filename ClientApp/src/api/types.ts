@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import { UserClaimListDto } from '.';
 
 export interface ApiError extends AxiosError {}
 
@@ -11,5 +12,5 @@ export interface UserProfile {
     sub: string;
     name: string;
     roles: string[];
-    permissions: string[];
+    claims: UserClaimListDto[];
 }

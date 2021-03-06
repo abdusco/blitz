@@ -20,8 +20,10 @@ import LinkWithState from '../components/LinkWithState';
 import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { formatDateISO } from '../lib/date';
+import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Cronjob() {
+    useRequireAuth('pm')
     const {
         params: { id },
     } = useRouteMatch<{ id: string }>();
@@ -50,23 +52,21 @@ export default function Cronjob() {
             </Head>
 
             <Hero>
-                <Hero.Title>
-                    {cronjobQuery.data?.title}{' '}
+                <Hero.Title>{cronjobQuery.data?.title}</Hero.Title>
+                <Hero.Body>
+                    <QueryProgress query={cronjobQuery} />
+                    {!cronjobQuery.isPlaceholderData && cronjobQuery.data && (
+                        <CronjobDetails data={cronjobQuery.data} />
+                    )}
                     <Button
-                        ml={4}
-                        size="sm"
+                        mt={4}
+                        // size="sm"
                         colorScheme="blue"
                         isLoading={mutation.isLoading}
                         onClick={() => mutation.mutate()}
                     >
                         Trigger
                     </Button>
-                </Hero.Title>
-                <Hero.Body>
-                    <QueryProgress query={cronjobQuery} />
-                    {!cronjobQuery.isPlaceholderData && cronjobQuery.data && (
-                        <CronjobDetails data={cronjobQuery.data} />
-                    )}
                 </Hero.Body>
             </Hero>
 
