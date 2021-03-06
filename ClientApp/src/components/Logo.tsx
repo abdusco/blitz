@@ -1,10 +1,12 @@
 import styled from '@emotion/styled';
-import React from "react";
+import React from 'react';
 
 const SvgWrapper = styled.div`
     display: inline-block;
     width: 1.3em;
     height: 1.3em;
+
+    margin-left: -1rem;
     
     svg {
         fill: currentColor;
