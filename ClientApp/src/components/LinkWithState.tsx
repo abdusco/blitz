@@ -10,7 +10,7 @@ function LinkWithState(
     const { pathname, state, className, ...remaining } = props;
     return (
         <Link
-            className={clsx(className, props.isEmphasized && styles.emphasizedLink)}
+            className={clsx(className, styles.link, props.isEmphasized && styles.emphasizedLink)}
             to={{ pathname, state }}
             {...remaining}
         >
