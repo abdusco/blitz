@@ -92,7 +92,7 @@ export const triggerCronjob = async (id: string) => {
     return data;
 };
 
-export const sleep = async (duration: number = 300) =>
+export const sleep = async (duration: number = 0) =>
     new Promise((resolve) => setTimeout(resolve, duration));
 
 export const toggleCronjobEnabled = async ({ id, enabled }: { id: string; enabled: boolean }) => {
