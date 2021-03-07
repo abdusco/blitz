@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Blitz.Web.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Projects
 {
@@ -20,13 +22,22 @@ namespace Blitz.Web.Projects
     {
         private readonly BlitzDbContext _db;
         private readonly IMapper _mapper;
+        private readonly ILogger<ProjectsController> _logger;
+        private ICronjobRegistrationService _cronjobRegistrationService;
 
         public ProjectsController(BlitzDbContext db,
-                                  IMapper mapper)
+                                  IMapper mapper,
+                                  ILogger<ProjectsController> logger,
+                                  ICronjobRegistrationService cronjobRegistrationService)
         {
             _db = db;
             _mapper = mapper;
+            _logger = logger;
+            _cronjobRegistrationService = cronjobRegistrationService;
         }
+
+        [AutoMap(typeof(Project))]
+        public record ProjectListDto(Guid Id, string Title, int CronjobsCount);
 
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
@@ -39,8 +50,22 @@ namespace Blitz.Web.Projects
                 .ToListAsync(cancellationToken);
         }
 
+        [AutoMap(typeof(Project))]
+        public record ProjectDto
+        {
+            public Guid Id { get; init; }
+            public string Title { get; init; }
+            public List<CronjobListDto> Cronjobs { get; init; }
+
+            [AutoMap(typeof(Cronjob))]
+            public record CronjobListDto(Guid Id,
+                                         string Title,
+                                         string Cron,
+                                         bool Enabled);
+        }
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<ProjectDetailsDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<ProjectDto>> GetProjectDetails(Guid id, CancellationToken cancellationToken)
         {
             var project = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
@@ -53,8 +78,11 @@ namespace Blitz.Web.Projects
             //     return Forbid();
             // }
 
-            return _mapper.Map<ProjectDetailsDto>(project);
+            return _mapper.Map<ProjectDto>(project);
         }
+
+        [AutoMap(typeof(Project), ReverseMap = true)]
+        public record ProjectCreateDto(string Title);
 
         [HttpPost]
         public async Task<ActionResult<Guid>> CreateProject(
@@ -74,6 +102,73 @@ namespace Blitz.Web.Projects
             return project.Id;
         }
 
+        public record ProjectBatchCreateDto
+        {
+            [Required] public string Title { get; init; }
+            public string Version { get; init; }
+            public List<CronjobCreateDto> Cronjobs { get; init; } = new();
+
+            public record CronjobCreateDto([Required] string Title,
+                                           string Description,
+                                           [Required] string Cron,
+                                           [Required] string Url,
+                                           [Required] string HttpMethod);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("batchcreate")]
+        public async Task<ActionResult<Guid>> CreateProjectWithCronjobs(ProjectBatchCreateDto request, CancellationToken cancellationToken)
+        {
+            var project = await _db.Projects
+                .Include(e => e.Cronjobs)
+                .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);
+
+            if (project != null && project.Version == request.Version)
+            {
+                _logger.LogInformation("No changes in {ProjectTitle}", project.Title);
+                return NoContent();
+            }
+
+            if (project == null)
+            {
+                project = new Project(request.Title) {Version = request.Version};
+                await _db.AddAsync(project, cancellationToken);
+            }
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            _db.RemoveRange(project.Cronjobs);
+            foreach (var cronjob in project.Cronjobs)
+            {
+                await _cronjobRegistrationService.Remove(cronjob);
+            }
+
+            project.Cronjobs.Clear();
+
+            var updatedCronjobs = request.Cronjobs.Select(e => new Cronjob(project)
+            {
+                Title = e.Title,
+                Description = e.Description,
+                Cron = new CronExpression(e.Cron),
+                Url = e.Url,
+                HttpMethod = e.HttpMethod,
+            }).ToList();
+            foreach (var cronjob in updatedCronjobs)
+            {
+                project.AddCronjob(cronjob);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            foreach (var cronjob in updatedCronjobs)
+            {
+                await _cronjobRegistrationService.Add(cronjob);
+            }
+
+            await tx.CommitAsync(cancellationToken);
+
+            return NoContent();
+        }
+
         [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
@@ -91,37 +186,5 @@ namespace Blitz.Web.Projects
 
             return NoContent();
         }
-    }
-
-    [AutoMap(typeof(Project))]
-    public class ProjectListDto
-    {
-        public Guid Id { get; set; }
-        public string Title { get; set; }
-        public int CronjobsCount { get; set; }
-    }
-
-    [AutoMap(typeof(Project))]
-    public class ProjectDetailsDto
-    {
-        public Guid Id { get; set; }
-        public string Title { get; set; }
-        public List<CronJobOverviewDto> Cronjobs { get; set; }
-
-
-        [AutoMap(typeof(Cronjob))]
-        public class CronJobOverviewDto
-        {
-            public Guid Id { get; set; }
-            public string Title { get; set; }
-            public string Cron { get; set; }
-            public bool Enabled { get; set; }
-        }
-    }
-
-    [AutoMap(typeof(Project), ReverseMap = true)]
-    public class ProjectCreateDto
-    {
-        public string Title { get; set; }
     }
 }
