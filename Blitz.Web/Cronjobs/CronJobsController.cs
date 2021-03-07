@@ -39,7 +39,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<CronjobDetailDto>>> ListAllCronjobs(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<CronjobDto>>> ListAllCronjobs(CancellationToken cancellationToken)
         {
             var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             var cronjobs = await _db.Cronjobs
@@ -48,11 +48,11 @@ namespace Blitz.Web.Cronjobs
                 .Include(c => c.Executions.OrderByDescending(e => e.CreatedAt).Take(1))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync(cancellationToken);
-            return _mapper.Map<List<CronjobDetailDto>>(cronjobs);
+            return _mapper.Map<List<CronjobDto>>(cronjobs);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CronjobDetailDto>> GetCronjobDetails(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<CronjobDto>> GetCronjobDetails(Guid id, CancellationToken cancellationToken)
         {
             var cronjob = await _db.Cronjobs
                 .OrderByDescending(p => p.CreatedAt)
@@ -67,7 +67,7 @@ namespace Blitz.Web.Cronjobs
             //     return Forbid();
             // }
 
-            return Ok(_mapper.Map<CronjobDetailDto>(cronjob));
+            return Ok(_mapper.Map<CronjobDto>(cronjob));
         }
 
 
@@ -109,7 +109,7 @@ namespace Blitz.Web.Cronjobs
 
         // [Authorize(Roles = "pm")]
         [HttpPost]
-        public async Task<ActionResult<CronjobDetailDto>> CreateCronjob(
+        public async Task<ActionResult<CronjobDto>> CreateCronjob(
             CronjobCreateRequest request,
             CancellationToken cancellationToken
         )
@@ -133,7 +133,7 @@ namespace Blitz.Web.Cronjobs
             await _cronjobRegistrationService.Add(cronjob);
             await tx.CommitAsync(cancellationToken);
 
-            return _mapper.Map<CronjobDetailDto>(cronjob);
+            return _mapper.Map<CronjobDto>(cronjob);
         }
 
         [HttpDelete("{id}")]
@@ -260,7 +260,7 @@ namespace Blitz.Web.Cronjobs
 
 
     [AutoMap(typeof(Cronjob))]
-    public class CronjobDetailDto
+    public class CronjobDto
     {
         public Guid Id { get; set; }
         public Guid ProjectId { get; set; }
