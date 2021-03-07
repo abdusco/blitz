@@ -21,6 +21,7 @@ export default function DataTable<T extends object>(
         visibleColumns,
         rows,
         prepareRow,
+        // @ts-ignore
         state: { expanded },
     } = useTable<T>(
         {
@@ -42,10 +43,13 @@ export default function DataTable<T extends object>(
                                 return (
                                     // Add the sorting props to control sorting. For this example
                                     // we can add them into the header props
+                                    // @ts-ignore
                                     <Th {...column.getHeaderProps(column.getSortByToggleProps(column.props))}>
                                         {column.render('Header')}
                                         {/* Add a sort direction indicator */}
+                                        {/* @ts-ignore */}
                                         {column.isSorted ? (
+                                            // @ts-ignore
                                             column.isSortedDesc ? (
                                                 <ChevronDownIcon w={8} />
                                             ) : (
@@ -69,6 +73,7 @@ export default function DataTable<T extends object>(
                                 <Tr {...rowProps}>
                                     {row.cells.map((cell) => {
                                         return (
+                                            // @ts-ignore
                                             <Td {...cell.getCellProps(cell.column.props || cell.column.cellProps)}>
                                                 {cell.render('Cell')}
                                             </Td>
