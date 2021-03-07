@@ -152,11 +152,11 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     return <>{children}</>;
 };
 
-const backendBaseUrl = process.env.NODE_ENV === 'production' ? '/' : 'https://localhost:5001'
+const backendBaseUrl = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:5001'
 axios.defaults.baseURL = backendBaseUrl + '/api';
 
 const authOptions: AuthOptions = {
-    authority: backendBaseUrl,
+    authority: location.origin,
     clientId: 'demoapp',
     scope: 'openid profile',
     redirectUri: location.origin,
