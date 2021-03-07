@@ -227,15 +227,7 @@ namespace Blitz.Web
             services.AddTransient<IClaimsTransformation, LoadAuthorizationClaimsTransformer>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
-                .AddThy(Configuration)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = "https://localhost:5001";
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateAudience = false,
-                    };
-                });
+                .AddThy(Configuration);
 
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();
