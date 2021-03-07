@@ -55,6 +55,7 @@ namespace Blitz.Web.Auth
                 .AddJwtBearer(o =>
                 {
                     o.Authority = options.PublicUrl;
+                    o.RequireHttpsMetadata = false;
                     o.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateAudience = false,
