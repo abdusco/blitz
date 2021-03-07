@@ -2,7 +2,6 @@ FROM node:15-buster-slim as ui-builder
 
 WORKDIR /app
 COPY ClientApp .
-RUN npm install -g yarn
 RUN rm -rf node_modules
 RUN yarn && yarn build 
 
