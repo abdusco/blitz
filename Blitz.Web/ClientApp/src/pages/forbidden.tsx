@@ -8,7 +8,7 @@ import { CenteredFullScreen } from '../layout/layout';
 const Centered = styled.div`
     text-align: center;
     display: grid;
-    gap: 2rem;
+    gap: 1rem;
 `;
 
 export default function Forbidden() {

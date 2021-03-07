@@ -1,14 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { AuthOptions, AuthProvider, useAuth, useUserProfile } from './lib/auth';
-import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Profile, User } from 'oidc-client';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { routes } from './routes';
-import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
-import { CenteredFullScreen } from './layout/layout';
-import { fetchUser } from './api';
+import React, {useEffect, useRef, useState} from 'react';
+import {AuthOptions, AuthProvider, useAuth, useUserProfile} from './lib/auth';
+import {BrowserRouter as Router, Switch, useHistory, useLocation} from 'react-router-dom';
+import {HelmetProvider} from 'react-helmet-async';
+import {QueryClient, QueryClientProvider} from 'react-query';
+import {Profile, User} from 'oidc-client';
+import axios, {AxiosError, AxiosRequestConfig} from 'axios';
+import {routes} from './routes';
+import {ChakraProvider, CircularProgress, extendTheme, useToast} from '@chakra-ui/react';
+import {CenteredFullScreen} from './layout/layout';
+import {fetchUser} from './api';
 
 export default function App() {
     return (
@@ -22,7 +22,7 @@ export default function App() {
                                 <LoadingApp>
                                     <Switch>
                                         {/* attach key prop to stop react from complaining */}
-                                        {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
+                                        {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
                                     </Switch>
                                 </LoadingApp>
                             </FailedQueryNotifier>
@@ -49,8 +49,8 @@ const FailedQueryNotifier: React.FC = (props) => {
             (err: AxiosError) => {
                 if (err.response?.status === 401) {
                     // let user return back to where he was, unless he was already on unauthenticated page.
-                    const next = history.location.pathname !== '/unauthenticated' ? history.location.pathname : '/';
-                    history.push('/unauthenticated', { next });
+                    let next = history.location.state?.next || history.location.pathname;
+                    history.push('/unauthenticated', {next});
                     return;
                 }
 
@@ -76,8 +76,8 @@ const FailedQueryNotifier: React.FC = (props) => {
                 const title = isNetworkError
                     ? 'Network error'
                     : statusCode
-                    ? `Request failed with ${statusCode}`
-                    : 'Request failed';
+                        ? `Request failed with ${statusCode}`
+                        : 'Request failed';
                 toast({
                     title: title,
                     status: 'error',
@@ -87,7 +87,7 @@ const FailedQueryNotifier: React.FC = (props) => {
                             Failed to fetch <code>{err.config.url}.</code>
                             {isNetworkError && (
                                 <>
-                                    <br />
+                                    <br/>
                                     Make sure you're online and the API can receive requests
                                 </>
                             )}
@@ -101,8 +101,8 @@ const FailedQueryNotifier: React.FC = (props) => {
 };
 
 const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
-    const { children, timeout = 400 } = props;
-    const { ready } = useAuth();
+    const {children, timeout = 400} = props;
+    const {ready} = useAuth();
     const user = useUserProfile();
     const [loaded, setLoaded] = useState(false);
     const toast = useToast();
@@ -144,7 +144,7 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     if (!loaded) {
         return (
             <CenteredFullScreen>
-                <CircularProgress isIndeterminate size={16} color="purple.500" />
+                <CircularProgress isIndeterminate size={16} color="purple.500"/>
             </CenteredFullScreen>
         );
     }
@@ -152,13 +152,14 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     return <>{children}</>;
 };
 
-axios.defaults.baseURL = 'https://localhost:5001/api';
+const backendBaseUrl = process.env.NODE_ENV === 'production' ? '/' : 'https://localhost:5001'
+axios.defaults.baseURL = backendBaseUrl + '/api';
 
 const authOptions: AuthOptions = {
-    authority: 'https://localhost:5001',
+    authority: backendBaseUrl,
     clientId: 'demoapp',
     scope: 'openid profile',
-    redirectUri: 'http://localhost:3000/',
+    redirectUri: location.origin,
     loadUserInfo: true,
 
     async onUser(user: User | null): Promise<void> {
@@ -174,7 +175,8 @@ const authOptions: AuthOptions = {
                 roles: info.roles.map((r) => r.name),
                 claims: info.claims,
             };
-        } catch (e) {}
+        } catch (e) {
+        }
 
         console.log('profile', user.profile);
     },

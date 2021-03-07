@@ -1,5 +1,5 @@
 import { Button, Heading, Stack } from '@chakra-ui/react';
-import React from 'react';
+import React, {useEffect} from 'react';
 import { useLocation } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { CenteredFullScreen } from '../layout/layout';
@@ -10,7 +10,8 @@ export default function Unauthenticated() {
     const justSignedOut = !!location.state?.signedOut;
     const { signIn } = useAuth();
     const reason = location.state?.reason;
-
+    const next = location.state?.next === location.pathname ? '/': location.state?.next;
+    
     return (
         <CenteredFullScreen>
             <Stack spacing={4}>
@@ -21,7 +22,7 @@ export default function Unauthenticated() {
                 {reason && <p>{reason}</p>}
                 {!justSignedOut && <p>You need to sign in to use the app.</p>}
 
-                <Button colorScheme="purple" onClick={() => signIn({ next: location.state?.next })}>
+                <Button colorScheme="purple" onClick={() => signIn({ next })}>
                     Sign in
                 </Button>
             </Stack>

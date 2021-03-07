@@ -10,7 +10,7 @@ export const useRequireAuth = (...anyOfRoles: string[]) => {
 
     useEffect(() => {
         if (ready && !user) {
-            router.push('/forbidden', { next: router.location.pathname });
+            router.push('/unauthenticated', { next: router.location.pathname });
         }
     }, [ready, user]);
 
@@ -25,7 +25,7 @@ export const useRequireAuth = (...anyOfRoles: string[]) => {
         }
 
         if (anyOfRoles.length && !anyOfRoles.some((r) => profile.roles?.includes(r))) {
-            router.push('/forbidden');
+            router.push('/forbidden', { next: router.location.pathname });
         }
     }, [ready, user]);
 };
