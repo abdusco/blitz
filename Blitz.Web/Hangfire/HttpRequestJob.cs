@@ -92,7 +92,7 @@ namespace Blitz.Web.Hangfire
                             ["StatusCode"] = response.StatusCode,
                             ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
                             ["Elapsed"] = timer.ElapsedMilliseconds,
-                            ["Body"] = response.Content.ToString()
+                            ["Body"] = await response.Content.ReadAsStringAsync(cancellationToken)
                         }
                     }
                 );
