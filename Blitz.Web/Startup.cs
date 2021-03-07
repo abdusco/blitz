@@ -118,8 +118,9 @@ namespace Blitz.Web
             services.AddHangfire((provider, configuration) =>
                 {
                     configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 1});
-                    configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
-                        new EFCoreStorageOptions());
+                    configuration.UseInMemoryStorage();
+                    // configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
+                    //     new EFCoreStorageOptions());
                 }
             );
             services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
@@ -315,8 +316,9 @@ namespace Blitz.Web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BlitzDbContext dbContext)
         {
-            app.SetupCronjobs();
-            app.UseGarbageCollector();
+            app
+                .InitCronjobs()
+                .InitGarbageCollector();
 
             if (env.IsDevelopment())
             {

@@ -15,7 +15,7 @@ namespace Blitz.Web.Maintenance
 {
     internal static class ApplicationBuilderExtensions
     {
-        public static void UseGarbageCollector(this IApplicationBuilder app)
+        public static void InitGarbageCollector(this IApplicationBuilder app)
         {
             var jobManager = app.ApplicationServices.GetRequiredService<IRecurringJobManager>();
             var options = app.ApplicationServices.GetRequiredService<IOptions<GarbageCollectorOptions>>().Value;
