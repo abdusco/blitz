@@ -1,5 +1,8 @@
 ﻿name: build-container
 on:
+  pull_request:
+    branches:
+      - main
   repository_dispatch:
   push:
     branches:
