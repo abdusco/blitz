@@ -1,0 +1,28 @@
+.nav {
+  display: flex;
+
+  & > * + * {
+    margin-left: 1rem;
+  }
+}
+
+.navLink {
+  font-weight: 600;
+  padding: 1rem 0;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+
+  &:hover {
+    color: var(--c-primary);
+  }
+}
+
+.active {
+  color: var(--c-primary);
+  font-weight: bold;
+}
+
+.logoLink {
+  margin-right: 2rem;
+}
