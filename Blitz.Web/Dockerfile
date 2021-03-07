@@ -2,8 +2,9 @@ FROM node:15-buster-slim as ui-builder
 
 WORKDIR /app
 COPY ClientApp .
+RUN npm install -g yarn
 RUN rm -rf node_modules
-RUN npm install && npm run build 
+RUN yarn && yarn build 
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 as builder
 
