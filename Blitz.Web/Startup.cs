@@ -76,6 +76,7 @@ namespace Blitz.Web
 
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers(options => options.Filters.Add<MappingExceptionFilter>());
+            services.AddCors(options => options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
             services.AddSwaggerGen(
                 options =>
                 {
@@ -272,7 +273,7 @@ namespace Blitz.Web
             {
                 ForwardedHeaders = ForwardedHeaders.All
             });
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors();
             app.UseStaticFiles();
 
             // app.UseHttpsRedirection();
@@ -298,20 +299,8 @@ namespace Blitz.Web
                 endpoints.MapSwagger("/openapi/{documentName}.json");
                 endpoints.MapControllers();
 
-                if (!Environment.IsDevelopment())
-                {
-                    endpoints.MapFallbackToFile("index.html");
-                }
+                endpoints.MapFallbackToFile("index.html");
             });
-
-            // if (Environment.IsDevelopment())
-            // {
-            //     app.UseSpa(spa =>
-            //     {
-            //         spa.Options.SourcePath = "ClientApp";
-            //         spa.UseProxyToSpaDevelopmentServer("http://localhost:5002");
-            //     });
-            // }
         }
     }
 }
