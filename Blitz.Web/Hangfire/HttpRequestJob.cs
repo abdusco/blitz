@@ -33,7 +33,6 @@ namespace Blitz.Web.Hangfire
                                            PerformContext context = null,
                                            CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Received cronjobId={CronjobId}", cronjobId);
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
             var cronjob = await db.Cronjobs.SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
@@ -42,6 +41,8 @@ namespace Blitz.Web.Hangfire
                 _logger.LogInformation("Cannot find a cronjob record with id={CronjobId}", cronjobId);
                 return;
             }
+
+            _logger.LogInformation("Received cronjob: {CronjobTitle}", cronjob.Title);
 
             Execution exec = null;
             if (executionId != Guid.Empty)
@@ -90,7 +91,8 @@ namespace Blitz.Web.Hangfire
                         {
                             ["StatusCode"] = response.StatusCode,
                             ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
-                            ["Elapsed"] = timer.ElapsedMilliseconds
+                            ["Elapsed"] = timer.ElapsedMilliseconds,
+                            ["Body"] = await response.Content.ReadAsStringAsync(cancellationToken)
                         }
                     }
                 );

@@ -1,0 +1,28 @@
+.hero {
+}
+
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4rem 0 2rem;
+}
+
+.heroTitle {
+  color: var(--c-primary);
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.heroSummary {
+  opacity: 0.6;
+  margin: 1em 0;
+
+  & > p {
+    margin-top: 0;
+  }
+}
+
+.heroBody {
+  margin: 2rem 0;
+}

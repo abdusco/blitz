@@ -1,0 +1,45 @@
+.narrow {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wide {
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+.centered {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  transition: opacity 0.2s;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+
+.username {
+  display: inline-block;
+  margin-right: 1rem;
+}

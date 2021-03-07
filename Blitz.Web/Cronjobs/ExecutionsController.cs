@@ -5,8 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,15 +28,16 @@ namespace Blitz.Web.Cronjobs
         [HttpGet]
         public async Task<ActionResult<List<ExecutionListDto>>> ListLatestExecutions(
             int skip = 0,
-            int limit = 20,
+            int limit = 30,
             CancellationToken cancellationToken = default
         )
         {
-            limit = Math.Clamp(limit, 0, 20);
-
+            limit = Math.Clamp(limit, 0, 50);
+            var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             var results = await _db.Executions
                 .Include(e => e.Cronjob)
                 .ThenInclude(c => c.Project)
+                // .Where(e => User.IsInRole("admin") || projectGrants.Contains(e.Cronjob.ProjectId.ToString()))
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .OrderByDescending(e => e.CreatedAt)
                 .Take(limit)
@@ -69,8 +72,9 @@ namespace Blitz.Web.Cronjobs
         }
 
 
+        [AllowAnonymous]
         [HttpPost("{id}/status")]
-        public async Task<ActionResult> UpdateStatus(
+        public async Task<ActionResult> UpdateExecutionStatus(
             Guid id,
             ExecutionStatusCreateDto update,
             CancellationToken cancellationToken

@@ -5,7 +5,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
+using Blitz.Web.Identity;
 using Blitz.Web.Projects;
+using Hangfire.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -17,6 +20,10 @@ namespace Blitz.Web.Persistence
         public DbSet<Cronjob> Cronjobs { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStatus> StatusUpdates { get; set; }
+        
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserClaim> UserClaims { get; set; }
 
         public BlitzDbContext(DbContextOptions<BlitzDbContext> options)
             : base(options)
@@ -39,11 +46,22 @@ namespace Blitz.Web.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // add hangfire models
+            modelBuilder.OnHangfireModelCreating();
+
             modelBuilder.Entity<Cronjob>(
-                builder => builder.Property(e => e.Cron)
-                    .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal))
+                builder =>
+                {
+                    builder.Property(e => e.ProjectId).IsRequired();
+                    builder.Property(e => e.Cron)
+                        .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
+                }
             );
-            modelBuilder.Entity<Project>(builder => builder.HasIndex(p => p.Title).IsUnique());
+            modelBuilder.Entity<Project>(builder =>
+            {
+                builder.HasIndex(p => p.Title).IsUnique();
+                builder.HasIndex(e => new {e.Title, e.Version}).IsUnique();
+            });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
                 {
@@ -57,6 +75,36 @@ namespace Blitz.Web.Persistence
                     );
                 }
             );
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.ToTable("Users");
+                builder.Property(e => e.Name).IsRequired();
+                builder.Property(e => e.Email).IsRequired();
+                builder.HasIndex(e => e.Email).IsUnique();
+                builder
+                    .HasMany(e => e.Roles)
+                    .WithMany(r => r.Users)
+                    .UsingEntity<Dictionary<string, object>>(
+                        "UserRole",
+                        m2m => m2m.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+                        m2m => m2m.HasOne<User>().WithMany().HasForeignKey("UserId")
+                    );
+                builder.HasMany<UserClaim>(e => e.Claims).WithOne(e => e.User);
+            });
+            modelBuilder.Entity<Role>(builder =>
+            {
+                builder.ToTable("Roles");
+                builder.Property(e => e.Name).IsRequired();
+                builder.HasIndex(e => e.Name).IsUnique();
+            });
+            modelBuilder.Entity<UserClaim>(builder =>
+            {
+                builder.ToTable("UserClaims");
+                builder.Property(e => e.UserId).IsRequired();
+                builder.Property(e => e.ClaimType).IsRequired();
+                builder.Property(e => e.ClaimValue).IsRequired();
+                builder.HasIndex(e => e.ClaimType);
+            });
 
             modelBuilder.ConfigureTimestamps();
             modelBuilder.ApplyNamingConventions();

@@ -15,7 +15,7 @@ namespace Blitz.Web.Maintenance
 {
     internal static class ApplicationBuilderExtensions
     {
-        public static void UseGarbageCollector(this IApplicationBuilder app)
+        public static void InitGarbageCollector(this IApplicationBuilder app)
         {
             var jobManager = app.ApplicationServices.GetRequiredService<IRecurringJobManager>();
             var options = app.ApplicationServices.GetRequiredService<IOptions<GarbageCollectorOptions>>().Value;
@@ -50,8 +50,8 @@ namespace Blitz.Web.Maintenance
     internal class GarbageCollectorOptions
     {
         public string Schedule { get; set; } = "*/5 * * * *";
-        public int MinAgeMinutes { get; set; } = 30;
-        public int MinKeptRecentExecutions { get; set; } = 10;
+        public int MinAgeMinutes { get; set; } = 1440;
+        public int MinKeptRecentExecutions { get; set; } = 15;
         public bool Enabled { get; set; } = true;
     }
 
