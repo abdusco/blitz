@@ -223,53 +223,10 @@ namespace Blitz.Web
 
 
             services.AddTransient<IExternalUserImporter, ThyExternalUserImporter>();
-            services.AddTransient<IExternalUserImporter, GithubExternalUserImporter>();
             services.AddTransient<IClaimsTransformation, LoadAuthorizationClaimsTransformer>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddCookie()
-                .AddGitHub(o =>
-                {
-                    o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    o.ClientId = "b490f873d28551214a13";
-                    o.ClientSecret = "ae08a9dc20e7031474cfe7087265dd9ea9a08bb6";
-                    o.CallbackPath = "/-/auth/callback/github";
-                    o.ClaimActions.Remove(ClaimTypes.Name);
-                    o.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-                    o.Events.OnTicketReceived = async context =>
-                    {
-                        var importer = context.HttpContext.RequestServices.GetRequiredService<GithubExternalUserImporter>();
-                        context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
-                    };
-                })
-                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "THY", o =>
-                {
-                    o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
-                    o.Authority = "https://devauth.thyteknik.com.tr";
-                    o.ClientId = "demoapp";
-                    o.ClientSecret = "ed6fa02b-aee0-7d5a-1b04-848b13085a6f";
-                    o.UsePkce = true;
-                    o.CallbackPath = "/-/auth/callback";
-                    o.RequireHttpsMetadata = false;
-                    o.ResponseType = OpenIdConnectResponseType.Code;
-                    o.GetClaimsFromUserInfoEndpoint = true;
-
-                    o.Scope.Add("openid");
-                    o.Scope.Add("profile");
-
-                    // we only need name, employee id and email
-                    o.ClaimActions.Clear();
-                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
-                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, JwtClaimTypes.Subject);
-                    o.ClaimActions.MapJsonKey(ClaimTypes.Email, JwtClaimTypes.Email);
-                    o.ClaimActions.Add(new ThyAuthUserClaimsAction(default, default));
-
-                    o.Events.OnTicketReceived = async context =>
-                    {
-                        var importer = context.HttpContext.RequestServices.GetRequiredService<ThyExternalUserImporter>();
-                        context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
-                    };
-                })
+                .AddThy(Configuration)
                 .AddJwtBearer(options =>
                 {
                     options.Authority = "https://localhost:5001";
@@ -297,20 +254,6 @@ namespace Blitz.Web
 
             services.AddHttpContextAccessor();
             services.AddSpaStaticFiles(options => { options.RootPath = "ClientApp/build"; });
-        }
-
-        private class ThyAuthUserClaimsAction : ClaimAction
-        {
-            public ThyAuthUserClaimsAction(string claimType, string valueType) : base(claimType, valueType)
-            {
-            }
-
-            public override void Run(JsonElement userData, ClaimsIdentity identity, string issuer)
-            {
-                var fullName = $"{userData.GetString("first_name")} {userData.GetString("surname")}";
-                identity.AddClaim(new Claim(ClaimTypes.Name, fullName));
-                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userData.GetString("sub")));
-            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

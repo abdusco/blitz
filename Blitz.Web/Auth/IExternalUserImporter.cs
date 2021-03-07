@@ -37,21 +37,24 @@ namespace Blitz.Web.Auth
             var user = await _dbContext.Set<User>().FirstOrDefaultAsync(e => e.IdProvider == authScheme
                                                                              && e.IdProviderSub ==
                                                                              principal.FindFirstValue(ClaimTypes.NameIdentifier));
+            var fullName = $"{principal.FindFirstValue("first_name")} {principal.FindFirstValue("surname")}";
+            var email = principal.FindFirstValue("email");
             if (user != null)
             {
                 _logger.LogInformation("Updating details of {UserName}", user.Name);
-                user.Name = principal.FindFirstValue(ClaimTypes.Name);
-                user.Email = principal.FindFirstValue(ClaimTypes.Email);
+                user.Name = fullName;
+                user.Email = email;
             }
             else
             {
                 user = new User
                 {
-                    Name = principal.FindFirstValue(ClaimTypes.Name),
-                    Email = principal.FindFirstValue(ClaimTypes.Email),
+                    Name = fullName,
+                    Email = email,
                     IdProvider = authScheme,
                     IdProviderSub = principal.FindFirstValue(ClaimTypes.NameIdentifier),
                 };
+                
                 var isFirstUser = !await _dbContext.Users.AnyAsync();
                 if (isFirstUser)
                 {
