@@ -131,12 +131,21 @@ namespace Blitz.Web
                 })
                 .AddCookie(AppAuthenticationConstants.ApplicationScheme, options =>
                 {
-                    options.LoginPath = "/-/auth/login";
-                    options.Events.OnRedirectToAccessDenied = context =>
+                    options.LoginPath = "/auth/login";
+                    options.Events.OnRedirectToLogin = context =>
                     {
                         if (context.Request.IsApiRequest())
                         {
                             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        }
+
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        if (context.Request.IsApiRequest())
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
                         }
 
                         return Task.CompletedTask;
