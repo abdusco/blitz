@@ -1,5 +1,5 @@
 // taken from https://github.com/cheap-glitch/mi-cron
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 /*!
  * mi-cron
