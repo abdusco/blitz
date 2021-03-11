@@ -1,17 +1,20 @@
-import { Button, Heading, Stack } from '@chakra-ui/react';
-import React, {useEffect} from 'react';
-import { useLocation } from 'react-router-dom';
+import { Button, Heading, HStack, Stack } from '@chakra-ui/react';
+import React, { useEffect } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { CenteredFullScreen } from '../layout/layout';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../lib/JwtAuthProvider';
 
 export default function Unauthenticated() {
     const location = useLocation();
+    const history = useHistory();
     const justSignedOut = !!location.state?.signedOut;
-    const { signIn } = useAuth();
+    const { login } = useAuth();
     const reason = location.state?.reason;
-    const next = location.state?.next === location.pathname ? '/': location.state?.next;
-    
+    const next = location.state?.next === location.pathname ? '/' : location.state?.next;
+
+    console.log({ justSignedOut });
+
     return (
         <CenteredFullScreen>
             <Stack spacing={4}>
@@ -22,9 +25,12 @@ export default function Unauthenticated() {
                 {reason && <p>{reason}</p>}
                 {!justSignedOut && <p>You need to sign in to use the app.</p>}
 
-                <Button colorScheme="purple" onClick={() => signIn({ next })}>
-                    Sign in
-                </Button>
+                <HStack spacing={4} justifyContent="center">
+                    {justSignedOut && <Button onClick={() => history.push('/')}>Go home</Button>}
+                    <Button colorScheme="purple" onClick={() => login({ next })}>
+                        Sign in
+                    </Button>
+                </HStack>
             </Stack>
         </CenteredFullScreen>
     );

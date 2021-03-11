@@ -1,151 +1,159 @@
-import React, { useEffect, useState } from 'react';
-import oidc, { Profile, User, UserManager, UserManagerSettings, WebStorageStateStore } from 'oidc-client';
-import { useHistory } from 'react-router-dom';
-import { UserProfile } from '../api';
+import axios from 'axios';
+import React, { useContext, useEffect, useState } from 'react';
+import decodeJwt from 'jwt-decode';
+import { useHistory } from 'react-router';
 
-oidc.Log.logger = console;
-
-// oidc.Log.level = oidc.Log.DEBUG;
-
-export interface AuthOptions
-    extends Omit<UserManagerSettings, 'authority' | 'client_id' | 'client_secret' | 'redirect_uri' | 'scope'> {
-    autoSignIn?: boolean;
-    authority: string;
-    clientId: string;
-    scope: string;
-    redirectUri?: string;
-
-    onUser: (user: User | null) => Promise<void>;
-
-    [oidcOptsKey: string]: any;
+export interface JwtAuthOptions {
+    tokenUrl: string;
+    loginUrl: string;
+    logoutUrl: string;
+    onUser?(user: User, claims: Jwt): Promise<User>;
 }
 
-export interface AuthContextProps {
+export interface User {
+    sub: string;
+    name: string;
+    roles: string[];
+    claims: { claimType: string; claimValue: string }[];
+    accessToken: string;
+    hasRole(...role: string[]): boolean;
+    hasClaim(claimType: string, claimValue: string): boolean;
+}
+
+interface AuthContextValue {
     user: User | null;
     ready: boolean;
-    signIn: (state?: unknown) => Promise<void>;
-    signOut: () => Promise<void>;
-    signOutRedirect: (args?: unknown) => Promise<void>;
+    login(state: any): Promise<void>;
+    logout(): Promise<void>;
 }
 
-const hasCodeInUrl = (location: Location): boolean => {
-    const searchParams = new URLSearchParams(location.search);
-    return ['code', 'state'].every((key) => searchParams.has(key));
+const AuthContext = React.createContext<AuthContextValue>({} as any);
+interface TokenResponse {
+    accessToken: string;
+}
+
+interface Jwt {
+    exp: number;
+    sub: string;
+    unique_name: string;
+    role: string[];
+    claims: any[];
+    [claim: string]: any;
+}
+
+const decodeToken = (token: string | null): Jwt | null => {
+    if (!token) return null;
+
+    const decoded = decodeJwt<Jwt>(token);
+    const expiresAtSeconds = decoded.exp;
+    const nowSeconds = Math.floor(+new Date() / 1000);
+    const remainingLife = expiresAtSeconds - nowSeconds;
+
+    if (remainingLife <= 60) {
+        console.log('Token expired');
+        return null;
+    }
+
+    console.info('Token will expire in', remainingLife, 'seconds');
+    return decoded;
 };
 
-const clearAuthQuery = () => {
-    const url = new URL(window.location.href);
-    url.search = '';
-    history.replaceState(null, document.title, url.toString());
-};
-
-export const initUserManager = (options: AuthOptions): UserManager => {
-    return new UserManager({
-        ...options,
-        authority: options.authority,
-        client_id: options.clientId,
-        redirect_uri: options.redirectUri,
-        post_logout_redirect_uri: options.redirectUri,
-        response_type: options.responseType || 'code',
-        response_mode: 'query',
-        scope: options.scope || 'openid',
-        automaticSilentRenew: options.automaticSilentRenew,
-        monitorSession: false,
-        stateStore: new WebStorageStateStore({ store: localStorage }),
-        userStore: new WebStorageStateStore({ store: localStorage }),
-    });
-};
-
-const noop = (params: any) => Promise.resolve();
-
-const AuthContext = React.createContext<AuthContextProps>({} as any);
-export const AuthProvider: React.FC<{ options: AuthOptions }> = (props) => {
-    const history = useHistory();
-    const { children, options } = props;
-    const { onUser = noop } = options;
-    const [userState, setUserState] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ options: JwtAuthOptions }> = (props) => {
+    const { options } = props;
+    const [user, setUser] = useState<User | null>(null);
     const [ready, setReady] = useState(false);
-
-    const userManager = initUserManager(options);
-
-    const signOutHooks = async (): Promise<void> => {
-        setUserState(null);
-    };
+    const history = useHistory();
 
     useEffect(() => {
         const getUser = async () => {
-            if (hasCodeInUrl(location)) {
-                const user = await userManager.signinCallback();
-                await onUser(user);
-                setUserState(user);
-                clearAuthQuery();
+            let token = localStorage.getItem('token');
+            let jwtClaims = decodeToken(token);
+            if (!jwtClaims) {
+                const res = await axios.post<TokenResponse>(options.tokenUrl, null, {
+                    withCredentials: true,
+                });
 
-                if (user.state?.next) {
-                    history.push(user.state?.next);
-                }
-            } else {
-                const user = await userManager!.getUser();
-                if (user && !user.expired) {
-                    await onUser(user);
-                    setUserState(user);
-                } else if (options.autoSignIn) {
-                    await userManager.signinRedirect();
+                if (res?.status === 200) {
+                    token = res.data.accessToken;
+                    jwtClaims = decodeToken(res.data.accessToken)!;
+                } else {
+                    console.log('User is not authenticated');
+                    setReady(true);
+                    return;
                 }
             }
-        };
-        const updateUserData = async () => {
-            const user = await userManager.getUser();
-            await onUser(user);
-            setUserState(user);
-            setReady(true);
+
+            if (jwtClaims) {
+                localStorage.setItem('token', token!);
+
+                let jwtUser: User = {
+                    ...jwtClaims,
+                    sub: jwtClaims.sub,
+                    name: jwtClaims.unique_name,
+                    claims: jwtClaims.claims || [],
+                    roles: jwtClaims.role || [],
+                    accessToken: token!,
+                    hasRole(...roles: string[]) {
+                        return roles.some((r) => this.roles.includes(r));
+                    },
+                    hasClaim(claimType, claimValue) {
+                        return (
+                            this[claimType] === claimValue ||
+                            this.claims.some((c) => c?.claimType === claimType && c?.claimValue === claimValue)
+                        );
+                    },
+                };
+
+                if (options.onUser) {
+                    jwtUser = await options.onUser(jwtUser, jwtClaims);
+                }
+
+                const url = new URL(window.location.href);
+                const stateJson = url.searchParams.get('state') || '{}';
+                const state = JSON.parse(stateJson);
+                window.history.replaceState(null, document.title, url.toString());
+
+                setUser(jwtUser);
+                if (state.next) {
+                    history.push({ pathname: state.next });
+                }
+                setReady(true);
+            }
         };
 
-        getUser().then(() => setReady(true));
-
-        userManager.events.addUserLoaded(updateUserData);
-        return () => userManager.events.removeUserLoaded(updateUserData);
+        getUser();
     }, []);
 
     return (
         <AuthContext.Provider
             value={{
-                user: userState,
+                user,
                 ready,
-                signIn: async (state: unknown): Promise<void> => {
-                    await userManager.removeUser();
-                    await userManager.clearStaleState();
-                    await userManager.signinRedirect({ state });
+                async login(state: any) {
+                    const url = new URL(window.location.href);
+                    if (state) {
+                        url.searchParams.append('state', JSON.stringify(state));
+                    }
+                    console.log('Redirecting to login page. Once logged in, will return to', url.toString());
+                    const returnUrl = `${options.loginUrl}?returnUrl=${encodeURIComponent(url.toString())}`;
+                    window.location.href = returnUrl;
                 },
-                signOut: async (): Promise<void> => {
-                    await userManager.removeUser();
-                    await signOutHooks();
-                },
-                signOutRedirect: async (args?: unknown): Promise<void> => {
-                    await userManager.signoutRedirect(args);
-                    await signOutHooks();
+                async logout() {
+                    localStorage.removeItem('token');
+                    setUser(null);
+
+                    const url = new URL(window.location.href);
+                    url.pathname = '/';
+                    url.search = '';
+                    url.hash = '';
+                    const returnUrl = `${options.logoutUrl}?returnUrl=${encodeURIComponent(url.toString())}`;
+                    window.location.href = returnUrl;
                 },
             }}
         >
-            {children}
+            {props.children}
         </AuthContext.Provider>
     );
 };
-export const useAuth = () => React.useContext(AuthContext);
 
-export function useToken(): string | null {
-    const { user } = useAuth();
-    if (!user) {
-        return null;
-    }
-
-    return user!.access_token;
-}
-
-export function useUserProfile(): UserProfile | null {
-    const auth = useAuth();
-    if (!auth.user) {
-        return null;
-    }
-
-    return (auth.user?.profile as unknown) as UserProfile;
-}
+export const useAuth = () => useContext(AuthContext);

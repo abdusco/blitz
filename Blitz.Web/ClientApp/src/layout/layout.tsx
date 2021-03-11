@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { useIsFetching } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { useAuth, useUserProfile } from '../lib/auth';
+import { useAuth } from '../lib/JwtAuthProvider';
 import styles from './layout.module.scss';
 import Nav from './nav';
 
@@ -48,30 +48,29 @@ function GlobalSpinner() {
 
 function LoginInfo() {
     const auth = useAuth();
-    const user = useUserProfile();
     const location = useLocation();
     const history = useHistory();
     const toast = useToast();
 
     const signOut = async () => {
-        await auth.signOut();
-        history.push('/unauthenticated', { next: location.pathname });
-        toast({
-            title: 'Signed out',
-            description: `You've been signed out successfully.`,
-            duration: 2000,
-            position: 'top',
-        });
+        // history.push('/unauthenticated', { next: location.pathname, signedOut: true });
+        // toast({
+        //     title: 'Signed out',
+        //     description: `You've been signed out successfully.`,
+        //     duration: 2000,
+        //     position: 'top',
+        // });
+        await auth.logout();
     };
 
     if (!auth.user) {
-        return <Button onClick={() => auth.signIn(location.pathname)}>Log in</Button>;
+        return <Button onClick={() => auth.login({ next: location.pathname })}>Log in</Button>;
     }
 
     return (
         <Menu>
             <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                {user && user.name}
+                {auth.user && auth.user.name}
             </MenuButton>
             <MenuList>
                 <MenuItem onClick={signOut}>Log out</MenuItem>

@@ -47,8 +47,8 @@ import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
 import DefaultLayout, { Clamp } from '../layout/layout';
-import { useUserProfile } from '../lib/auth';
 import { useRequireAuth } from '../lib/useRequireAuth';
+import { useAuth } from '../lib/JwtAuthProvider';
 
 export default function Users() {
     useRequireAuth('admin');
@@ -80,7 +80,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
     const claimsPopup = useDisclosure();
     const rolesPopup = useDisclosure();
     const confirmDeleteDialog = useDisclosure();
-    const authUser = useUserProfile();
+    const {user: authUser} = useAuth();
 
     const openRolesPopup = (user: UserListDto) => {
         setUser(user);
@@ -97,7 +97,7 @@ const UsersList: React.FC<{ data: UserListDto[] }> = ({ data }) => {
         confirmDeleteDialog.onOpen();
     };
 
-    const isSelf = (row: Row<UserListDto>) => row.original.id === authUser?.sub;
+    const isSelf = (row: Row<UserListDto>) => row.original.id === authUser?.name;
 
     const columns = useMemo(
         () =>
