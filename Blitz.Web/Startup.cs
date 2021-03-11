@@ -73,7 +73,7 @@ namespace Blitz.Web
 
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers(options => options.Filters.Add<MappingExceptionFilter>());
-            services.AddCors(options => options.AddDefaultPolicy(builder => 
+            services.AddCors(options => options.AddDefaultPolicy(builder =>
                 builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
                     .WithOrigins("http://localhost:3000")
             ));
@@ -108,7 +108,7 @@ namespace Blitz.Web
 
             services.Configure<JwtOptions>(Configuration.GetSection(JwtOptions.Key));
             var jwtOptions = Configuration.GetSection(JwtOptions.Key).Get<JwtOptions>();
-            
+
             services.AddTransient<IJwtTokenIssuer, JwtJwtTokenIssuer>();
             services.AddTransient<IExternalUserImporter, ThyExternalUserImporter>();
             // services.AddTransient<IClaimsTransformation, LoadAuthorizationClaimsTransformer>();
@@ -172,6 +172,12 @@ namespace Blitz.Web
 
             services.AddHttpContextAccessor();
             services.AddSpaStaticFiles(options => { options.RootPath = "ClientApp/build"; });
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -185,11 +191,7 @@ namespace Blitz.Web
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.All
-            });
+            
             app.UseCors();
             app.UseStaticFiles();
 
