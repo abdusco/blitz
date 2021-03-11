@@ -41,17 +41,15 @@ namespace Blitz.Web.Auth
 
             _logger.LogInformation("Populating claims for the user {UserName}", user.Name);
 
-            var identity = new ClaimsIdentity(principal.Identity.AuthenticationType);
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, id.ToString()));
-            identity.AddClaims(principal.Claims);
-            identity.AddClaims(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
+            var identity = (ClaimsIdentity) principal.Identity;
+            identity!.AddClaims(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
             identity.AddClaims(
                 user.Claims
                     .Where(c => c.ClaimType == AppClaimTypes.Project)
                     .Select(r => new Claim(AppClaimTypes.Project, r.ClaimValue))
             );
 
-            return new ClaimsPrincipal(identity);
+            return principal;
         }
     }
 }

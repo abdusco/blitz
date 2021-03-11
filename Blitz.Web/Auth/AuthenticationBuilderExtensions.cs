@@ -26,35 +26,34 @@ namespace Blitz.Web.Auth
             var options = configuration.GetSection(OidcOptions.Key).Get<OidcOptions>();
             builder.Services.Configure<OidcOptions>(configuration.GetSection("OidcAuth"));
 
-            return builder.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "THY", o =>
-            {
-                o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
-                o.Authority = options.Authority;
-                o.ClientId = options.ClientId;
-                o.ClientSecret = options.ClientSecret;
-                o.UsePkce = true;
-                o.CallbackPath = options.CallbackPath;
-                o.RequireHttpsMetadata = false;
-                o.ResponseType = OpenIdConnectResponseType.Code;
-                o.GetClaimsFromUserInfoEndpoint = true;
-
-                foreach (var scope in options.Scopes)
+            return builder
+                .AddOpenIdConnect(AppAuthenticationConstants.ExternalScheme, "THY", o =>
                 {
-                    o.Scope.Add(scope);
-                }
+                    o.Authority = options.Authority;
+                    o.ClientId = options.ClientId;
+                    o.ClientSecret = options.ClientSecret;
+                    o.UsePkce = true;
+                    o.CallbackPath = options.CallbackPath;
+                    o.RequireHttpsMetadata = false;
+                    o.ResponseType = OpenIdConnectResponseType.Code;
+                    o.GetClaimsFromUserInfoEndpoint = true;
 
-                o.ClaimActions.Clear();
-                o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
-                o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
-                o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}");
-                
-                o.Events.OnTicketReceived = async context =>
-                {
-                    var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
-                    context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
-                };
-            });
+                    foreach (var scope in options.Scopes)
+                    {
+                        o.Scope.Add(scope);
+                    }
+
+                    o.ClaimActions.Clear();
+                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+                    o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+                    o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}");
+
+                    o.Events.OnTicketReceived = async context =>
+                    {
+                        var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
+                        context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
+                    };
+                });
         }
     }
 }

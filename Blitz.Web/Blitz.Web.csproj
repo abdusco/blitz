@@ -27,4 +27,8 @@
         <PackageReference Include="OpenIddict.Validation.ServerIntegration" Version="3.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Remove="ClientApp/**/*"/>
+        <None Include="ClientApp"/>
+    </ItemGroup>
 </Project>
