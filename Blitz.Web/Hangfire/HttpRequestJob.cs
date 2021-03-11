@@ -80,7 +80,7 @@ namespace Blitz.Web.Hangfire
                 var now = DateTime.UtcNow;
 
                 var req = new HttpRequestMessage(method, cronjob.Url);
-                req.Headers.Add("X-Execution-Id", exec.Id.ToString());
+                req.Headers.Add("Execution-Id", exec.Id.ToString());
                 var response = await _http.SendAsync(req, cancellationToken);
                 timer.Stop();
                 exec.UpdateStatus(
