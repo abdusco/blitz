@@ -31,7 +31,7 @@ namespace Blitz.Web.Auth
         {
             return Task.FromResult<ActionResult>(Challenge(new AuthenticationProperties
             {
-                RedirectUri = Url.Action(nameof(ExternalCallback), "Auth", new {returnUrl})
+                RedirectUri = Url.ActionLink(nameof(ExternalCallback), "Auth", new {returnUrl})
             }));
         }
 
