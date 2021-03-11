@@ -191,7 +191,7 @@ namespace Blitz.Web
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+            app.UseForwardedHeaders();
             app.UseCors();
             app.UseStaticFiles();
 
