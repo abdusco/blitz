@@ -7,10 +7,10 @@ import styles from './components.module.scss';
 function LinkWithState(
     props: PropsWithChildren<{ pathname: string; state?: any; isEmphasized?: boolean } & Omit<LinkProps, 'to'>>
 ) {
-    const { pathname, state, className, ...remaining } = props;
+    const { pathname, state, className, isEmphasized, ...remaining } = props;
     return (
         <Link
-            className={clsx(className, styles.link, props.isEmphasized && styles.emphasizedLink)}
+            className={clsx(className, styles.link, isEmphasized && styles.emphasizedLink)}
             to={{ pathname, state }}
             {...remaining}
         >
