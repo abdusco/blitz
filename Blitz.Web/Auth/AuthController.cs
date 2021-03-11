@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Blitz.Web.Http;
 using Blitz.Web.Persistence;
-using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,36 +12,30 @@ using Microsoft.EntityFrameworkCore;
 namespace Blitz.Web.Auth
 {
     [ApiExplorerSettings(IgnoreApi = true)]
-    [Route("[controller]")]
-    public class AuthController : ControllerBase
+    [Route("api/[controller]")]
+    public class AuthController : ApiController
     {
-        private readonly IExternalUserImporter _userImporter;
-        private readonly IAuthenticationSchemeProvider _authenticationSchemeProvider;
         private readonly BlitzDbContext _dbContext;
         private readonly IJwtTokenIssuer _jwtTokenIssuer;
 
         public AuthController(BlitzDbContext dbContext,
-                              IExternalUserImporter userImporter,
-                              IAuthenticationSchemeProvider authenticationSchemeProvider,
                               IJwtTokenIssuer jwtTokenIssuer)
         {
             _dbContext = dbContext;
-            _userImporter = userImporter;
-            _authenticationSchemeProvider = authenticationSchemeProvider;
             _jwtTokenIssuer = jwtTokenIssuer;
         }
 
         [AllowAnonymous]
-        [HttpGet("login")]
-        public async Task<ActionResult> Login(string returnUrl)
+        [HttpGet("~/auth/login")]
+        public Task<ActionResult> Login(string returnUrl)
         {
-            return Challenge(new AuthenticationProperties
+            return Task.FromResult<ActionResult>(Challenge(new AuthenticationProperties
             {
                 RedirectUri = Url.Action(nameof(ExternalCallback), "Auth", new {returnUrl})
-            });
+            }));
         }
 
-        [HttpGet("externalcallback")]
+        [HttpGet("~/auth/externalcallback")]
         public async Task<ActionResult> ExternalCallback(string returnUrl = "~/")
         {
             var result = await HttpContext.AuthenticateAsync(AppAuthenticationConstants.ExternalScheme);
@@ -56,12 +50,12 @@ namespace Blitz.Web.Auth
         [ApiExplorerSettings(IgnoreApi = false)]
         [Authorize]
         [HttpGet("me")]
-        public async Task<ActionResult> WhoAmI()
+        public Task<ActionResult> WhoAmI()
         {
-            return Ok(User.Claims.Select(c => new {c.Type, c.Value}).ToList());
+            return Task.FromResult<ActionResult>(Ok(User.Claims.Select(c => new {c.Type, c.Value}).ToList()));
         }
 
-        public record Token(string AccessToken, long ExpirationTime);
+        public record Token(string AccessToken);
 
         [ApiExplorerSettings(IgnoreApi = false)]
         [Authorize]
@@ -87,10 +81,10 @@ namespace Blitz.Web.Auth
             );
 
             var token = await _jwtTokenIssuer.IssueTokenAsync(User);
-            return Ok(new Token(token.EncodeAsString(), token.ValidTo.ToEpochTime()));
+            return Ok(new Token(token.EncodeAsString()));
         }
 
-        [HttpPost("logout")]
+        [HttpGet("~/auth/logout")]
         public async Task<ActionResult> Logout(string returnUrl = "~/")
         {
             await HttpContext.SignOutAsync(AppAuthenticationConstants.ApplicationScheme);
