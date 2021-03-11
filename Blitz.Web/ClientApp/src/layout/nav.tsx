@@ -2,22 +2,22 @@ import clsx from 'clsx';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { useUserProfile } from '../lib/auth';
+import { useAuth } from '../lib/JwtAuthProvider';
 import styles from './nav.module.scss';
 
 export default function Nav() {
-    const user = useUserProfile();
+    const { user } = useAuth();
     const linkProps = {
         activeClassName: styles.active,
         className: styles.navLink,
     };
-    const isAdmin = user?.roles?.includes('admin');
+
     const links = [
         { pathname: '/projects', text: 'Projects', roles: ['pm'] },
         { pathname: '/cronjobs', text: 'Cronjobs', roles: ['pm'] },
         { pathname: '/executions', text: 'Executions', roles: ['pm'] },
         { pathname: '/users', text: 'Users', roles: ['admin'] },
-    ].filter((it) => isAdmin || (it.roles ? it.roles.some((r) => (user ? user.roles?.includes(r) : true)) : true));
+    ].filter((it) => user?.hasRole('admin', ...(it.roles || [])));
 
     return (
         <nav className={styles.nav}>

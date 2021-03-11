@@ -1,27 +1,20 @@
 import { Heading } from '@chakra-ui/react';
 import styled from '@emotion/styled';
-import axios from 'axios';
 import React from 'react';
-import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { useUserProfile } from '../lib/auth';
-import { useRequireAuth } from '../lib/useRequireAuth';
+import { useAuth } from '../lib/JwtAuthProvider';
 import styles from './home.module.scss';
 
 export default function Home() {
-    const { data } = useQuery('home', () => axios.post('https://httpbin.org/delay/1'));
-    const user = useUserProfile();
+    const { user } = useAuth();
 
-    useQuery('home2', () => axios.post('https://httpbin.org/delay/3'));
-
-    const isAdmin = user?.roles?.includes('admin');
     const links = [
         { text: 'Projects', pathname: '/projects', icon: <ProjectsIcon />, roles: ['pm'] },
         { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon />, roles: ['pm'] },
         { text: 'Executions', pathname: '/executions', icon: <ExecutionsIcon /> },
         { text: 'Users', pathname: '/users', icon: <UsersIcon />, roles: ['admin'] },
-    ].filter((it) => isAdmin || (it.roles ? it.roles?.some((r) => (user ? user.roles?.includes(r) : true)) : true));
+    ].filter((it) => it.roles ? user?.hasRole('admin', ...(it.roles || [])): true);
 
     return (
         <div className={styles.home}>

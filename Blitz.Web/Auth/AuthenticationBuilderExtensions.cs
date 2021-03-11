@@ -1,20 +1,19 @@
 ﻿using System.Collections.Generic;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Blitz.Web.Auth
 {
     internal static class AuthenticationBuilderExtensions
     {
-        internal class AuthOptions
+        internal class OidcOptions
         {
-            public const string Key = "Auth";
-            public string PublicUrl { get; set; }
+            public const string Key = "Oidc";
             public string Authority { get; set; }
             public string ClientId { get; set; }
             public string ClientSecret { get; set; }
@@ -24,13 +23,12 @@ namespace Blitz.Web.Auth
 
         public static AuthenticationBuilder AddThy(this AuthenticationBuilder builder, IConfiguration configuration)
         {
-            var options = configuration.GetSection(AuthOptions.Key).Get<AuthOptions>();
-            builder.Services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Key));
+            var options = configuration.GetSection(OidcOptions.Key).Get<OidcOptions>();
+            builder.Services.Configure<OidcOptions>(configuration.GetSection("OidcAuth"));
 
-            return builder.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, "THY", o =>
+            return builder
+                .AddOpenIdConnect(AppAuthenticationConstants.ExternalScheme, "THY", o =>
                 {
-                    o.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
                     o.Authority = options.Authority;
                     o.ClientId = options.ClientId;
                     o.ClientSecret = options.ClientSecret;
@@ -45,20 +43,15 @@ namespace Blitz.Web.Auth
                         o.Scope.Add(scope);
                     }
 
-                    o.ClaimActions.MapAll();
+                    o.ClaimActions.Clear();
+                    o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+                    o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+                    o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}");
+
                     o.Events.OnTicketReceived = async context =>
                     {
                         var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
-                    };
-                })
-                .AddJwtBearer(o =>
-                {
-                    o.Authority = options.PublicUrl;
-                    o.RequireHttpsMetadata = false;
-                    o.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateAudience = false,
                     };
                 });
         }

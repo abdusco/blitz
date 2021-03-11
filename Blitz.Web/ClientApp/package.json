@@ -19,6 +19,7 @@
         "dayjs": "^1.10.4",
         "framer-motion": "^3.7.0",
         "history": "^5.0.0",
+        "jwt-decode": "^3.1.2",
         "oidc-client": "^1.11.5",
         "react": "^17.0.0",
         "react-dom": "^17.0.0",

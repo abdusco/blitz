@@ -1,69 +1,96 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Blitz.Web.Identity;
+using Blitz.Web.Http;
 using Blitz.Web.Persistence;
-using IdentityModel;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using OpenIddict.Abstractions;
-using OpenIddict.Server.AspNetCore;
 
 namespace Blitz.Web.Auth
 {
     [ApiExplorerSettings(IgnoreApi = true)]
-    public class AuthController : ControllerBase
+    [Route("api/[controller]")]
+    public class AuthController : ApiController
     {
         private readonly BlitzDbContext _dbContext;
+        private readonly IJwtTokenIssuer _jwtTokenIssuer;
 
-        public AuthController(BlitzDbContext dbContext)
+        public AuthController(BlitzDbContext dbContext,
+                              IJwtTokenIssuer jwtTokenIssuer)
         {
             _dbContext = dbContext;
+            _jwtTokenIssuer = jwtTokenIssuer;
         }
 
-        [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
-        [HttpGet("~/connect/userinfo")]
-        [HttpPost("~/connect/userinfo")]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> UserInfo()
+        [AllowAnonymous]
+        [HttpGet("~/auth/login")]
+        public Task<ActionResult> Login(string returnUrl)
         {
-            var idRequest = HttpContext.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("OpenIdDict request cannot be retrieved");
-            var info = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            return Task.FromResult<ActionResult>(Challenge(new AuthenticationProperties
+            {
+                RedirectUri = Url.Action(nameof(ExternalCallback), "Auth", new {returnUrl})
+            }));
+        }
+
+        [HttpGet("~/auth/externalcallback")]
+        public async Task<ActionResult> ExternalCallback(string returnUrl = "~/")
+        {
+            var result = await HttpContext.AuthenticateAsync(AppAuthenticationConstants.ExternalScheme);
+            if (!result.Succeeded)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : Redirect(returnUrl);
+        }
+
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [Authorize]
+        [HttpGet("me")]
+        public Task<ActionResult> WhoAmI()
+        {
+            return Task.FromResult<ActionResult>(Ok(User.Claims.Select(c => new {c.Type, c.Value}).ToList()));
+        }
+
+        public record Token(string AccessToken);
+
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [Authorize]
+        [HttpPost("token")]
+        public async Task<ActionResult> IssueToken()
+        {
+            var userId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var user = await _dbContext.Users
                 .Include(e => e.Roles)
                 .Include(e => e.Claims)
-                .FirstOrDefaultAsync(e => e.Id == Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)));
-            if (user is null)
+                .FirstOrDefaultAsync(e => e.Id == userId);
+            if (user == null)
             {
-                return Challenge(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.InvalidToken,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "The specified access token is bound to an account that no longer exists."
-                    }));
+                return NotFound(new ProblemDetails {Detail = "No such user"});
             }
 
-            var claims = new Dictionary<string, object>(StringComparer.Ordinal)
-            {
-                [OpenIddictConstants.Claims.Subject] = user.Id.ToString()
-            };
+            var identity = (ClaimsIdentity) User.Identity;
+            identity!.AddClaims(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
+            identity.AddClaims(
+                user.Claims
+                    .Where(c => c.ClaimType == AppClaimTypes.Project)
+                    .Select(r => new Claim(AppClaimTypes.Project, r.ClaimValue))
+            );
 
-            if (User.HasScope(OpenIddictConstants.Scopes.Profile))
-            {
-                claims[OpenIddictConstants.Claims.Role] = user.Roles.Select(e => e.Name).ToList();
-            }
-            
-            return Ok(claims);
+            var token = await _jwtTokenIssuer.IssueTokenAsync(User);
+            return Ok(new Token(token.EncodeAsString()));
+        }
+
+        [HttpGet("~/auth/logout")]
+        public async Task<ActionResult> Logout(string returnUrl = "~/")
+        {
+            await HttpContext.SignOutAsync(AppAuthenticationConstants.ApplicationScheme);
+            await HttpContext.SignOutAsync(AppAuthenticationConstants.ExternalScheme);
+
+            return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : Redirect(returnUrl);
         }
     }
 }

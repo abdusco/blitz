@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
@@ -80,7 +81,7 @@ namespace Blitz.Web.Hangfire
                 var now = DateTime.UtcNow;
 
                 var req = new HttpRequestMessage(method, cronjob.Url);
-                req.Headers.Add("X-Execution-Id", exec.Id.ToString());
+                req.Headers.Add("Execution-Id", exec.Id.ToString());
                 var response = await _http.SendAsync(req, cancellationToken);
                 timer.Stop();
                 exec.UpdateStatus(
@@ -92,7 +93,9 @@ namespace Blitz.Web.Hangfire
                             ["StatusCode"] = response.StatusCode,
                             ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
                             ["Elapsed"] = timer.ElapsedMilliseconds,
-                            ["Body"] = await response.Content.ReadAsStringAsync(cancellationToken)
+                            ["Body"] = response.Content!.Headers.ContentType!.MediaType == MediaTypeNames.Application.Json
+                                ? await response.Content.ReadAsStringAsync(cancellationToken)
+                                : null
                         }
                     }
                 );

@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
-import { useAuth } from './auth';
 import { useHistory } from 'react-router-dom';
-import { UserProfile } from '../api';
+import { useAuth } from './JwtAuthProvider';
 
-export const useRequireProjectClaim = (projectId: string) => {
-    const { ready, user } = useAuth();
-    const profile = (user?.profile as unknown) as UserProfile;
+export const useRequireProjectClaim = (projectId: string|undefined) => {
+    const { user, ready } = useAuth();
     const router = useHistory();
 
     useEffect(() => {
@@ -13,18 +11,16 @@ export const useRequireProjectClaim = (projectId: string) => {
             return;
         }
 
-        const isAdmin = profile.roles?.includes('admin');
-        if (isAdmin) {
+        if (!projectId) {
             return;
         }
 
-        if (
-            !profile.claims
-                .filter((c) => c.claimType === 'Project')
-                .map((c) => c.claimValue)
-                .includes(projectId)
-        ) {
+        if (user.hasRole('admin')) {
+            return;
+        }
+
+        if (!user.hasClaim('Project', projectId)) {
             router.push('/forbidden', { reason: 'You are not authorized to view this project' });
         }
-    }, [ready, user]);
+    }, [ready, user, projectId]);
 };

@@ -1,14 +1,13 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {AuthOptions, AuthProvider, useAuth, useUserProfile} from './lib/auth';
-import {BrowserRouter as Router, Switch, useHistory, useLocation} from 'react-router-dom';
-import {HelmetProvider} from 'react-helmet-async';
-import {QueryClient, QueryClientProvider} from 'react-query';
-import {Profile, User} from 'oidc-client';
-import axios, {AxiosError, AxiosRequestConfig} from 'axios';
-import {routes} from './routes';
-import {ChakraProvider, CircularProgress, extendTheme, useToast} from '@chakra-ui/react';
-import {CenteredFullScreen} from './layout/layout';
-import {fetchUser} from './api';
+import React, { useEffect, useRef, useState } from 'react';
+import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { routes } from './routes';
+import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
+import { CenteredFullScreen } from './layout/layout';
+import { fetchUser } from './api';
+import { AuthProvider, JwtAuthOptions, useAuth } from './lib/JwtAuthProvider';
 
 export default function App() {
     return (
@@ -22,7 +21,7 @@ export default function App() {
                                 <LoadingApp>
                                     <Switch>
                                         {/* attach key prop to stop react from complaining */}
-                                        {routes.map((it, i) => React.cloneElement(it, {...it.props, key: i}))}
+                                        {routes.map((it, i) => React.cloneElement(it, { ...it.props, key: i }))}
                                     </Switch>
                                 </LoadingApp>
                             </FailedQueryNotifier>
@@ -34,6 +33,22 @@ export default function App() {
     );
 }
 
+const cancelToken = axios.CancelToken.source();
+const baseUrl = process.env.NODE_ENV === 'production' ? location.origin : 'https://localhost:5001';
+axios.defaults.baseURL = baseUrl + '/api';
+axios.defaults.cancelToken = cancelToken.token;
+
+const authOptions: JwtAuthOptions = {
+    tokenUrl: baseUrl + '/api/auth/token',
+    loginUrl: baseUrl + '/auth/login',
+    logoutUrl: baseUrl + '/auth/logout',
+    async onUser(user) {
+        console.log('Current user', user);
+        axios.defaults.headers['Authorization'] = `Bearer ${user.accessToken}`;
+        return user;
+    },
+};
+
 const FailedQueryNotifier: React.FC = (props) => {
     const toast = useToast();
     const history = useHistory();
@@ -42,15 +57,31 @@ const FailedQueryNotifier: React.FC = (props) => {
     const sameRequest = (current: AxiosRequestConfig, prev: AxiosRequestConfig | undefined): boolean => {
         return current?.url === prev?.url;
     };
+    
+    useEffect(() => {
+        history.listen((change) => {
+            if (change.action == 'PUSH') {
+                console.log('new path');
+                cancelToken.cancel();
+            }
+        });
+    }, []);
 
     useEffect(() => {
         axios.interceptors.response.use(
             (val) => val,
             (err: AxiosError) => {
                 if (err.response?.status === 401) {
+                    const atHome = history.location.pathname === '/';
+                    if (atHome) {
+                        return;
+                    }
+
+                    console.log('Now at', history.location.pathname, 'but is unauthenticated');
+                    
                     // let user return back to where he was, unless he was already on unauthenticated page.
                     let next = history.location.state?.next || history.location.pathname;
-                    history.push('/unauthenticated', {next});
+                    history.push('/unauthenticated', { next });
                     return;
                 }
 
@@ -76,8 +107,8 @@ const FailedQueryNotifier: React.FC = (props) => {
                 const title = isNetworkError
                     ? 'Network error'
                     : statusCode
-                        ? `Request failed with ${statusCode}`
-                        : 'Request failed';
+                    ? `Request failed with ${statusCode}`
+                    : 'Request failed';
                 toast({
                     title: title,
                     status: 'error',
@@ -87,7 +118,7 @@ const FailedQueryNotifier: React.FC = (props) => {
                             Failed to fetch <code>{err.config.url}.</code>
                             {isNetworkError && (
                                 <>
-                                    <br/>
+                                    <br />
                                     Make sure you're online and the API can receive requests
                                 </>
                             )}
@@ -101,9 +132,8 @@ const FailedQueryNotifier: React.FC = (props) => {
 };
 
 const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
-    const {children, timeout = 400} = props;
-    const {ready} = useAuth();
-    const user = useUserProfile();
+    const { children, timeout = 400 } = props;
+    const { ready, user } = useAuth();
     const [loaded, setLoaded] = useState(false);
     const toast = useToast();
     const welcomeRef = useRef(false);
@@ -131,7 +161,6 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
         }
     }, [user, ready]);
 
-    //
     useEffect(() => {
         let id = 0;
         if (ready) {
@@ -144,42 +173,12 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
     if (!loaded) {
         return (
             <CenteredFullScreen>
-                <CircularProgress isIndeterminate size={16} color="purple.500"/>
+                <CircularProgress isIndeterminate size={16} color="purple.500" />
             </CenteredFullScreen>
         );
     }
 
     return <>{children}</>;
-};
-
-const backendBaseUrl = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:5001'
-axios.defaults.baseURL = backendBaseUrl + '/api';
-
-const authOptions: AuthOptions = {
-    authority: location.origin,
-    clientId: 'demoapp',
-    scope: 'openid profile',
-    redirectUri: location.origin,
-    loadUserInfo: true,
-
-    async onUser(user: User | null): Promise<void> {
-        if (!user) {
-            delete axios.defaults.headers['Authorization'];
-            return;
-        }
-        axios.defaults.headers['Authorization'] = `Bearer ${user.access_token}`;
-        try {
-            const info = await fetchUser(user.profile.sub);
-            user.profile = {
-                ...user.profile,
-                roles: info.roles.map((r) => r.name),
-                claims: info.claims,
-            };
-        } catch (e) {
-        }
-
-        console.log('profile', user.profile);
-    },
 };
 
 const queryClient = new QueryClient({

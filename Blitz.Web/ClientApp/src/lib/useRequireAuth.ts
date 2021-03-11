@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { useAuth } from './auth';
 import { useHistory } from 'react-router-dom';
 import { UserProfile } from '../api';
+import { useAuth } from './JwtAuthProvider';
 
 export const useRequireAuth = (...anyOfRoles: string[]) => {
     const { ready, user } = useAuth();
-    const profile = (user?.profile as unknown) as UserProfile;
     const router = useHistory();
 
     useEffect(() => {
@@ -19,12 +18,11 @@ export const useRequireAuth = (...anyOfRoles: string[]) => {
             return;
         }
 
-        const isAdmin = profile.roles?.includes('admin');
-        if (isAdmin) {
+        if (user.hasRole('admin')) {
             return;
         }
 
-        if (anyOfRoles.length && !anyOfRoles.some((r) => profile.roles?.includes(r))) {
+        if (anyOfRoles.length && !user.hasRole(...anyOfRoles)) {
             router.push('/forbidden', { next: router.location.pathname });
         }
     }, [ready, user]);

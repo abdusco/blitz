@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Cronjobs
 {
+    [AllowAnonymous]
     public class ExecutionsController : ApiController
     {
         private readonly BlitzDbContext _db;
@@ -72,7 +73,6 @@ namespace Blitz.Web.Cronjobs
         }
 
 
-        [AllowAnonymous]
         [HttpPost("{id}/status")]
         public async Task<ActionResult> UpdateExecutionStatus(
             Guid id,

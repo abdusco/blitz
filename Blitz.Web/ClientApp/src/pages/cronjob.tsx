@@ -1,4 +1,4 @@
-import { Button, Stack, Table, Td, Th, Tr, useToast } from '@chakra-ui/react';
+import { Button, Stack, Table, Tbody, Td, Th, Tr, useToast } from '@chakra-ui/react';
 import React, { useMemo } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
@@ -21,9 +21,10 @@ import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { formatDateISO } from '../lib/date';
 import { useRequireAuth } from '../lib/useRequireAuth';
+import { useRequireProjectClaim } from '../lib/useRequireProjectClaim';
 
 export default function Cronjob() {
-    useRequireAuth('pm')
+    useRequireAuth('pm');
     const {
         params: { id },
     } = useRouteMatch<{ id: string }>();
@@ -34,6 +35,8 @@ export default function Cronjob() {
     });
     const history = useHistory();
     const toast = useToast();
+
+    useRequireProjectClaim(cronjobQuery.data?.projectId);
 
     const mutation = useMutation(() => triggerCronjob(id), {
         onSuccess(executionId) {
@@ -89,38 +92,43 @@ const CronjobDetails: React.FC<{ data: CronjobDetailDto }> = (props) => {
     return (
         <>
             <Table width="unset">
-                <Tr>
-                    <Th>Project</Th>
-                    <Td>
-                        <LinkWithState pathname={`/projects/${data.projectId}`} state={{ title: data.projectTitle }}>
-                            {data.projectTitle}
-                        </LinkWithState>
-                    </Td>
-                </Tr>
-                <Tr>
-                    <Th>Cron</Th>
-                    <Td>
-                        <CronPopup placement="right" cron={data.cron}>
-                            <span>
-                                <code>{data.cron}</code>
-                            </span>
-                        </CronPopup>
-                    </Td>
-                </Tr>
-                <Tr>
-                    <Th>URL</Th>
-                    <Td>
-                        <code>
-                            <b>{data.httpMethod}</b> {data.url}
-                        </code>
-                    </Td>
-                </Tr>
-                <Tr>
-                    <Th>Enabled</Th>
-                    <Td>
-                        <CronjobEnabledSwitch id={data.id} projectId={data.projectId} enabled={data.enabled} />
-                    </Td>
-                </Tr>
+                <Tbody>
+                    <Tr>
+                        <Th>Project</Th>
+                        <Td>
+                            <LinkWithState
+                                pathname={`/projects/${data.projectId}`}
+                                state={{ title: data.projectTitle }}
+                            >
+                                {data.projectTitle}
+                            </LinkWithState>
+                        </Td>
+                    </Tr>
+                    <Tr>
+                        <Th>Cron</Th>
+                        <Td>
+                            <CronPopup placement="right" cron={data.cron}>
+                                <span>
+                                    <code>{data.cron}</code>
+                                </span>
+                            </CronPopup>
+                        </Td>
+                    </Tr>
+                    <Tr>
+                        <Th>URL</Th>
+                        <Td>
+                            <code>
+                                <b>{data.httpMethod}</b> {data.url}
+                            </code>
+                        </Td>
+                    </Tr>
+                    <Tr>
+                        <Th>Enabled</Th>
+                        <Td>
+                            <CronjobEnabledSwitch id={data.id} projectId={data.projectId} enabled={data.enabled} />
+                        </Td>
+                    </Tr>
+                </Tbody>
             </Table>
         </>
     );
