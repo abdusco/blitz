@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -43,7 +44,11 @@ namespace Blitz.Web.Auth
                     o.Scope.Add(scope);
                 }
 
-                o.ClaimActions.MapAll();
+                o.ClaimActions.Clear();
+                o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+                o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+                o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}");
+                
                 o.Events.OnTicketReceived = async context =>
                 {
                     var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
