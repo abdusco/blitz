@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { CenteredFullScreen } from '../layout/layout';
-import { useAuth } from '../lib/JwtAuthProvider';
+import { useAuth } from '../lib/auth';
 
 export default function Unauthenticated() {
     const location = useLocation();

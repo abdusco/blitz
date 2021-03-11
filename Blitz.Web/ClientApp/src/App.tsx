@@ -1,13 +1,12 @@
+import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { routes } from './routes';
-import { ChakraProvider, CircularProgress, extendTheme, useToast } from '@chakra-ui/react';
+import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
 import { CenteredFullScreen } from './layout/layout';
-import { fetchUser } from './api';
-import { AuthProvider, JwtAuthOptions, useAuth } from './lib/JwtAuthProvider';
+import { AuthProvider, JwtAuthOptions, useAuth } from './lib/auth';
+import { routes } from './routes';
 
 export default function App() {
     return (

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import React, { useContext, useEffect, useState } from 'react';
 import decodeJwt from 'jwt-decode';
+import React, { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 
 export interface JwtAuthOptions {

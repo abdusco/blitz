@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { UserProfile } from '../api';
-import { useAuth } from './JwtAuthProvider';
+import { useAuth } from './auth';
 
 export const useRequireAuth = (...anyOfRoles: string[]) => {
     const { ready, user } = useAuth();

@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { useAuth } from '../lib/JwtAuthProvider';
+import { useAuth } from '../lib/auth';
 import styles from './nav.module.scss';
 
 export default function Nav() {

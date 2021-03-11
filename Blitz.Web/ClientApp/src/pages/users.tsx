@@ -23,7 +23,7 @@ import {
     ModalOverlay,
     Tag,
     useDisclosure,
-    UseDisclosureReturn,
+    UseDisclosureReturn
 } from '@chakra-ui/react';
 import styled from '@emotion/styled';
 import React, { useMemo, useRef, useState } from 'react';
@@ -40,15 +40,15 @@ import {
     updateUserClaims,
     updateUserRoles,
     UserClaimsUpdateRequest,
-    UserListDto,
+    UserListDto
 } from '../api';
 import DataTable from '../components/DataTable';
-import { QueryProgress } from '../components/QueryProgress';
 import Head from '../components/Head';
 import Hero from '../components/Hero';
+import { QueryProgress } from '../components/QueryProgress';
 import DefaultLayout, { Clamp } from '../layout/layout';
+import { useAuth } from '../lib/auth';
 import { useRequireAuth } from '../lib/useRequireAuth';
-import { useAuth } from '../lib/JwtAuthProvider';
 
 export default function Users() {
     useRequireAuth('admin');

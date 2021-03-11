@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { useAuth } from './JwtAuthProvider';
+import { useAuth } from './auth';
 
 export const useRequireProjectClaim = (projectId: string|undefined) => {
     const { user, ready } = useAuth();

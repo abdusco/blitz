@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { useIsFetching } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { useAuth } from '../lib/JwtAuthProvider';
+import { useAuth } from '../lib/auth';
 import styles from './layout.module.scss';
 import Nav from './nav';
 

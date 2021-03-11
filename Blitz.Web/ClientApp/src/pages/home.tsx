@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { useAuth } from '../lib/JwtAuthProvider';
+import { useAuth } from '../lib/auth';
 import styles from './home.module.scss';
 
 export default function Home() {

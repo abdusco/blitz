@@ -1,4 +1,4 @@
-import { Button, Heading, Stack } from '@chakra-ui/react';
+import { Button, Heading } from '@chakra-ui/react';
 import styled from '@emotion/styled';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
