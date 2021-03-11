@@ -205,6 +205,16 @@ const theme = extendTheme({
         bold: 600,
     },
     components: {
+        Table: {
+            baseStyle: {
+                td: {
+                    padding: '1rem 0.5rem !important',
+                },
+                th: {
+                    padding: '1rem 0.5rem !important',
+                }
+            },
+        },
         Button: {
             baseStyle: {
                 borderRadius: '2rem',
