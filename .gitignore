@@ -5,3 +5,5 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 *.sqlite3*
+*.dotsettings.user
+TODO.md
