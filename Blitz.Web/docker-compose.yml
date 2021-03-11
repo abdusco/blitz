@@ -5,6 +5,9 @@ services:
     command: --seed
     environment:
       - ConnectionStrings__BlitzPostgres=Server=db;Database=blitz;UserId=blitz;Password=blitz
+      # generate a random key using
+      # openssl rand -hex 32
+      - JwtToken__SigningKey=${JWT}
     build:
       context: .
       target: app

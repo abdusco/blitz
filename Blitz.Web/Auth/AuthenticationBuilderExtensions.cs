@@ -13,7 +13,7 @@ namespace Blitz.Web.Auth
     {
         internal class OidcOptions
         {
-            public const string Key = "Oidc";
+            public const string Key = OpenIdConnectDefaults.AuthenticationScheme;
             public string Authority { get; set; }
             public string ClientId { get; set; }
             public string ClientSecret { get; set; }
@@ -24,7 +24,7 @@ namespace Blitz.Web.Auth
         public static AuthenticationBuilder AddThy(this AuthenticationBuilder builder, IConfiguration configuration)
         {
             var options = configuration.GetSection(OidcOptions.Key).Get<OidcOptions>();
-            builder.Services.Configure<OidcOptions>(configuration.GetSection("OidcAuth"));
+            builder.Services.Configure<OidcOptions>(configuration.GetSection(OidcOptions.Key));
 
             return builder
                 .AddOpenIdConnect(AppAuthenticationConstants.ExternalScheme, "THY", o =>
