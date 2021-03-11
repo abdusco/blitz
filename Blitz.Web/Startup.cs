@@ -22,6 +22,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace Blitz.Web
 {
@@ -77,6 +78,13 @@ namespace Blitz.Web
                 builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
                     .WithOrigins("http://localhost:3000")
             ));
+            services.Configure<SwaggerUIOptions>(options =>
+            {
+                options.DocumentTitle = "Blitz API";
+                options.DisplayOperationId();
+                options.RoutePrefix = "api";
+                options.SwaggerEndpoint("/openapi/v1.json", "Blitz API");
+            });
             services.AddSwaggerGen(
                 options =>
                 {
@@ -191,6 +199,7 @@ namespace Blitz.Web
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.UseForwardedHeaders();
             app.UseCors();
             app.UseStaticFiles();
@@ -200,18 +209,7 @@ namespace Blitz.Web
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseSwaggerUI(
-                c =>
-                {
-                    c.DocumentTitle = "Blitz API";
-                    c.DisplayOperationId();
-                    c.RoutePrefix = "api";
-                    c.SwaggerEndpoint("/openapi/v1.json", "Blitz API");
-                    c.OAuthConfigObject.Scopes = new[] {"api"};
-                    c.OAuthConfigObject.ClientId = "demoapp";
-                    c.OAuthUsePkce();
-                }
-            );
+            app.UseSwaggerUI();
 
             app.UseEndpoints(endpoints =>
             {
