@@ -1,10 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -14,14 +8,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
-using Hangfire.EntityFrameworkCore;
-using IdentityModel;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth.Claims;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,12 +18,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
-using OpenIddict.Server;
 
 namespace Blitz.Web
 {
@@ -88,7 +73,10 @@ namespace Blitz.Web
 
             services.AddRouting(o => o.LowercaseUrls = true);
             services.AddControllers(options => options.Filters.Add<MappingExceptionFilter>());
-            services.AddCors(options => options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+            services.AddCors(options => options.AddDefaultPolicy(builder => 
+                builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+                    .WithOrigins("http://localhost:3000")
+            ));
             services.AddSwaggerGen(
                 options =>
                 {
