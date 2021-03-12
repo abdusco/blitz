@@ -8,6 +8,7 @@ using AutoMapper.QueryableExtensions;
 using Blitz.Web.Auth;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -73,7 +74,8 @@ namespace Blitz.Web.Cronjobs
         }
 
 
-        [HttpPost("{id}/status")]
+        [Authorize(AuthenticationSchemes = IntranetDefaults.AuthenticationScheme)]
+        [HttpPost("{id:guid}/status")]
         public async Task<ActionResult> UpdateExecutionStatus(
             Guid id,
             ExecutionStatusCreateDto update,
