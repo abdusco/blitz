@@ -1,11 +1,12 @@
 .hero {
+  background-image: linear-gradient(to bottom, hsla(259, 59%, 59%, 0.05), hsla(259, 59%, 59%, 0) 80%);
 }
 
 .heroInner {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 4rem 0 2rem;
+  padding: 4rem 0 3rem;
 }
 
 .heroTitle {

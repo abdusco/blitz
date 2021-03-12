@@ -44,24 +44,26 @@ export default function Home() {
 }
 
 const HomeCard = styled.article`
-    box-shadow: 0 0.25rem 2rem -0.25rem rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.5rem 1.5rem -0.25rem rgba(0, 0, 0, 0.15);
     padding: 4rem 2rem 2rem;
     border-radius: 2rem;
     transition: 0.2s;
     background-image: linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.01));
-
+    
     &:hover {
         color: var(--c-primary);
         transform: translateY(-3px);
-        box-shadow: 0 0.75rem 2.5rem -0.2rem rgba(0, 0, 0, 0.1);
-
+        box-shadow: 0 0.75rem 2.5rem -0.2rem rgb(128, 90, 213, 0.4);
+    
         svg {
             fill: currentColor;
+            opacity: 1;
         }
     }
 
     svg {
-        opacity: 0.2;
+        transition: 0.4s;
+        opacity: 0.1;
     }
 
     .cardIcon {
