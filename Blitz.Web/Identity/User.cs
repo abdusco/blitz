@@ -34,5 +34,15 @@ namespace Blitz.Web.Identity
         {
             return Claims.Where(c => c.ClaimType == claimType).ToList();
         }
+
+        public void AddRole(Role role)
+        {
+            if (Roles.Contains(role))
+            {
+                return;
+            }
+
+            Roles.Add(role);
+        }
     }
 }

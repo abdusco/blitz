@@ -157,6 +157,15 @@ namespace Blitz.Web.Auth
                 user.AddControlledEntity(item);
             }
 
+            if (projects.Any())
+            {
+                var pmRole = await _dbContext.Roles.FirstOrDefaultAsync(e => e.Name == "pm", cancellationToken);
+                if (pmRole != null)
+                {
+                    user.AddRole(pmRole);
+                }
+            }
+
             await _dbContext.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
             return NoContent();
