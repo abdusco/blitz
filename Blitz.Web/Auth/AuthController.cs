@@ -75,7 +75,7 @@ namespace Blitz.Web.Auth
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(idClaim, out var userId))
             {
-                return BadRequest(new ProblemDetails {Detail = $"Cannot parse {idClaim} as a user id"});
+                return Unauthorized(new ProblemDetails {Detail = $"Cannot parse {idClaim} as a user id"});
             }
 
             var user = await _dbContext.Users
