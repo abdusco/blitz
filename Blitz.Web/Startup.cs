@@ -180,9 +180,11 @@ namespace Blitz.Web
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .AddAuthenticationSchemes(
+                        // intranet auth doesn't provide a useful nameidentifier claim
+                        // so we let other auth schemes override it if present
+                        IntranetDefaults.AuthenticationScheme,
                         AppAuthenticationConstants.ApplicationScheme,
-                        JwtBearerDefaults.AuthenticationScheme,
-                        IntranetDefaults.AuthenticationScheme
+                        JwtBearerDefaults.AuthenticationScheme
                     )
                     .Build();
 
