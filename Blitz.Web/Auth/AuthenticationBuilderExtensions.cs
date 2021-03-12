@@ -35,11 +35,8 @@ namespace Blitz.Web.Auth
         {
             var oidcOptions = configuration.GetSection(OidcOptions.Key).Get<OidcOptions>();
             builder.Services.Configure<OidcOptions>(configuration.GetSection(OidcOptions.Key));
-
-            var intranetOptions = configuration.GetSection(IntranetAuthOptions.Key).Get<IntranetAuthOptions>();
-            builder.Services.Configure<IntranetAuthOptions>(configuration.GetSection(IntranetAuthOptions.Key));
-
-            return builder
+            
+            builder = builder
                 .AddOpenIdConnect(AppAuthenticationConstants.ExternalScheme, "THY", o =>
                 {
                     o.Authority = oidcOptions.Authority;
@@ -66,8 +63,17 @@ namespace Blitz.Web.Auth
                         var importer = context.HttpContext.RequestServices.GetRequiredService<IExternalUserImporter>();
                         context.Principal = await importer.ImportUserAsync(context.Principal, context.Scheme);
                     };
-                })
-                .AddIntranet(options =>
+                    // populate authentication type in claimsidentity
+                    o.TokenValidationParameters.AuthenticationType = AppAuthenticationConstants.ExternalScheme;
+                });
+            
+            
+            var intranetOptions = configuration.GetSection(IntranetAuthOptions.Key).Get<IntranetAuthOptions>();
+            builder.Services.Configure<IntranetAuthOptions>(configuration.GetSection(IntranetAuthOptions.Key));
+
+            if (intranetOptions != null)
+            {
+                builder = builder.AddIntranet(options =>
                 {
                     options.AllowedIpRanges = intranetOptions.AllowedIpRanges;
                     options.Events.OnAuthenticated = context =>
@@ -78,6 +84,9 @@ namespace Blitz.Web.Auth
                         return Task.CompletedTask;
                     };
                 });
+            }
+
+            return builder;
         }
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -8,6 +10,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
+using IdentityModel;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -153,6 +156,7 @@ namespace Blitz.Web
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        AuthenticationType = JwtBearerDefaults.AuthenticationScheme,
                         ValidateIssuer = true,
                         ValidIssuer = Environment.ApplicationName,
                         ValidateAudience = true,
@@ -160,6 +164,13 @@ namespace Blitz.Web
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = jwtOptions.SigningCredentials.Key,
                     };
+                    // dont map jwt metadata claims
+                    var validator = options.SecurityTokenValidators.Cast<JwtSecurityTokenHandler>().First();
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Issuer);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Expiration);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.NotBefore);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.IssuedAt);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Audience);
                 });
 
 
