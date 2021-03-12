@@ -5,7 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter as Router, Switch, useHistory, useLocation } from 'react-router-dom';
 import { CenteredFullScreen } from './layout/layout';
-import { AuthProvider, JwtAuthOptions, useAuth } from './lib/auth';
+import { AuthProvider, JwtAuthOptions, useAuth, User } from './lib/auth';
 import { routes } from './routes';
 
 export default function App() {
@@ -41,7 +41,7 @@ const authOptions: JwtAuthOptions = {
     tokenUrl: baseUrl + '/api/auth/token',
     loginUrl: baseUrl + '/auth/login',
     logoutUrl: baseUrl + '/auth/logout',
-    async onUser(user) {
+    async onUser(user: User) {
         console.log('Current user', user);
         axios.defaults.headers['Authorization'] = `Bearer ${user.accessToken}`;
         return user;
