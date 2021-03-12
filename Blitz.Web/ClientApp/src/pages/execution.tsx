@@ -15,6 +15,7 @@ import DefaultLayout, { Clamp } from '../layout/layout';
 import { flattenObject } from '../lib/objects';
 import styles from './execution.module.scss';
 import { formatDateISO } from '../lib/date';
+import LinkWithState from '../components/LinkWithState';
 
 export default function Execution() {
     const {
@@ -58,27 +59,21 @@ const ExecutionSummary: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                 <Tr>
                     <Th>Project</Th>
                     <Td>
-                        <Link
-                            to={{
-                                pathname: `/projects/${data.cronjob.projectId}`,
-                                state: { title: data.cronjob.projectTitle },
-                            }}
+                        <LinkWithState
+                            pathname={`/projects/${data.cronjob.projectId}`}
+                            state={{ title: data.cronjob.projectTitle }}
+                            isEmphasized
                         >
                             {data.cronjob.projectTitle}
-                        </Link>
+                        </LinkWithState>
                     </Td>
                 </Tr>
                 <Tr>
                     <Th>Cronjob</Th>
                     <Td>
-                        <Link
-                            to={{
-                                pathname: `/cronjobs/${data.cronjob.id}`,
-                                state: { title: data.cronjob.title },
-                            }}
-                        >
+                        <LinkWithState pathname={`/cronjobs/${data.cronjob.id}`} state={{ title: data.cronjob.title }} isEmphasized>
                             {data.cronjob.title}
-                        </Link>
+                        </LinkWithState>
                     </Td>
                 </Tr>
                 <Tr>
