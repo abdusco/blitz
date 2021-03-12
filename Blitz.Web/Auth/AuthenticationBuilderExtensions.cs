@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Humanizer;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -56,7 +57,7 @@ namespace Blitz.Web.Auth
                     o.ClaimActions.Clear();
                     o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
                     o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
-                    o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}");
+                    o.ClaimActions.MapCustomJson(ClaimTypes.Name, json => $"{json.GetString("first_name")} {json.GetString("surname")}".ToLowerInvariant().Titleize());
 
                     o.Events.OnTicketReceived = async context =>
                     {
