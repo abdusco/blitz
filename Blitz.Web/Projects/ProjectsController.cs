@@ -10,6 +10,7 @@ using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -115,10 +116,15 @@ namespace Blitz.Web.Projects
                                            [Required] string HttpMethod);
         }
 
-        [AllowAnonymous]
+        [Authorize(AuthenticationSchemes = IntranetDefaults.AuthenticationScheme)]
         [HttpPost("batchcreate")]
         public async Task<ActionResult<Guid>> CreateProjectWithCronjobs(ProjectBatchCreateDto request, CancellationToken cancellationToken)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            
             var project = await _db.Projects
                 .Include(e => e.Cronjobs)
                 .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);

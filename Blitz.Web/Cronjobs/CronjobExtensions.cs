@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Blitz.Web.Cronjobs
 {
-    internal static class ApplicationBuilderExtensions
+    internal static class CronjobExtensions
     {
         public static IApplicationBuilder InitCronjobs(this IApplicationBuilder app)
         {

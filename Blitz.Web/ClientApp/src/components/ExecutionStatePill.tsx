@@ -4,12 +4,12 @@ import { ExecutionState } from '../api';
 
 const colors: Record<ExecutionState, ThemeTypings['colorSchemes']> = {
     failed: 'red',
-    finished: 'blue',
-    pending: 'gray',
-    timedout: 'pink',
-    unknown: 'yellow',
+    finished: 'green',
+    timedout: 'yellow',
     started: 'blue',
     triggered: 'cyan',
+    pending: 'gray',
+    unknown: 'gray',
 };
 
 export const ExecutionStatePill: React.FC<{ state?: ExecutionState }> = ({ state = '?' }) => {

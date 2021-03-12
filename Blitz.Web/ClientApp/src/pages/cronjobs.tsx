@@ -1,3 +1,5 @@
+import { Tooltip } from '@chakra-ui/tooltip';
+import styled from '@emotion/styled';
 import { AxiosError } from 'axios';
 import React from 'react';
 import { useQuery } from 'react-query';
@@ -14,8 +16,8 @@ import DefaultLayout, { Clamp } from '../layout/layout';
 import { useRequireAuth } from '../lib/useRequireAuth';
 
 export default function Cronjobs() {
-    useRequireAuth('pm')
-    
+    useRequireAuth('pm');
+
     return (
         <DefaultLayout>
             <Head>
@@ -73,16 +75,22 @@ const CronjobList: React.FC = () => {
                     accessor: 'cron',
                     Cell: ({ value }) => (
                         <CronPopup cron={value} placement="right">
-                            <code>{value}</code>
+                            <NoWrap>{value}</NoWrap>
                         </CronPopup>
                     ),
                 },
                 {
                     Header: 'Action',
                     accessor: 'url',
-                    Cell: ({ value, row }) => <code><b>{row.original.httpMethod}</b> { value}</code>,
+                    Cell: ({ value: url, row }) => (
+                        <CronjobAction>
+                            <b>{row.original.httpMethod}</b>{' '}
+                            <Tooltip color="black.400" backgroundColor="gray.50" label={<NoWrap>{url}</NoWrap>}>
+                                {url}
+                            </Tooltip>
+                        </CronjobAction>
+                    ),
                 },
-                // { Header: 'Method', accessor: 'httpMethod' },
                 {
                     Header: 'Enabled',
                     accessor: 'enabled',
@@ -102,3 +110,15 @@ const CronjobList: React.FC = () => {
         </Clamp>
     );
 };
+
+const CronjobAction = styled.code`
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 25rem;
+    overflow: hidden;
+    display: inline-block;
+`;
+
+const NoWrap = styled.code`
+    white-space: nowrap;
+`;

@@ -36,9 +36,14 @@ interface Jwt {
     exp: number;
     sub: string;
     unique_name: string;
-    role: string[];
+    role: string | string[];
     claims: any[];
     [claim: string]: any;
+}
+
+function makeArray(val: any): any[] {
+    if (!val) return [];
+    return Array.isArray(val) ? val : [val];
 }
 
 const decodeToken = (token: string | null): Jwt | null => {
@@ -56,6 +61,20 @@ const decodeToken = (token: string | null): Jwt | null => {
 
     console.info('Token will expire in', remainingLife, 'seconds');
     return decoded;
+};
+
+const STORAGE_PREFIX = 'login';
+const saveLoginState = (state: any): string => {
+    const key = Math.random().toString(36).substr(2, 10);
+    localStorage.setItem(`${STORAGE_PREFIX}:${key}`, JSON.stringify(state));
+    return key;
+};
+
+const popLoginState = (key: string): any | null => {
+    const storageKey = `${STORAGE_PREFIX}:${key}`;
+    const value = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    localStorage.removeItem(storageKey);
+    return value;
 };
 
 export const AuthProvider: React.FC<{ options: JwtAuthOptions }> = (props) => {
@@ -90,39 +109,50 @@ export const AuthProvider: React.FC<{ options: JwtAuthOptions }> = (props) => {
                     ...jwtClaims,
                     sub: jwtClaims.sub,
                     name: jwtClaims.unique_name,
-                    claims: jwtClaims.claims || [],
-                    roles: jwtClaims.role || [],
+                    roles: makeArray(jwtClaims.role),
                     accessToken: token!,
                     hasRole(...roles: string[]) {
                         return roles.some((r) => this.roles.includes(r));
                     },
                     hasClaim(claimType, claimValue) {
-                        return (
-                            this[claimType] === claimValue ||
-                            this.claims.some((c) => c?.claimType === claimType && c?.claimValue === claimValue)
-                        );
+                        return this[claimType] === claimValue || this[claimType]?.includes(claimValue);
                     },
                 };
 
                 if (options.onUser) {
                     jwtUser = await options.onUser(jwtUser, jwtClaims);
                 }
+                setUser(jwtUser);
 
                 const url = new URL(window.location.href);
-                const stateJson = url.searchParams.get('state') || '{}';
-                const state = JSON.parse(stateJson);
+                const stateKey = url.searchParams.get('state');
+                url.search = '';
                 window.history.replaceState(null, document.title, url.toString());
 
-                setUser(jwtUser);
-                if (state.next) {
-                    history.push({ pathname: state.next });
+                if (stateKey) {
+                    const state = popLoginState(stateKey);
+                    if (state?.next) {
+                        history.push({ pathname: state.next });
+                    } else if (!state) {
+                        console.warn('No matching login state found');
+                    }
                 }
+
                 setReady(true);
             }
         };
 
         getUser();
     }, []);
+
+    /* useEffect(() => {
+        const id = setInterval(() => {
+            console.log('refreshing token');
+            
+        }, 10 * 1000);
+
+        return () => clearInterval(id);
+    }, []); */
 
     return (
         <AuthContext.Provider
@@ -132,7 +162,8 @@ export const AuthProvider: React.FC<{ options: JwtAuthOptions }> = (props) => {
                 async login(state: any) {
                     const url = new URL(window.location.href);
                     if (state) {
-                        url.searchParams.append('state', JSON.stringify(state));
+                        const stateKey = saveLoginState(state);
+                        url.searchParams.append('state', stateKey);
                     }
                     console.log('Redirecting to login page. Once logged in, will return to', url.toString());
                     const returnUrl = `${options.loginUrl}?returnUrl=${encodeURIComponent(url.toString())}`;

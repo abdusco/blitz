@@ -4,7 +4,7 @@ import { useAuth } from './auth';
 
 export const useRequireProjectClaim = (projectId: string|undefined) => {
     const { user, ready } = useAuth();
-    const router = useHistory();
+    const history = useHistory();
 
     useEffect(() => {
         if (!ready || !user) {
@@ -20,7 +20,7 @@ export const useRequireProjectClaim = (projectId: string|undefined) => {
         }
 
         if (!user.hasClaim('Project', projectId)) {
-            router.push('/forbidden', { reason: 'You are not authorized to view this project' });
+            history.push('/forbidden', { reason: 'You are not authorized to view this project' });
         }
     }, [ready, user, projectId]);
 };

@@ -1,4 +1,6 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -8,6 +10,8 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
+using IdentityModel;
+using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -22,6 +26,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace Blitz.Web
 {
@@ -77,6 +82,13 @@ namespace Blitz.Web
                 builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
                     .WithOrigins("http://localhost:3000")
             ));
+            services.Configure<SwaggerUIOptions>(options =>
+            {
+                options.DocumentTitle = "Blitz API";
+                options.DisplayOperationId();
+                options.RoutePrefix = "api";
+                options.SwaggerEndpoint("/openapi/v1.json", "Blitz API");
+            });
             services.AddSwaggerGen(
                 options =>
                 {
@@ -144,6 +156,7 @@ namespace Blitz.Web
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        AuthenticationType = JwtBearerDefaults.AuthenticationScheme,
                         ValidateIssuer = true,
                         ValidIssuer = Environment.ApplicationName,
                         ValidateAudience = true,
@@ -151,6 +164,13 @@ namespace Blitz.Web
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = jwtOptions.SigningCredentials.Key,
                     };
+                    // dont map jwt metadata claims
+                    var validator = options.SecurityTokenValidators.Cast<JwtSecurityTokenHandler>().First();
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Issuer);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Expiration);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.NotBefore);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.IssuedAt);
+                    validator.InboundClaimFilter.Add(JwtClaimTypes.Audience);
                 });
 
 
@@ -160,8 +180,11 @@ namespace Blitz.Web
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .AddAuthenticationSchemes(
-                        JwtBearerDefaults.AuthenticationScheme,
-                        AppAuthenticationConstants.ApplicationScheme
+                        // intranet auth doesn't provide a useful nameidentifier claim
+                        // so we let other auth schemes override it if present
+                        // IntranetDefaults.AuthenticationScheme,
+                        AppAuthenticationConstants.ApplicationScheme,
+                        JwtBearerDefaults.AuthenticationScheme
                     )
                     .Build();
 
@@ -191,6 +214,7 @@ namespace Blitz.Web
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.UseForwardedHeaders();
             app.UseCors();
             app.UseStaticFiles();
@@ -200,18 +224,7 @@ namespace Blitz.Web
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseSwaggerUI(
-                c =>
-                {
-                    c.DocumentTitle = "Blitz API";
-                    c.DisplayOperationId();
-                    c.RoutePrefix = "api";
-                    c.SwaggerEndpoint("/openapi/v1.json", "Blitz API");
-                    c.OAuthConfigObject.Scopes = new[] {"api"};
-                    c.OAuthConfigObject.ClientId = "demoapp";
-                    c.OAuthUsePkce();
-                }
-            );
+            app.UseSwaggerUI();
 
             app.UseEndpoints(endpoints =>
             {
