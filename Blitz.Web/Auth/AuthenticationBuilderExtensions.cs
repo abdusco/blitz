@@ -35,7 +35,7 @@ namespace Blitz.Web.Auth
         {
             var oidcOptions = configuration.GetSection(OidcOptions.Key).Get<OidcOptions>();
             builder.Services.Configure<OidcOptions>(configuration.GetSection(OidcOptions.Key));
-            
+
             builder = builder
                 .AddOpenIdConnect(AppAuthenticationConstants.ExternalScheme, "THY", o =>
                 {
@@ -66,25 +66,22 @@ namespace Blitz.Web.Auth
                     // populate authentication type in claimsidentity
                     o.TokenValidationParameters.AuthenticationType = AppAuthenticationConstants.ExternalScheme;
                 });
-            
-            
+
+
             var intranetOptions = configuration.GetSection(IntranetAuthOptions.Key).Get<IntranetAuthOptions>();
             builder.Services.Configure<IntranetAuthOptions>(configuration.GetSection(IntranetAuthOptions.Key));
 
-            if (intranetOptions != null)
+            builder = builder.AddIntranet(options =>
             {
-                builder = builder.AddIntranet(options =>
+                options.AllowedIpRanges = intranetOptions?.AllowedIpRanges ?? new();
+                options.Events.OnAuthenticated = context =>
                 {
-                    options.AllowedIpRanges = intranetOptions.AllowedIpRanges;
-                    options.Events.OnAuthenticated = context =>
-                    {
-                        // assign admin role
-                        var identity = (ClaimsIdentity) context.Principal!.Identity;
-                        identity!.AddClaim(new Claim(ClaimTypes.Role, "admin"));
-                        return Task.CompletedTask;
-                    };
-                });
-            }
+                    // assign admin role
+                    var identity = (ClaimsIdentity) context.Principal!.Identity;
+                    identity!.AddClaim(new Claim(ClaimTypes.Role, "admin"));
+                    return Task.CompletedTask;
+                };
+            });
 
             return builder;
         }
