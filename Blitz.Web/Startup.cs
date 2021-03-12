@@ -182,7 +182,7 @@ namespace Blitz.Web
                     .AddAuthenticationSchemes(
                         // intranet auth doesn't provide a useful nameidentifier claim
                         // so we let other auth schemes override it if present
-                        IntranetDefaults.AuthenticationScheme,
+                        // IntranetDefaults.AuthenticationScheme,
                         AppAuthenticationConstants.ApplicationScheme,
                         JwtBearerDefaults.AuthenticationScheme
                     )

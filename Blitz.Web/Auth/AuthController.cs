@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
+using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blitz.Web.Auth
 {
+    [Authorize(AuthenticationSchemes = IntranetDefaults.AuthenticationScheme)]
     [ApiExplorerSettings(IgnoreApi = true)]
     [Route("api/[controller]")]
     public class AuthController : ApiController
