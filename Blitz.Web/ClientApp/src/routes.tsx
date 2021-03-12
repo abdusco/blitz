@@ -1,15 +1,33 @@
+import { CircularProgress } from '@chakra-ui/react';
+import React, { PropsWithChildren, Suspense } from 'react';
 import { Route } from 'react-router-dom';
+import { CenteredFullScreen } from './layout/layout';
 import Home from './pages/home';
-import Users from './pages/users';
-import Unauthenticated from './pages/unauthenticated';
-import React from 'react';
-import Cronjobs from './pages/cronjobs';
-import Projects from './pages/projects';
-import Executions from './pages/executions';
-import Project from './pages/project';
-import Cronjob from './pages/cronjob';
-import Execution from './pages/execution';
-import Forbidden from './pages/forbidden';
+
+const spinner = (
+    <CenteredFullScreen>
+        <CircularProgress isIndeterminate size={16} color="purple.500" />
+    </CenteredFullScreen>
+);
+const lazyComponent = (promise: () => Promise<{ default: any }>) => {
+    const Lazy = React.lazy(promise);
+
+    return (props: PropsWithChildren<any>) => (
+        <Suspense fallback={spinner}>
+            <Lazy />
+        </Suspense>
+    );
+};
+
+const Users = lazyComponent(() => import('./pages/users'));
+const Unauthenticated = lazyComponent(() => import('./pages/unauthenticated'));
+const Forbidden = lazyComponent(() => import('./pages/forbidden'));
+const Projects = lazyComponent(() => import('./pages/projects'));
+const Project = lazyComponent(() => import('./pages/project'));
+const Cronjobs = lazyComponent(() => import('./pages/cronjobs'));
+const Cronjob = lazyComponent(() => import('./pages/cronjob'));
+const Executions = lazyComponent(() => import('./pages/executions'));
+const Execution = lazyComponent(() => import('./pages/execution'));
 
 export const routes = [
     <Route exact path="/" component={Home} />,
