@@ -2,6 +2,8 @@ import { CircularProgress } from '@chakra-ui/react';
 import React, { PropsWithChildren, Suspense } from 'react';
 import { Route } from 'react-router-dom';
 import { CenteredFullScreen } from './layout/layout';
+import Execution from './pages/execution';
+import Executions from './pages/executions';
 import Home from './pages/home';
 
 const spinner = (
@@ -26,8 +28,6 @@ const Projects = lazyComponent(() => import('./pages/projects'));
 const Project = lazyComponent(() => import('./pages/project'));
 const Cronjobs = lazyComponent(() => import('./pages/cronjobs'));
 const Cronjob = lazyComponent(() => import('./pages/cronjob'));
-const Executions = lazyComponent(() => import('./pages/executions'));
-const Execution = lazyComponent(() => import('./pages/execution'));
 
 export const routes = [
     <Route exact path="/" component={Home} />,

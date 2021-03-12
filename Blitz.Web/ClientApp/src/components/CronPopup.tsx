@@ -1,12 +1,8 @@
-import { Box, Divider, Popover, PopoverContent, PopoverProps, PopoverTrigger, Stack } from '@chakra-ui/react';
+import { Box, Popover, PopoverContent, PopoverProps, PopoverTrigger, Stack } from '@chakra-ui/react';
+import styled from '@emotion/styled';
+import cronstrue from 'cronstrue';
 import React from 'react';
 
-import cronstrue from 'cronstrue';
-import { nextDates } from '../lib/cron';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import styled from '@emotion/styled';
-dayjs.extend(utc);
 
 const humanizeCron = (cron: string): { error?: string; description?: string } => {
     if (!cron?.trim()) return {};
