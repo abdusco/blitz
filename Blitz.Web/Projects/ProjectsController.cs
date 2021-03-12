@@ -120,6 +120,11 @@ namespace Blitz.Web.Projects
         [HttpPost("batchcreate")]
         public async Task<ActionResult<Guid>> CreateProjectWithCronjobs(ProjectBatchCreateDto request, CancellationToken cancellationToken)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            
             var project = await _db.Projects
                 .Include(e => e.Cronjobs)
                 .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);
