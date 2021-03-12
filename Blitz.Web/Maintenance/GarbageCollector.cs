@@ -42,7 +42,7 @@ namespace Blitz.Web.Maintenance
             await using var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
 
             _logger.LogInformation($"Running cleanup");
-            var cutoff = DateTime.UtcNow - TimeSpan.FromMinutes(_options.MinAgeMinutes);
+            var cutoff = DateTime.Now - TimeSpan.FromMinutes(_options.MinAgeMinutes);
 
             var executedCronjobIds = db.Executions
                 .Where(e => e.CreatedAt < cutoff)

@@ -27,13 +27,12 @@ namespace Blitz.Web.Maintenance
             var options = app.ApplicationServices.GetRequiredService<IOptions<GarbageCollectorOptions>>().Value;
             var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(GarbageCollector));
 
+            if (!options.Enabled) return;
+            
             logger.LogInformation($"Registering a cronjob for garbage collection with cron={options.Schedule}");
             jobManager.RemoveIfExists(nameof(GarbageCollector));
-            if (options.Enabled)
-            {
-                jobManager.AddOrUpdate<GarbageCollector>(nameof(GarbageCollector),
-                    collector => collector.ExecuteAsync(default), () => options.Schedule);
-            }
+            jobManager.AddOrUpdate<GarbageCollector>(nameof(GarbageCollector),
+                collector => collector.ExecuteAsync(default), () => options.Schedule);
         }
     }
 }
