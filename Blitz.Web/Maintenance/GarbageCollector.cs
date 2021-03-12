@@ -13,44 +13,10 @@ using Microsoft.Extensions.Options;
 
 namespace Blitz.Web.Maintenance
 {
-    internal static class ApplicationBuilderExtensions
-    {
-        public static void InitGarbageCollector(this IApplicationBuilder app)
-        {
-            var jobManager = app.ApplicationServices.GetRequiredService<IRecurringJobManager>();
-            var options = app.ApplicationServices.GetRequiredService<IOptions<GarbageCollectorOptions>>().Value;
-            var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(GarbageCollector));
-
-            logger.LogInformation($"Registering a cronjob for garbage collection with cron={options.Schedule}");
-            jobManager.RemoveIfExists(nameof(GarbageCollector));
-            if (options.Enabled)
-            {
-                jobManager.AddOrUpdate<GarbageCollector>(nameof(GarbageCollector),
-                    collector => collector.ExecuteAsync(default), () => options.Schedule);
-            }
-        }
-    }
-
-    internal static class ServiceCollectionExtensions
-    {
-        public static void AddGarbageCollector(this IServiceCollection serviceCollection, Action<GarbageCollectorOptions> configure = null)
-        {
-            var optionsBuilder = serviceCollection.AddOptions<GarbageCollectorOptions>()
-                .BindConfiguration(nameof(GarbageCollector));
-            if (configure is not null)
-            {
-                optionsBuilder.Configure(configure);
-            }
-
-            serviceCollection.AddTransient<GarbageCollector>();
-        }
-    }
-
-
     internal class GarbageCollectorOptions
     {
         public string Schedule { get; set; } = "*/5 * * * *";
-        public int MinAgeMinutes { get; set; } = 1440;
+        public int MinAgeMinutes { get; set; } = 360;
         public int MinKeptRecentExecutions { get; set; } = 15;
         public bool Enabled { get; set; } = true;
     }
