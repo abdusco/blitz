@@ -8,6 +8,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
+using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -168,8 +169,9 @@ namespace Blitz.Web
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .AddAuthenticationSchemes(
+                        AppAuthenticationConstants.ApplicationScheme,
                         JwtBearerDefaults.AuthenticationScheme,
-                        AppAuthenticationConstants.ApplicationScheme
+                        IntranetDefaults.AuthenticationScheme
                     )
                     .Build();
 
