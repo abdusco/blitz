@@ -6,9 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
+using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
@@ -43,9 +43,8 @@ namespace Blitz.Web.Projects
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
         {
-            var projectGrants = User.GetClaimsOfType(AppClaimTypes.Project);
             return await _db.Projects
-                .Where(p => User.IsInRole("admin") || projectGrants.Contains(p.Id.ToString()))
+                .FilterByClaims(User)
                 .OrderBy(p => p.Title)
                 .ProjectTo<ProjectListDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
@@ -71,13 +70,6 @@ namespace Blitz.Web.Projects
             var project = await _db.Projects
                 .Include(p => p.Cronjobs.OrderByDescending(c => c.CreatedAt))
                 .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
-
-            // OPTIMIZE: dont load everything before authorization
-            // var result = await _authorizationService.AuthorizeAsync(User, project, AuthorizationPolicies.RequireProjectManagerPolicy);
-            // if (!result.Succeeded)
-            // {
-            //     return Forbid();
-            // }
 
             return _mapper.Map<ProjectDto>(project);
         }
@@ -124,7 +116,7 @@ namespace Blitz.Web.Projects
             {
                 return BadRequest();
             }
-            
+
             var project = await _db.Projects
                 .Include(e => e.Cronjobs)
                 .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);
