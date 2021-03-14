@@ -48,7 +48,7 @@ namespace Blitz.Web
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
             services.AddHangfire((provider, configuration) =>
                 {
-                    configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 1});
+                    configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 2});
                     configuration.UseInMemoryStorage();
                     // configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
                     //     new EFCoreStorageOptions());
