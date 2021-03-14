@@ -92,11 +92,8 @@ namespace Blitz.Web.Cronjobs
 
             var status = _mapper.Map<ExecutionStatus>(update);
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             existing.UpdateStatus(status);
             await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
-
             return NoContent();
         }
     }

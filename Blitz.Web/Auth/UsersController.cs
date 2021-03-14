@@ -142,6 +142,7 @@ namespace Blitz.Web.Auth
         {
             var user = await _dbContext.Users
                 .Include(e => e.Claims)
+                .Include(e => e.Roles)
                 .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken: cancellationToken);
             if (user == null)
             {

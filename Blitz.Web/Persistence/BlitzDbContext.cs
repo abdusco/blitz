@@ -8,7 +8,6 @@ using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Projects;
 using Hangfire.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -20,7 +19,7 @@ namespace Blitz.Web.Persistence
         public DbSet<Cronjob> Cronjobs { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStatus> StatusUpdates { get; set; }
-        
+
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserClaim> UserClaims { get; set; }

@@ -1,11 +1,11 @@
-import { Heading } from '@chakra-ui/react';
+import { Badge, Flex, Heading } from '@chakra-ui/react';
 import styled from '@emotion/styled';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useAuth } from '../lib/auth';
 import styles from './home.module.scss';
-
+ 
 export default function Home() {
     const { user } = useAuth();
 
@@ -14,13 +14,16 @@ export default function Home() {
         { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon />, roles: ['pm'] },
         { text: 'Executions', pathname: '/executions', icon: <ExecutionsIcon /> },
         { text: 'Users', pathname: '/users', icon: <UsersIcon />, roles: ['admin'] },
-    ].filter((it) => it.roles ? user?.hasRole('admin', ...(it.roles || [])): true);
+    ].filter((it) => (it.roles ? user?.hasRole('admin', ...(it.roles || [])) : true));
 
     return (
         <div className={styles.home}>
             <div className={styles.homeContent}>
                 <Heading size={'xl'} fontWeight="bold" className={styles.homeTitle} color="purple.500">
-                    <Logo />
+                    <Flex alignItems="center" justifyContent='center'>
+                        <Logo />
+                        <Badge ml={4} backgroundColor='purple.50' color='purple.600'>Beta</Badge>
+                    </Flex>
                 </Heading>
                 {links.length > 0 && (
                     <ul className={styles.grid}>
@@ -49,12 +52,12 @@ const HomeCard = styled.article`
     border-radius: 2rem;
     transition: 0.2s;
     background-image: linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.01));
-    
+
     &:hover {
         color: var(--c-primary);
         transform: translateY(-3px);
         box-shadow: 0 0.75rem 2.5rem -0.2rem rgb(128, 90, 213, 0.4);
-    
+
         svg {
             fill: currentColor;
             opacity: 1;
