@@ -11,7 +11,6 @@ using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
 using IdentityModel;
-using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -25,7 +24,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using OpenIddict.Abstractions;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace Blitz.Web
@@ -100,7 +98,7 @@ namespace Blitz.Web
                         Type = SecuritySchemeType.Http,
                         Description = "Go to [/auth/login](/auth/login) to login, then execute /auth/token to generate a token",
                         BearerFormat = "JWT",
-                        Scheme = OpenIddictConstants.Schemes.Bearer,
+                        Scheme = JwtBearerDefaults.AuthenticationScheme,
                         In = ParameterLocation.Header,
                         Name = HeaderNames.Authorization,
                     });
