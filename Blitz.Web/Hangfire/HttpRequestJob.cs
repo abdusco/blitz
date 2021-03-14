@@ -55,19 +55,16 @@ namespace Blitz.Web.Hangfire
 
             if (exec is null)
             {
-                exec = new Execution(cronjob) {Id = executionId = Guid.NewGuid()};
+                executionId = Guid.NewGuid();
+                exec = new Execution(cronjob) {Id = executionId};
                 await db.AddAsync(exec, cancellationToken);
             }
 
             _logger.LogInformation("Executing {ExecutionId} for {CronjobTitle} ({CronjobId})", exec.Id, cronjob.Title, cronjobId);
 
             exec.UpdateStatus(ExecutionState.Pending);
-            await using (var tx = await db.Database.BeginTransactionAsync(cancellationToken))
-            {
-                await db.SaveChangesAsync(cancellationToken);
-                await tx.CommitAsync(cancellationToken);
-            }
-
+            await db.SaveChangesAsync(cancellationToken);
+            
             var method = cronjob.HttpMethod.ToUpperInvariant() switch
             {
                 "GET" => HttpMethod.Get,
@@ -82,7 +79,9 @@ namespace Blitz.Web.Hangfire
 
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("Execution-Id", exec.Id.ToString());
+                
                 var response = await _http.SendAsync(req, cancellationToken);
+
                 timer.Stop();
                 exec.UpdateStatus(
                     new ExecutionStatus(exec, ExecutionState.Triggered)
@@ -125,9 +124,7 @@ namespace Blitz.Web.Hangfire
             finally
             {
                 _logger.LogInformation("Saving execution={ExecutionId}", exec.Id);
-                await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
-                await tx.CommitAsync(cancellationToken);
             }
         }
     }
