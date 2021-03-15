@@ -43,28 +43,29 @@ namespace Blitz.Web.Hangfire
                 return;
             }
 
-            _logger.LogInformation("Received cronjob: {CronjobTitle}", cronjob.Title);
-
-            Execution exec = null;
-            if (executionId != Guid.Empty)
-            {
-                exec = await db.Executions
-                    .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
-                    .SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
-            }
+            // make sure execution is saved to db
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            
+            var exec = await db.Executions
+                .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
+                .SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
 
             if (exec is null)
             {
-                executionId = Guid.NewGuid();
+                if (executionId == Guid.Empty)
+                {
+                    executionId = Guid.NewGuid();
+                }
+
                 exec = new Execution(cronjob) {Id = executionId};
                 await db.AddAsync(exec, cancellationToken);
             }
 
-            _logger.LogInformation("Executing {ExecutionId} for {CronjobTitle} ({CronjobId})", exec.Id, cronjob.Title, cronjobId);
+            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title, cronjobId);
 
             exec.UpdateStatus(ExecutionState.Pending);
             await db.SaveChangesAsync(cancellationToken);
-            
+
             var method = cronjob.HttpMethod.ToUpperInvariant() switch
             {
                 "GET" => HttpMethod.Get,
@@ -79,7 +80,7 @@ namespace Blitz.Web.Hangfire
 
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("Execution-Id", exec.Id.ToString());
-                
+
                 var response = await _http.SendAsync(req, cancellationToken);
 
                 timer.Stop();
@@ -123,7 +124,7 @@ namespace Blitz.Web.Hangfire
             }
             finally
             {
-                _logger.LogInformation("Saving execution={ExecutionId}", exec.Id);
+                _logger.LogInformation("Saving execution id={ExecutionId}", exec.Id);
                 await db.SaveChangesAsync(cancellationToken);
             }
         }

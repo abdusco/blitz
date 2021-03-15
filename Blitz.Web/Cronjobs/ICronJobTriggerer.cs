@@ -25,7 +25,7 @@ namespace Blitz.Web.Cronjobs
         public Task<Guid> TriggerAsync(Cronjob cronjob)
         {
             var executionId = Guid.NewGuid();
-            _logger.LogInformation("Triggering '{CronjobTitle}' ({CronjobId}) manually with id={ExecutionId}", cronjob.Title, cronjob.Id, executionId);
+            _logger.LogInformation("Triggering '{Cronjob}' manually with execution id={ExecutionId}", cronjob.Title, executionId);
             _backgroundJobClient.Enqueue<HttpRequestJob>(job => job.SendRequestAsync(cronjob.Id, executionId, null, default));
             return Task.FromResult(executionId);
         }
