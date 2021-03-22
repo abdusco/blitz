@@ -44,7 +44,7 @@ namespace Blitz.Web.Hangfire
             }
 
             // make sure execution is saved to db
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(1.5), cancellationToken);
             
             var exec = await db.Executions
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
