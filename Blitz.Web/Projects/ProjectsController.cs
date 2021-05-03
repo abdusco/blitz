@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
@@ -90,6 +91,12 @@ namespace Blitz.Web.Projects
             }
 
             await _db.AddAsync(project, cancellationToken);
+            if (User.GetIdClaim() is string userId)
+            {
+                var user = await _db.Users.FirstOrDefaultAsync(e => e.Id == Guid.Parse(userId), cancellationToken);
+                user.AddControlledEntity(project);
+            }
+
             await _db.SaveChangesAsync(cancellationToken);
 
             return project.Id;

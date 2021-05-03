@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using Blitz.Web.Identity;
@@ -11,11 +12,10 @@ namespace Blitz.Web.Auth
         {
             return principal.Claims.Where(c => c.Type == claimType).Select(c => c.Value).ToList().AsReadOnly();
         }
-        /*public static bool IsAdmin(this ClaimsPrincipal principal)
+
+        public static string? GetIdClaim(this ClaimsPrincipal principal)
         {
-            return principal.IsInRole(IdentityDefaults.AdminRole);
+            return principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         }
-        */
-        
     }
 }
