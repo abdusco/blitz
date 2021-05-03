@@ -54,7 +54,7 @@ namespace Blitz.Web
             );
             services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
             services.AddGarbageCollector();
-            services.AddHttpClient<HttpRequestJob>(
+            services.AddHttpClient<HttpRequestSender>(
                 (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
             );
 

@@ -9,20 +9,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
-using Hangfire.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Hangfire
 {
-    public class HttpRequestJob
+    public class HttpRequestSender
     {
         private readonly HttpClient _http;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<HttpRequestJob> _logger;
+        private readonly ILogger<HttpRequestSender> _logger;
 
-        public HttpRequestJob(HttpClient http, IServiceScopeFactory scopeFactory, ILogger<HttpRequestJob> logger)
+        public HttpRequestSender(HttpClient http, IServiceScopeFactory scopeFactory, ILogger<HttpRequestSender> logger)
         {
             _http = http;
             _scopeFactory = scopeFactory;
@@ -31,7 +30,6 @@ namespace Blitz.Web.Hangfire
 
         public async Task SendRequestAsync(Guid cronjobId,
                                            Guid executionId = default,
-                                           PerformContext context = null,
                                            CancellationToken cancellationToken = default)
         {
             using var scope = _scopeFactory.CreateScope();
