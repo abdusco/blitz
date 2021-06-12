@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
@@ -13,7 +14,7 @@ namespace Blitz.Web.Projects
 
         public Project(string title)
         {
-            Title = title;
+            Title = title ?? throw new ArgumentNullException(nameof(title));
         }
 
         public string Title { get; set; }
