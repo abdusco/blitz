@@ -10,6 +10,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
+using Hangfire.EntityFrameworkCore;
 using IdentityModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -48,8 +49,8 @@ namespace Blitz.Web
                 {
                     configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 2});
                     configuration.UseInMemoryStorage();
-                    // configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
-                    //     new EFCoreStorageOptions());
+                    configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
+                        new EFCoreStorageOptions());
                 }
             );
             services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
