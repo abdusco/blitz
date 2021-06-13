@@ -53,7 +53,11 @@ namespace Blitz.Web
                         new EFCoreStorageOptions());
                 }
             );
-            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+            services.AddHangfireServer(options =>
+            {
+                options.ServerName = Environment.ApplicationName;
+                options.WorkerCount = 4;
+            });
             services.AddGarbageCollector();
             services.AddHttpClient<HttpRequestSender>(
                 (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
