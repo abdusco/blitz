@@ -64,7 +64,7 @@ namespace Blitz.Web.Persistence
             modelBuilder.Entity<Project>(builder =>
             {
                 builder.HasIndex(p => p.Title).IsUnique();
-                builder.HasIndex(e => new {e.Title, e.Version}).IsUnique();
+                builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
             });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
@@ -124,7 +124,7 @@ namespace Blitz.Web.Persistence
                 if (entityType.FindProperty(nameof(ITimestamped.CreatedAt)) is IMutableProperty createdAt)
                 {
                     createdAt.SetDefaultValueSql("current_timestamp");
-                    entityType.AddIndex(new[] {createdAt});
+                    entityType.AddIndex(new[] { createdAt });
                 }
             }
         }
