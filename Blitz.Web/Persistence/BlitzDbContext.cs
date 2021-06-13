@@ -54,6 +54,11 @@ namespace Blitz.Web.Persistence
                     builder.Property(e => e.ProjectId).IsRequired();
                     builder.Property(e => e.Cron)
                         .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
+                    builder.Property(e => e.Auth)
+                        .HasConversion(
+                            auth => JsonSerializer.Serialize(auth, null),
+                            s => JsonSerializer.Deserialize<TokenAuth>(s, null)
+                        ).HasColumnType("JSONB");
                 }
             );
             modelBuilder.Entity<Project>(builder =>

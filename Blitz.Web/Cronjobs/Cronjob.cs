@@ -37,6 +37,10 @@ namespace Blitz.Web.Cronjobs
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; } = true;
 
+        public TokenAuth Auth { get; set; }
+
+        public bool NeedsAuthentication => Auth != null;
+
         private Cronjob()
         {
         }
@@ -82,7 +86,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         public void UpdateStatus(ExecutionState state, Dictionary<string, object> details) =>
-            UpdateStatus(new ExecutionStatus(this, state) {Details = details});
+            UpdateStatus(new ExecutionStatus(this, state) { Details = details });
 
         public void UpdateStatus(ExecutionState state) => UpdateStatus(new ExecutionStatus(this, state));
     }

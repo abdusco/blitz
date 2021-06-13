@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
+using IdentityModel.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ namespace Blitz.Web.Hangfire
 
             // make sure execution is saved to db
             await Task.Delay(TimeSpan.FromSeconds(1.5), cancellationToken);
-            
+
             var exec = await db.Executions
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
@@ -55,7 +56,7 @@ namespace Blitz.Web.Hangfire
                     executionId = Guid.NewGuid();
                 }
 
-                exec = new Execution(cronjob) {Id = executionId};
+                exec = new Execution(cronjob) { Id = executionId };
                 await db.AddAsync(exec, cancellationToken);
             }
 
@@ -72,6 +73,20 @@ namespace Blitz.Web.Hangfire
             };
 
             var timer = Stopwatch.StartNew();
+
+            if (cronjob.NeedsAuthentication)
+            {
+                _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.Auth.TokenEndpoint);
+                var tokenResult = await _http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                {
+                    Address = cronjob.Auth.TokenEndpoint,
+                    ClientId = cronjob.Auth.ClientId,
+                    ClientSecret = cronjob.Auth.ClientSecret,
+                    Scope = cronjob.Auth.Scopes,
+                }, cancellationToken: cancellationToken);
+                _http.SetBearerToken(tokenResult.AccessToken);
+            }
+
             try
             {
                 var now = DateTime.UtcNow;
