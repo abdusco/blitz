@@ -288,12 +288,12 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_config_template");
+                        .HasName("pk_config_templates");
 
                     b.HasIndex("CreatedAt")
-                        .HasDatabaseName("ix_config_template_created_at");
+                        .HasDatabaseName("ix_config_templates_created_at");
 
-                    b.ToTable("config_template");
+                    b.ToTable("config_templates");
                 });
 
             modelBuilder.Entity("Blitz.Web.Projects.Project", b =>

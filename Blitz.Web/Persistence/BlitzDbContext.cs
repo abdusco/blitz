@@ -21,6 +21,7 @@ namespace Blitz.Web.Persistence
     {
         public DbSet<Project> Projects { get; set; }
         public DbSet<Cronjob> Cronjobs { get; set; }
+        public DbSet<ConfigTemplate> ConfigTemplates { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStatus> StatusUpdates { get; set; }
 
@@ -77,6 +78,7 @@ namespace Blitz.Web.Persistence
             });
             modelBuilder.Entity<ConfigTemplate>(builder =>
             {
+                builder.ToTable("config_templates");
                 builder.Property(e => e.Auth)
                     .HasConversion(
                         auth => JsonSerializer.Serialize(auth, null),

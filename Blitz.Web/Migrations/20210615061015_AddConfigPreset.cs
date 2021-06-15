@@ -8,7 +8,7 @@ namespace Blitz.Web.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "config_template",
+                name: "config_templates",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -19,19 +19,19 @@ namespace Blitz.Web.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_config_template", x => x.id);
+                    table.PrimaryKey("pk_config_templates", x => x.id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_config_template_created_at",
-                table: "config_template",
+                name: "ix_config_templates_created_at",
+                table: "config_templates",
                 column: "created_at");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "config_template");
+                name: "config_templates");
         }
     }
 }

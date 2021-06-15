@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blitz.Web.Migrations
 {
     [DbContext(typeof(BlitzDbContext))]
-    [Migration("20210615053526_AddConfigPreset")]
+    [Migration("20210615061015_AddConfigPreset")]
     partial class AddConfigPreset
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -290,12 +290,12 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_config_template");
+                        .HasName("pk_config_templates");
 
                     b.HasIndex("CreatedAt")
-                        .HasDatabaseName("ix_config_template_created_at");
+                        .HasDatabaseName("ix_config_templates_created_at");
 
-                    b.ToTable("config_template");
+                    b.ToTable("config_templates");
                 });
 
             modelBuilder.Entity("Blitz.Web.Projects.Project", b =>
