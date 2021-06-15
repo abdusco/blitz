@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ContextType } from 'react';
 
 export interface ProjectListDto {
     id: string;
@@ -8,6 +9,19 @@ export interface ProjectListDto {
 
 export interface ProjectCreateInput {
     title: string;
+    auth?: TokenAuthCreateDto;
+}
+
+export interface TokenAuthDto {
+    tokenEndpoint: string;
+    clientId: string;
+    scope: string;
+}
+export interface TokenAuthCreateDto {
+    tokenEndpoint: string;
+    clientId: string;
+    clientSecret: string;
+    scope: string;
 }
 
 export interface CronjobCreateDto {
@@ -16,6 +30,7 @@ export interface CronjobCreateDto {
     url: string;
     cron: string;
     httpMethod: string;
+    auth?: TokenAuthCreateDto;
 }
 
 export interface CronjobListDto {
@@ -80,6 +95,17 @@ export interface ExecutionStatusUpdate {
     details: Record<string, any>;
 }
 
+export interface ConfigTemplateCreateDto {
+    title: string;
+    auth: TokenAuthCreateDto;
+}
+
+export interface ConfigTemplateDto {
+    id: string;
+    title: string;
+    auth: TokenAuthCreateDto;
+}
+
 export const fetchCronjob = async (id: string) => {
     const { data } = await axios.get<CronjobDetailDto>(`/cronjobs/${id}`);
     await sleep();
@@ -92,8 +118,7 @@ export const triggerCronjob = async (id: string) => {
     return data;
 };
 
-export const sleep = async (duration: number = 0) =>
-    new Promise((resolve) => setTimeout(resolve, duration));
+export const sleep = async (duration: number = 0) => new Promise((resolve) => setTimeout(resolve, duration));
 
 export const toggleCronjobEnabled = async ({ id, enabled }: { id: string; enabled: boolean }) => {
     await axios.patch(`/cronjobs/${id}`, { enabled });
@@ -212,4 +237,22 @@ export const updateUserClaims = async (userId: string, req: UserClaimsUpdateRequ
 export const deleteUser = async (userId: string) => {
     await axios.delete(`/users/${userId}`);
     await sleep();
+};
+
+export const createTemplate = async (payload: ConfigTemplateCreateDto): Promise<ConfigTemplateDto> => {
+    const res = await axios.post<ConfigTemplateDto>(`/templates`, payload);
+    return res.data;
+};
+
+export const fetchTemplates = async (): Promise<ConfigTemplateDto[]> => {
+    const res = await axios.get<ConfigTemplateDto[]>(`/templates`);
+    return res.data;
+};
+
+export const updateTemplate = async (
+    templateId: string,
+    payload: ConfigTemplateCreateDto
+): Promise<ConfigTemplateDto> => {
+    const res = await axios.patch<ConfigTemplateDto>(`/templates/${templateId}`, payload);
+    return res.data;
 };

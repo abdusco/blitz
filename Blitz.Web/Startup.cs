@@ -49,8 +49,8 @@ namespace Blitz.Web
                 {
                     configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 2});
                     configuration.UseInMemoryStorage();
-                    configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
-                        new EFCoreStorageOptions());
+                    // configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
+                    //     new EFCoreStorageOptions());
                 }
             );
             services.AddHangfireServer(options =>
