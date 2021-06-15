@@ -28,6 +28,8 @@ const Projects = lazyComponent(() => import('./pages/projects'));
 const Project = lazyComponent(() => import('./pages/project'));
 const Cronjobs = lazyComponent(() => import('./pages/cronjobs'));
 const Cronjob = lazyComponent(() => import('./pages/cronjob'));
+const Administration = lazyComponent(() => import('./pages/administration'));
+const ConfigTemplate = lazyComponent(() => import('./pages/configtemplate'));
 
 export const routes = [
     <Route exact path="/" component={Home} />,
@@ -40,4 +42,6 @@ export const routes = [
     <Route path="/projects" component={Projects} />,
     <Route path="/executions/:id" component={Execution} />,
     <Route path="/executions" component={Executions} />,
+    <Route path="/administration" component={Administration} />,
+    <Route path="/configtemplate" component={ConfigTemplate} />,
 ];

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useAuth } from '../lib/auth';
 import styles from './home.module.scss';
- 
+
 export default function Home() {
     const { user } = useAuth();
 
@@ -14,15 +14,18 @@ export default function Home() {
         { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon />, roles: ['pm'] },
         { text: 'Executions', pathname: '/executions', icon: <ExecutionsIcon /> },
         { text: 'Users', pathname: '/users', icon: <UsersIcon />, roles: ['admin'] },
+        { text: 'Administration', pathname: '/administration', icon: <SettingsIcon /> },
     ].filter((it) => (it.roles ? user?.hasRole('admin', ...(it.roles || [])) : true));
 
     return (
         <div className={styles.home}>
             <div className={styles.homeContent}>
                 <Heading size={'xl'} fontWeight="bold" className={styles.homeTitle} color="purple.500">
-                    <Flex alignItems="center" justifyContent='center'>
+                    <Flex alignItems="center" justifyContent="center">
                         <Logo />
-                        <Badge ml={4} backgroundColor='purple.50' color='purple.600'>Beta</Badge>
+                        <Badge ml={4} backgroundColor="purple.50" color="purple.600">
+                            Beta
+                        </Badge>
                     </Flex>
                 </Heading>
                 {links.length > 0 && (
@@ -104,3 +107,11 @@ const UsersIcon = () => (
         <path d="M288 415.5q33 0 76.5 9-76.5 42-76.5 111v72H64.5V528q0-34.5 41.25-61.5t90.75-39 91.5-12zm240 33q55.5 0 115.5 24t60 63v72h-351v-72q0-39 60-63t115.5-24zm-240-96q-39 0-67.5-28.5T192 256.5t28.5-67.5 67.5-28.5 67.5 28.5 28.5 67.5-28.5 67.5-67.5 28.5zM528 384q-33 0-56.25-23.25T448.5 304.5t23.25-57 56.25-24 56.25 24 23.25 57-23.25 56.25T528 384z" />
     </svg>
 );
+
+const SettingsIcon = () => {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
+            <path d="M384 496.5q46.5 0 79.5-33t33-79.5-33-79.5-79.5-33-79.5 33-33 79.5 33 79.5 79.5 33zm238.5-81L690 468q10.5 7.5 3 21l-64.5 111q-6 10.5-19.5 6l-79.5-31.5Q498 597 475.5 606l-12 84q-3 13.5-15 13.5h-129q-12 0-15-13.5l-12-84q-28.5-12-54-31.5L159 606q-13.5 4.5-19.5-6L75 489q-7.5-13.5 3-21l67.5-52.5Q144 405 144 384t1.5-31.5L78 300q-10.5-7.5-3-21l64.5-111q6-10.5 19.5-6l79.5 31.5q31.5-22.5 54-31.5l12-84q3-13.5 15-13.5h129q12 0 15 13.5l12 84q28.5 12 54 31.5L609 162q13.5-4.5 19.5 6L693 279q7.5 13.5-3 21l-67.5 52.5Q624 363 624 384t-1.5 31.5z" />
+        </svg>
+    );
+};
