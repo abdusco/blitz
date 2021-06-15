@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -9,6 +10,7 @@ using Blitz.Web.Identity;
 using Blitz.Web.Projects;
 using Hangfire.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Blitz.Web.Persistence
@@ -65,13 +67,24 @@ namespace Blitz.Web.Persistence
             {
                 builder.HasIndex(p => p.Title).IsUnique();
                 builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
+                builder.Property(e => e.Auth)
+                    .HasConversion(
+                        auth => JsonSerializer.Serialize(auth, null),
+                        s => JsonSerializer.Deserialize<TokenAuth>(s, null)
+                    ).HasColumnType("JSONB");
             });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
                 {
+                    var comparer = new ValueComparer<Dictionary<string, object>>(
+                        (d1, d2) => d1.SequenceEqual(d2),
+                        d => d.Aggregate(0, (agg, val) => HashCode.Combine(agg, val.GetHashCode())),
+                        d => d
+                    );
                     builder.Property(e => e.Details).HasConversion(
                         val => JsonSerializer.Serialize(val, null),
-                        dbVal => JsonSerializer.Deserialize<Dictionary<string, object>>(dbVal, null)
+                        dbVal => JsonSerializer.Deserialize<Dictionary<string, object>>(dbVal, null),
+                        comparer
                     );
                     builder.Property(e => e.State).HasConversion(
                         val => val.Name,

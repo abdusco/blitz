@@ -25,6 +25,8 @@ namespace Blitz.Web.Projects
         /// </summary>
         public string Version { get; set; }
 
+        public TokenAuth Auth { get; set; }
+
         public UserClaim ToUserClaim(User user)
         {
             return new UserClaim(user, nameof(Project), Id.ToString());

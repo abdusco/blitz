@@ -3,15 +3,17 @@ using System;
 using Blitz.Web.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Blitz.Web.Migrations
 {
     [DbContext(typeof(BlitzDbContext))]
-    partial class BlitzDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210615045959_AddProjectAuth")]
+    partial class AddProjectAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
