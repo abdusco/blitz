@@ -39,7 +39,8 @@ namespace Blitz.Web.Cronjobs
 
         public TokenAuth Auth { get; set; }
 
-        public bool NeedsAuthentication => Auth != null;
+        public bool NeedsAuthentication => EffectiveAuth != null;
+        public TokenAuth EffectiveAuth => Auth ?? Project?.Auth;
 
         private Cronjob()
         {

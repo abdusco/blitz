@@ -35,7 +35,7 @@ namespace Blitz.Web.Hangfire
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
-            var cronjob = await db.Cronjobs.SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
+            var cronjob = await db.Cronjobs.Include(e => e.Project).SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
             if (cronjob is null)
             {
                 _logger.LogInformation("Cannot find a cronjob record with id={CronjobId}", cronjobId);
@@ -76,13 +76,13 @@ namespace Blitz.Web.Hangfire
 
             if (cronjob.NeedsAuthentication)
             {
-                _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.Auth.TokenEndpoint);
+                _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.EffectiveAuth.TokenEndpoint);
                 var tokenResult = await _http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
                 {
-                    Address = cronjob.Auth.TokenEndpoint,
-                    ClientId = cronjob.Auth.ClientId,
-                    ClientSecret = cronjob.Auth.ClientSecret,
-                    Scope = cronjob.Auth.Scopes,
+                    Address = cronjob.EffectiveAuth.TokenEndpoint,
+                    ClientId = cronjob.EffectiveAuth.ClientId,
+                    ClientSecret = cronjob.EffectiveAuth.ClientSecret,
+                    Scope = cronjob.EffectiveAuth.Scopes,
                 }, cancellationToken: cancellationToken);
                 _http.SetBearerToken(tokenResult.AccessToken);
             }
