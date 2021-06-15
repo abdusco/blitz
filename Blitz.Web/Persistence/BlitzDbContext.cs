@@ -7,11 +7,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
+using Blitz.Web.Presets;
 using Blitz.Web.Projects;
 using Hangfire.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Blitz.Web.Persistence
 {
@@ -67,6 +69,14 @@ namespace Blitz.Web.Persistence
             {
                 builder.HasIndex(p => p.Title).IsUnique();
                 builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
+                builder.Property(e => e.Auth)
+                    .HasConversion(
+                        auth => JsonSerializer.Serialize(auth, null),
+                        s => JsonSerializer.Deserialize<TokenAuth>(s, null)
+                    ).HasColumnType("JSONB");
+            });
+            modelBuilder.Entity<ConfigTemplate>(builder =>
+            {
                 builder.Property(e => e.Auth)
                     .HasConversion(
                         auth => JsonSerializer.Serialize(auth, null),
