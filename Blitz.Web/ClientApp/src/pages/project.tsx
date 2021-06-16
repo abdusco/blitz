@@ -76,6 +76,73 @@ export default function Project() {
     );
 }
 
+export const CreateCronjobForm: React.FC<{
+    projectId: string;
+    onSubmit: (data: CronjobCreateDto) => Promise<void> | void;
+    defaultValues?: Partial<CronjobCreateDto>;
+    formProps?: any,
+}> = (props) => {
+    const form = useForm<CronjobCreateDto>({
+        defaultValues: props.defaultValues ?? {
+            httpMethod: 'POST',
+        },
+    });
+    const currentCron = form.watch('cron');
+
+
+    return (
+        <form {...props.formProps} onSubmit={form.handleSubmit(props.onSubmit)}>
+            <Stack spacing={4}>
+                <input type="hidden" ref={form.register} name="projectId" value={props.projectId} />
+                <FormControl isRequired>
+                    <FormLabel>Title</FormLabel>
+                    <Input placeholder="e.g. warm up cache" name="title" ref={form.register} required />
+                    <FormHelperText>A name for this cronjob</FormHelperText>
+                </FormControl>
+                <FormControl isRequired>
+                    <FormLabel>URL</FormLabel>
+                    <Input
+                        placeholder="https://url.to.api/-/cronjobs/warmupcache"
+                        name="url"
+                        type="url"
+                        ref={form.register}
+                        required
+                    />
+                    <FormHelperText>URL to be sent request to</FormHelperText>
+                </FormControl>
+                <FormControl isRequired>
+                    <FormLabel>Schedule</FormLabel>
+                    <CronPopup cron={currentCron} placement="right" isOpen={!!currentCron}>
+                        <Input
+                            placeholder="* * * * *"
+                            name="cron"
+                            type="text"
+                            pattern="(\S+ ?){5}"
+                            ref={form.register}
+                            required
+                            autoComplete="off"
+                        />
+                    </CronPopup>
+                    <FormHelperText>A cronjob expression: {currentCron}.</FormHelperText>
+                </FormControl>
+                <FormControl isRequired>
+                    <FormLabel>HTTP Method</FormLabel>
+                    <RadioGroup defaultValue="POST">
+                        <Stack direction="row">
+                            <Radio name="httpMethod" ref={form.register} value="POST">
+                                POST
+                            </Radio>
+                            <Radio name="httpMethod" ref={form.register} value="GET">
+                                GET
+                            </Radio>
+                        </Stack>
+                    </RadioGroup>
+                </FormControl>
+            </Stack>
+        </form>
+    );
+};
+
 export const CreateCronjobDialog: React.FC<{
     projectId: string;
     isOpen: boolean;
@@ -109,55 +176,7 @@ export const CreateCronjobDialog: React.FC<{
                 <ModalHeader>Create a new cronjob</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} id={'createCronjob'}>
-                        <Stack spacing={4}>
-                            <input type="hidden" ref={form.register} name="projectId" value={props.projectId} />
-                            <FormControl isRequired>
-                                <FormLabel>Title</FormLabel>
-                                <Input placeholder="e.g. warm up cache" name="title" ref={form.register} required />
-                                <FormHelperText>A name for this cronjob</FormHelperText>
-                            </FormControl>
-                            <FormControl isRequired>
-                                <FormLabel>URL</FormLabel>
-                                <Input
-                                    placeholder="https://url.to.api/-/cronjobs/warmupcache"
-                                    name="url"
-                                    type="url"
-                                    ref={form.register}
-                                    required
-                                />
-                                <FormHelperText>URL to be sent request to</FormHelperText>
-                            </FormControl>
-                            <FormControl isRequired>
-                                <FormLabel>Schedule</FormLabel>
-                                <CronPopup cron={currentCron} placement="right" isOpen={!!currentCron}>
-                                    <Input
-                                        placeholder="* * * * *"
-                                        name="cron"
-                                        type="text"
-                                        pattern="(\S+ ?){5}"
-                                        ref={form.register}
-                                        required
-                                        autoComplete="off"
-                                    />
-                                </CronPopup>
-                                <FormHelperText>A cronjob expression: {currentCron}.</FormHelperText>
-                            </FormControl>
-                            <FormControl isRequired>
-                                <FormLabel>HTTP Method</FormLabel>
-                                <RadioGroup defaultValue="POST">
-                                    <Stack direction="row">
-                                        <Radio name="httpMethod" ref={form.register} value="POST">
-                                            POST
-                                        </Radio>
-                                        <Radio name="httpMethod" ref={form.register} value="GET">
-                                            GET
-                                        </Radio>
-                                    </Stack>
-                                </RadioGroup>
-                            </FormControl>
-                        </Stack>
-                    </form>
+                    <CreateCronjobForm projectId={props.projectId} onSubmit={onSubmit} formProps={{id: 'createCronjob'}} />
                 </ModalBody>
                 <ModalFooter>
                     <Button

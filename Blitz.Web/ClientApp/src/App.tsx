@@ -70,6 +70,7 @@ const FailedQueryNotifier: React.FC = (props) => {
         axios.interceptors.response.use(
             (val) => val,
             (err: AxiosError) => {
+                return;
                 if (err.response?.status === 401) {
                     const atHome = history.location.pathname === '/';
                     if (atHome) {
