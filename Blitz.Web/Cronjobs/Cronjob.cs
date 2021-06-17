@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Ardalis.SmartEnum;
 using Blitz.Web.Persistence;
+using Blitz.Web.Presets;
 using Blitz.Web.Projects;
 
 namespace Blitz.Web.Cronjobs
@@ -38,9 +39,9 @@ namespace Blitz.Web.Cronjobs
         public bool Enabled { get; set; } = true;
 
         public TokenAuth Auth { get; set; }
-
-        public bool NeedsAuthentication => EffectiveAuth != null;
-        public TokenAuth EffectiveAuth => Auth ?? Project?.Auth;
+        public ConfigTemplate Template { get; set; }
+        public bool IsAuthenticated { get; set; }
+        public ITokenAuth EffectiveAuth => new CombinedTokenAuth(new[] { Auth, Template?.Auth, Project?.Auth, Project?.Template?.Auth });
 
         private Cronjob()
         {

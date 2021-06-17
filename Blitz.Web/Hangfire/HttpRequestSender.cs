@@ -74,7 +74,7 @@ namespace Blitz.Web.Hangfire
 
             var timer = Stopwatch.StartNew();
 
-            if (cronjob.NeedsAuthentication)
+            if (cronjob.IsAuthenticated)
             {
                 _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.EffectiveAuth.TokenEndpoint);
                 var tokenResult = await _http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest

@@ -3,15 +3,17 @@ using System;
 using Blitz.Web.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Blitz.Web.Migrations
 {
     [DbContext(typeof(BlitzDbContext))]
-    partial class BlitzDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210617115529_AddAuthToggle")]
+    partial class AddAuthToggle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,10 +62,6 @@ namespace Blitz.Web.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("project_id");
 
-                    b.Property<Guid?>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
-
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
@@ -84,9 +82,6 @@ namespace Blitz.Web.Migrations
 
                     b.HasIndex("ProjectId")
                         .HasDatabaseName("ix_cronjobs_project_id");
-
-                    b.HasIndex("TemplateId")
-                        .HasDatabaseName("ix_cronjobs_template_id");
 
                     b.ToTable("cronjobs");
                 });
@@ -324,10 +319,6 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("current_timestamp");
 
-                    b.Property<Guid?>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
-
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
@@ -345,9 +336,6 @@ namespace Blitz.Web.Migrations
 
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("ix_projects_created_at");
-
-                    b.HasIndex("TemplateId")
-                        .HasDatabaseName("ix_projects_template_id");
 
                     b.HasIndex("Title")
                         .IsUnique()
@@ -712,14 +700,7 @@ namespace Blitz.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Blitz.Web.Presets.ConfigTemplate", "Template")
-                        .WithMany()
-                        .HasForeignKey("TemplateId")
-                        .HasConstraintName("fk_cronjobs_config_templates_template_id");
-
                     b.Navigation("Project");
-
-                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Blitz.Web.Cronjobs.Execution", b =>
@@ -756,16 +737,6 @@ namespace Blitz.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Blitz.Web.Projects.Project", b =>
-                {
-                    b.HasOne("Blitz.Web.Presets.ConfigTemplate", "Template")
-                        .WithMany()
-                        .HasForeignKey("TemplateId")
-                        .HasConstraintName("fk_projects_config_templates_template_id");
-
-                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireJob", b =>
