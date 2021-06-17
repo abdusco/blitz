@@ -11,7 +11,7 @@ using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
-using Blitz.Web.Presets;
+using Blitz.Web.Templates;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

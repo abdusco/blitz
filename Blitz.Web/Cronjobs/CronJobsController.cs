@@ -9,6 +9,7 @@ using Blitz.Web.Auth;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
 using Blitz.Web.Projects;
+using Blitz.Web.Templates;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -96,13 +97,29 @@ namespace Blitz.Web.Cronjobs
             cronjob.Enabled = request.Enabled ?? cronjob.Enabled;
             cronjob.Title = request.Title ?? cronjob.Title;
             cronjob.Cron = _mapper.Map<CronExpression>(request.Cron) ?? cronjob.Cron;
+            cronjob.IsAuthenticated = request.IsAuthenticated;
+            if (request.IsAuthenticated)
+            {
+                if (request.TemplateId is { } templateId)
+                {
+                    var template = await _db.ConfigTemplates.FindAsync(new object[] { templateId }, cancellationToken: cancellationToken);
+                    if (template == null)
+                    {
+                        return NotFound(new ProblemDetails { Detail = "No such template" });
+                    }
+
+                    cronjob.Template = template;
+                }
+
+                cronjob.Auth = _mapper.Map<TokenAuth>(request.Auth);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
 
             if (cronjob.Enabled)
             {
                 await _cronjobRegistrationService.Add(cronjob);
             }
-
-            await _db.SaveChangesAsync(cancellationToken);
 
             return NoContent();
         }
@@ -117,7 +134,7 @@ namespace Blitz.Web.Cronjobs
             var cronjob = _mapper.Map<Cronjob>(request);
             if (!await _db.Projects.AnyAsync(e => e.Id == request.ProjectId, cancellationToken))
             {
-                return BadRequest(new ProblemDetails {Detail = "No such project"});
+                return BadRequest(new ProblemDetails { Detail = "No such project" });
             }
 
             var project = await _db.Projects.FindAsync(request.ProjectId);
@@ -270,6 +287,7 @@ namespace Blitz.Web.Cronjobs
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; }
+        public TokenAuthDto EffectiveAuth { get; set; }
     }
 
     [AutoMap(typeof(Cronjob), ReverseMap = true)]
@@ -288,5 +306,8 @@ namespace Blitz.Web.Cronjobs
         public string Title { get; set; }
         public string Cron { get; set; }
         public bool? Enabled { get; set; }
+        public bool IsAuthenticated { get; set; }
+        public TokenAuthCreateDto Auth { get; set; }
+        public Guid? TemplateId { get; set; }
     }
 }

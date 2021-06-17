@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
-using Blitz.Web.Presets;
+using Blitz.Web.Templates;
 
 namespace Blitz.Web.Projects
 {

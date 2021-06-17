@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
-using Blitz.Web.Presets;
 using Blitz.Web.Projects;
+using Blitz.Web.Templates;
 using Hangfire.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -76,6 +76,7 @@ namespace Blitz.Web.Persistence
             modelBuilder.Entity<ConfigTemplate>(builder =>
             {
                 builder.ToTable("config_templates");
+                builder.HasIndex(e => e.Key).IsUnique();
                 builder.Property(e => e.Auth)
                     .HasJsonConversion(authComparer)
                     .HasColumnType("JSONB");

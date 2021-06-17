@@ -7,12 +7,12 @@ using AutoMapper;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Persistence;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Blitz.Web.Presets
+namespace Blitz.Web.Templates
 {
+    [AutoMap(typeof(ITokenAuth))]
     [AutoMap(typeof(TokenAuth), ReverseMap = true)]
     public record TokenAuthDto(string TokenEndpoint,
                                string Scope,
@@ -25,44 +25,54 @@ namespace Blitz.Web.Presets
                                      string ClientId,
                                      string ClientSecret);
 
-    [AutoMap(typeof(ConfigTemplate), ReverseMap = true)]
-    public record ConfigTemplateDto(Guid Id, string Title, TokenAuthDto Auth);
-
-    [AutoMap(typeof(ConfigTemplate), ReverseMap = true)]
-    public record ConfigTemplateCreateDto(string Title, TokenAuthCreateDto Auth);
-
-    public class PresetsController : ApiController
+    public class TemplatesController : ApiController
     {
         private readonly BlitzDbContext _dbContext;
         private readonly IMapper _mapper;
 
-        public PresetsController(BlitzDbContext dbContext, IMapper mapper)
+        public TemplatesController(BlitzDbContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext;
             _mapper = mapper;
         }
 
+        [AutoMap(typeof(ConfigTemplate), ReverseMap = true)]
+        public record ConfigTemplateDto(Guid Id,
+                                        string Key,
+                                        string Title,
+                                        TokenAuthDto Auth);
+
+
         [HttpGet("{id:guid}")]
-        public async Task<ConfigTemplateDto> GetTemplateDetails(Guid id)
+        public async Task<IActionResult> GetTemplateDetails(Guid id)
         {
             var template = await _dbContext.ConfigTemplates.FindAsync(id);
-            return _mapper.Map<ConfigTemplateDto>(template);
+            return Ok(_mapper.Map<ConfigTemplateDto>(template));
         }
 
         [HttpGet]
-        public async Task<List<ConfigTemplateDto>> GetTemplateList(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTemplateList(CancellationToken cancellationToken = default)
         {
             var templates = await _dbContext.ConfigTemplates.OrderBy(e => e.Title).ToListAsync(cancellationToken);
-            return _mapper.Map<List<ConfigTemplateDto>>(templates);
+            return Ok(_mapper.Map<List<ConfigTemplateDto>>(templates));
         }
 
+        [AutoMap(typeof(ConfigTemplate), ReverseMap = true)]
+        public record ConfigTemplateCreateDto(string Key, string Title, TokenAuthCreateDto Auth);
+
+
         [HttpPost]
-        public async Task<ConfigTemplateDto> CreateTemplate(ConfigTemplateCreateDto dto, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> CreateTemplate(ConfigTemplateCreateDto dto, CancellationToken cancellationToken = default)
         {
+            var templateExists = await _dbContext.ConfigTemplates.AnyAsync(e => e.Key == dto.Key, cancellationToken);
+            if (templateExists)
+            {
+                return BadRequest(new ProblemDetails{Detail = $"A template with key '{dto.Key}' already exists"});
+            }
             var template = _mapper.Map<ConfigTemplate>(dto);
             await _dbContext.AddAsync(template, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return _mapper.Map<ConfigTemplateDto>(template);
+            return Ok();
         }
 
         [HttpDelete("{id:guid}")]

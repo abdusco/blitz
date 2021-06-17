@@ -1,7 +1,7 @@
 using System;
 using Blitz.Web.Cronjobs;
-using Blitz.Web.Presets;
 using Blitz.Web.Projects;
+using Blitz.Web.Templates;
 using Xunit;
 
 namespace Blitz.Tests
