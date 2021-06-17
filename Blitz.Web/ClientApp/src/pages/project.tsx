@@ -3,6 +3,7 @@ import {
     FormControl,
     FormHelperText,
     FormLabel,
+    HStack,
     Input,
     Modal,
     ModalBody,
@@ -16,12 +17,21 @@ import {
     Stack,
     useDisclosure,
 } from '@chakra-ui/react';
+import axios from 'axios';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
-import { createCronjob, CronjobCreateDto, CronJobOverviewDto, fetchProject, ProjectDetailsDto } from '../api';
+import {
+    createCronjob,
+    CronjobCreateDto,
+    CronJobOverviewDto,
+    fetchProject,
+    ProjectDetailsDto,
+    TokenAuthCreateDto,
+    updateProjectDetails,
+} from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import { CronPopup } from '../components/CronPopup';
 import DataTable from '../components/DataTable';
@@ -29,6 +39,7 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import { QueryProgress } from '../components/QueryProgress';
+import TokenAuthForm from '../components/TokenAuthForm';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { useRequireAuth } from '../lib/useRequireAuth';
 import { useRequireProjectClaim } from '../lib/useRequireProjectClaim';
@@ -50,7 +61,8 @@ export default function Project() {
     };
     const query = useQuery(['projects', id], () => fetchProject(id), { placeholderData });
 
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const newCronjobDialog = useDisclosure();
+    const projectEditDialog = useDisclosure();
 
     return (
         <DefaultLayout>
@@ -61,12 +73,29 @@ export default function Project() {
             <Hero>
                 <Hero.Title>{query.data?.title}</Hero.Title>
                 <Hero.Body>
-                    <Button onClick={onOpen}>New Cronjob</Button>
+                    <HStack spacing="2">
+                        <Button colorScheme='blue' onClick={newCronjobDialog.onOpen}>New Cronjob</Button>
+                        <Button onClick={projectEditDialog.onOpen}>Edit</Button>
+                    </HStack>
                 </Hero.Body>
             </Hero>
 
             <Clamp>
-                {query.data && <CreateCronjobDialog projectId={query.data?.id} isOpen={isOpen} onClose={onClose} />}
+                {!query.isPlaceholderData && query.data && (
+                    <CreateCronjobDialog
+                        projectId={id}
+                        isOpen={newCronjobDialog.isOpen}
+                        onClose={newCronjobDialog.onClose}
+                    />
+                )}
+
+                {!query.isPlaceholderData && query.data && (
+                    <ProjectEditDialog
+                        project={query.data}
+                        isOpen={projectEditDialog.isOpen}
+                        onClose={projectEditDialog.onClose}
+                    />
+                )}
 
                 <QueryProgress query={query} />
                 {!query.isPlaceholderData && query.data && <ProjectDetail project={query.data} />}
@@ -76,11 +105,44 @@ export default function Project() {
     );
 }
 
+const ProjectEditDialog: React.FC<{
+    project: ProjectDetailsDto;
+    isOpen: boolean;
+    onClose: () => void;
+}> = (props) => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation(
+        async (data: TokenAuthCreateDto) => updateProjectDetails(props.project.id, { auth: data }),
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries(['projects', props.project.id]);
+            },
+        }
+    );
+    const onSubmit = async (data: TokenAuthCreateDto) => {
+        await mutation.mutateAsync(data);
+        props.onClose();
+    };
+    return (
+        <Modal isOpen={props.isOpen} onClose={props.onClose} size="3xl">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Editing {props.project.title}</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody pb={6}>
+                    <TokenAuthForm onSubmit={onSubmit} defaultValues={props.project.auth || {}} />
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+    );
+};
+
 export const CreateCronjobForm: React.FC<{
     projectId: string;
     onSubmit: (data: CronjobCreateDto) => Promise<void> | void;
     defaultValues?: Partial<CronjobCreateDto>;
-    formProps?: any,
+    formProps?: any;
 }> = (props) => {
     const form = useForm<CronjobCreateDto>({
         defaultValues: props.defaultValues ?? {
@@ -88,8 +150,6 @@ export const CreateCronjobForm: React.FC<{
         },
     });
     const currentCron = form.watch('cron');
-
-
     return (
         <form {...props.formProps} onSubmit={form.handleSubmit(props.onSubmit)}>
             <Stack spacing={4}>
@@ -149,11 +209,6 @@ export const CreateCronjobDialog: React.FC<{
     onClose: () => void;
     // onSubmit: (input: CronjobCreateDto) => Promise<void>;
 }> = (props) => {
-    const form = useForm<CronjobCreateDto>({
-        defaultValues: {
-            httpMethod: 'POST',
-        },
-    });
     const queryClient = useQueryClient();
     const history = useHistory();
     const mutation = useMutation((payload: CronjobCreateDto) => createCronjob(payload), {
@@ -168,7 +223,6 @@ export const CreateCronjobDialog: React.FC<{
         await mutation.mutateAsync(form);
     };
 
-    const currentCron = form.watch('cron');
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
             <ModalOverlay />
@@ -176,7 +230,11 @@ export const CreateCronjobDialog: React.FC<{
                 <ModalHeader>Create a new cronjob</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <CreateCronjobForm projectId={props.projectId} onSubmit={onSubmit} formProps={{id: 'createCronjob'}} />
+                    <CreateCronjobForm
+                        projectId={props.projectId}
+                        onSubmit={onSubmit}
+                        formProps={{ id: 'createCronjob' }}
+                    />
                 </ModalBody>
                 <ModalFooter>
                     <Button

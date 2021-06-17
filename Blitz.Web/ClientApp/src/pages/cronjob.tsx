@@ -1,6 +1,25 @@
-import { Button, Stack, Table, Tbody, Td, Th, Tr, useToast } from '@chakra-ui/react';
+import { InfoOutlineIcon, LockIcon, UnlockIcon } from '@chakra-ui/icons';
+import {
+    Box,
+    Button,
+    HStack,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+    Stack,
+    Table,
+    Tbody,
+    Td,
+    Th,
+    Tr,
+    useDisclosure,
+    useToast,
+} from '@chakra-ui/react';
 import React, { useMemo } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
 import { Column } from 'react-table';
 import {
@@ -8,7 +27,10 @@ import {
     CronjobExecutionsListDto,
     fetchCronjob,
     fetchCronjobExecutions,
+    ProjectDetailsDto,
+    TokenAuthCreateDto,
     triggerCronjob,
+    updateCronjobDetails,
 } from '../api';
 import { CronjobEnabledSwitch } from '../components/CronjobEnabledSwitch';
 import { CronPopup } from '../components/CronPopup';
@@ -18,6 +40,7 @@ import Head from '../components/Head';
 import Hero from '../components/Hero';
 import LinkWithState from '../components/LinkWithState';
 import { QueryProgress } from '../components/QueryProgress';
+import TokenAuthForm from '../components/TokenAuthForm';
 import DefaultLayout, { Clamp } from '../layout/layout';
 import { formatDateISO } from '../lib/date';
 import { useRequireAuth } from '../lib/useRequireAuth';
@@ -57,6 +80,8 @@ export default function Cronjob() {
         },
     });
 
+    const editDialog = useDisclosure();
+
     return (
         <DefaultLayout>
             <Head>
@@ -70,15 +95,19 @@ export default function Cronjob() {
                     {!cronjobQuery.isPlaceholderData && cronjobQuery.data && (
                         <CronjobDetails data={cronjobQuery.data} />
                     )}
-                    <Button
-                        mt={4}
-                        // size="sm"
-                        colorScheme="blue"
-                        isLoading={mutation.isLoading}
-                        onClick={() => mutation.mutate()}
-                    >
-                        Trigger
-                    </Button>
+                    <HStack mt="4" spacing="2">
+                        <Button colorScheme="blue" isLoading={mutation.isLoading} onClick={() => mutation.mutate()}>
+                            Trigger
+                        </Button>
+                        <Button onClick={editDialog.onOpen}>Edit</Button>
+                    </HStack>
+                    {!cronjobQuery.isPlaceholderData && cronjobQuery.data && (
+                        <CronjobEditDialog
+                            cronjob={cronjobQuery.data}
+                            onClose={editDialog.onClose}
+                            isOpen={editDialog.isOpen}
+                        />
+                    )}
                 </Hero.Body>
             </Hero>
 
@@ -132,6 +161,10 @@ const CronjobDetails: React.FC<{ data: CronjobDetailDto }> = (props) => {
                         </Td>
                     </Tr>
                     <Tr>
+                        <Th>Authentication</Th>
+                        <Td>{data.effectiveAuth ? <LockIcon color="green.400" /> : <UnlockIcon color="gray" />}</Td>
+                    </Tr>
+                    <Tr>
                         <Th>Enabled</Th>
                         <Td>
                             <CronjobEnabledSwitch id={data.id} projectId={data.projectId} enabled={data.enabled} />
@@ -140,6 +173,50 @@ const CronjobDetails: React.FC<{ data: CronjobDetailDto }> = (props) => {
                 </Tbody>
             </Table>
         </>
+    );
+};
+
+const CronjobEditDialog: React.FC<{
+    cronjob: CronjobDetailDto;
+    isOpen: boolean;
+    onClose: () => void;
+}> = (props) => {
+    const queryClient = useQueryClient();
+    const projectQuery = useQuery<ProjectDetailsDto>(['projects', props.cronjob?.projectId], {
+        enabled: !!props.cronjob?.projectId,
+    });
+
+    const mutation = useMutation(
+        async (data: TokenAuthCreateDto) => updateCronjobDetails(props.cronjob.id, { auth: data }),
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries(['cronjobs', props.cronjob.id], { exact: true });
+            },
+        }
+    );
+    const onSubmit = async (data: TokenAuthCreateDto) => {
+        await mutation.mutateAsync(data);
+        props.onClose();
+    };
+
+    const isInheritingFromProject = !props.cronjob.effectiveAuth && projectQuery.data?.auth
+
+    return (
+        <Modal isOpen={props.isOpen} onClose={props.onClose} size="3xl">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Editing {props.cronjob.title}</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody pb={6}>
+                    <TokenAuthForm
+                        onSubmit={onSubmit}
+                        defaultValues={props.cronjob.effectiveAuth || projectQuery.data?.auth || {}}
+                    >
+                        {isInheritingFromProject ? 'Prefilled from project': null}
+                    </TokenAuthForm>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
     );
 };
 
