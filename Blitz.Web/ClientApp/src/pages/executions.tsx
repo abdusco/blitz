@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { QueryProgress } from '../components/QueryProgress';
 import LinkWithState from '../components/LinkWithState';
 import { formatDateISO } from '../lib/date';
+import { InfoOutlineIcon } from '@chakra-ui/icons';
 
 export default function Executions() {
     const query = useQuery('executions', fetchLatestExecutions, { refetchInterval: 5000 });
@@ -46,7 +47,7 @@ const ExecutionsList: React.FC<{ data: ExecutionDetailDto[] }> = ({ data }) => {
                     accessor: 'createdAt',
                     Cell: ({ row, value }) => (
                         <LinkWithState isEmphasized={true} pathname={`/executions/${row.original.id}`}>
-                            {formatDateISO(value)}
+                            <InfoOutlineIcon/> {formatDateISO(value)}
                         </LinkWithState>
                     ),
                 },

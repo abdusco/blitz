@@ -231,7 +231,7 @@ export const RecentExecutions: React.FC<{ data: CronjobExecutionsListDto[] }> = 
                     accessor: 'createdAt',
                     Cell: ({ value, row }) => (
                         <LinkWithState isEmphasized={true} pathname={`/executions/${row.original.id}`}>
-                            {formatDateISO(value)}
+                            <InfoOutlineIcon /> {formatDateISO(value)}
                         </LinkWithState>
                     ),
                 },
