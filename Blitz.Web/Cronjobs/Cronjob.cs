@@ -41,7 +41,7 @@ namespace Blitz.Web.Cronjobs
         public TokenAuth Auth { get; set; }
         public ConfigTemplate Template { get; set; }
         public bool IsAuthenticated { get; set; }
-        public ITokenAuth EffectiveAuth => new CombinedTokenAuth(new[] { Auth, Template?.Auth, Project?.Auth, Project?.Template?.Auth });
+        public ITokenAuth EffectiveAuth => TokenAuth.Combine(new[] { Auth, Template?.Auth, Project?.Auth, Project?.Template?.Auth });
 
         private Cronjob()
         {

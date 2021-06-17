@@ -18,25 +18,30 @@ namespace Blitz.Web.Cronjobs
         public string Scope { get; init; }
         public string ClientId { get; init; }
         public string ClientSecret { get; init; }
-    }
 
-    public class CombinedTokenAuth : ITokenAuth
-    {
-        private List<ITokenAuth> _sources;
-
-        public CombinedTokenAuth(ICollection<ITokenAuth> sources)
+        public static ITokenAuth Combine(ICollection<ITokenAuth> sources)
         {
-            if (sources is { Count: <1 })
-            {
-                throw new ArgumentException("Sources cannot be empty", nameof(sources));
-            }
-
-            _sources = sources.ToList();
+            return new CombinedTokenAuth(sources);
         }
 
-        public string TokenEndpoint => _sources.Select(e => e?.TokenEndpoint).FirstOrDefault(it => it != null);
-        public string Scope => _sources.Select(e => e?.Scope).FirstOrDefault(it => it != null);
-        public string ClientId => _sources.Select(e => e?.ClientId).FirstOrDefault(it => it != null);
-        public string ClientSecret => _sources.Select(e => e?.ClientSecret).FirstOrDefault(it => it != null);
+        private class CombinedTokenAuth : ITokenAuth
+        {
+            private readonly List<ITokenAuth> _sources;
+
+            public CombinedTokenAuth(ICollection<ITokenAuth> sources)
+            {
+                if (sources is { Count: <1 })
+                {
+                    throw new ArgumentException("Sources cannot be empty", nameof(sources));
+                }
+
+                _sources = sources.ToList();
+            }
+
+            public string TokenEndpoint => _sources.Select(e => e?.TokenEndpoint).FirstOrDefault(it => it != null);
+            public string Scope => _sources.Select(e => e?.Scope).FirstOrDefault(it => it != null);
+            public string ClientId => _sources.Select(e => e?.ClientId).FirstOrDefault(it => it != null);
+            public string ClientSecret => _sources.Select(e => e?.ClientSecret).FirstOrDefault(it => it != null);
+        }
     }
 }
