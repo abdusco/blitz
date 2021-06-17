@@ -1,10 +1,10 @@
 ﻿namespace Blitz.Web.Cronjobs
 {
-    public class TokenAuth
+    public record TokenAuth
     {
-        public string TokenEndpoint { get; set; }
-        public string Scopes { get; set; }
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
+        public string TokenEndpoint { get; init; }
+        public string Scope { get; init; }
+        public string ClientId { get; init; }
+        public string ClientSecret { get; init; }
     }
 }

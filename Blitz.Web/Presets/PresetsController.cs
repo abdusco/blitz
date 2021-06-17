@@ -15,12 +15,13 @@ namespace Blitz.Web.Presets
 {
     [AutoMap(typeof(TokenAuth), ReverseMap = true)]
     public record TokenAuthDto(string TokenEndpoint,
-                               string Scopes,
-                               string ClientId);
+                               string Scope,
+                               string ClientId,
+                               string ClientSecret);
 
     [AutoMap(typeof(TokenAuth), ReverseMap = true)]
     public record TokenAuthCreateDto(string TokenEndpoint,
-                                     string Scopes,
+                                     string Scope,
                                      string ClientId,
                                      string ClientSecret);
 

@@ -82,7 +82,7 @@ namespace Blitz.Web.Hangfire
                     Address = cronjob.EffectiveAuth.TokenEndpoint,
                     ClientId = cronjob.EffectiveAuth.ClientId,
                     ClientSecret = cronjob.EffectiveAuth.ClientSecret,
-                    Scope = cronjob.EffectiveAuth.Scopes,
+                    Scope = cronjob.EffectiveAuth.Scope,
                 }, cancellationToken: cancellationToken);
                 _http.SetBearerToken(tokenResult.AccessToken);
             }
