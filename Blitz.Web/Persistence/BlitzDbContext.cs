@@ -52,6 +52,7 @@ namespace Blitz.Web.Persistence
         {
             // add hangfire models
             modelBuilder.OnHangfireModelCreating();
+            var authComparer = new ValueComparer<TokenAuth>((a, b) => a != b, auth => auth.GetHashCode());
 
             modelBuilder.Entity<Cronjob>(
                 builder =>
@@ -60,10 +61,8 @@ namespace Blitz.Web.Persistence
                     builder.Property(e => e.Cron)
                         .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
                     builder.Property(e => e.Auth)
-                        .HasConversion(
-                            auth => JsonSerializer.Serialize(auth, null),
-                            s => JsonSerializer.Deserialize<TokenAuth>(s, null)
-                        ).HasColumnType("JSONB");
+                        .HasJsonConversion(authComparer)
+                        .HasColumnType("JSONB");
                 }
             );
             modelBuilder.Entity<Project>(builder =>
@@ -71,19 +70,15 @@ namespace Blitz.Web.Persistence
                 builder.HasIndex(p => p.Title).IsUnique();
                 builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
                 builder.Property(e => e.Auth)
-                    .HasConversion(
-                        auth => JsonSerializer.Serialize(auth, null),
-                        s => JsonSerializer.Deserialize<TokenAuth>(s, null)
-                    ).HasColumnType("JSONB");
+                    .HasJsonConversion(authComparer)
+                    .HasColumnType("JSONB");
             });
             modelBuilder.Entity<ConfigTemplate>(builder =>
             {
                 builder.ToTable("config_templates");
                 builder.Property(e => e.Auth)
-                    .HasConversion(
-                        auth => JsonSerializer.Serialize(auth, null),
-                        s => JsonSerializer.Deserialize<TokenAuth>(s, null)
-                    ).HasColumnType("JSONB");
+                    .HasJsonConversion(authComparer)
+                    .HasColumnType("JSONB");
             });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
@@ -93,15 +88,13 @@ namespace Blitz.Web.Persistence
                         d => d.Aggregate(0, (agg, val) => HashCode.Combine(agg, val.GetHashCode())),
                         d => d
                     );
-                    builder.Property(e => e.Details).HasConversion(
-                        val => JsonSerializer.Serialize(val, null),
-                        dbVal => JsonSerializer.Deserialize<Dictionary<string, object>>(dbVal, null),
-                        comparer
-                    );
-                    builder.Property(e => e.State).HasConversion(
-                        val => val.Name,
-                        dbValue => ExecutionState.FromName(dbValue, true)
-                    );
+                    builder.Property(e => e.Details)
+                        .HasJsonConversion(comparer);
+                    builder.Property(e => e.State)
+                        .HasConversion(
+                            val => val.Name,
+                            dbValue => ExecutionState.FromName(dbValue, true)
+                        );
                 }
             );
             modelBuilder.Entity<User>(builder =>
@@ -115,8 +108,8 @@ namespace Blitz.Web.Persistence
                     .WithMany(r => r.Users)
                     .UsingEntity<Dictionary<string, object>>(
                         "UserRole",
-                        m2m => m2m.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
-                        m2m => m2m.HasOne<User>().WithMany().HasForeignKey("UserId")
+                        lookup => lookup.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+                        lookup => lookup.HasOne<User>().WithMany().HasForeignKey("UserId")
                     );
                 builder.HasMany<UserClaim>(e => e.Claims).WithOne(e => e.User);
             });
@@ -137,6 +130,18 @@ namespace Blitz.Web.Persistence
 
             modelBuilder.ConfigureTimestamps();
             modelBuilder.ApplyNamingConventions();
+        }
+    }
+
+    internal static class PropertyBuilderExtensions
+    {
+        public static PropertyBuilder<T> HasJsonConversion<T>(this PropertyBuilder<T> builder, ValueComparer<T> valueComparer = null)
+        {
+            return builder.HasConversion<string>(
+                it => JsonSerializer.Serialize(it, null),
+                s => JsonSerializer.Deserialize<T>(s, null),
+                valueComparer: valueComparer
+            );
         }
     }
 
