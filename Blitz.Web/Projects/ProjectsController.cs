@@ -11,6 +11,7 @@ using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
+using Blitz.Web.Presets;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,9 @@ namespace Blitz.Web.Projects
         }
 
         [AutoMap(typeof(Project))]
-        public record ProjectListDto(Guid Id, string Title, int CronjobsCount);
+        public record ProjectListDto(Guid Id,
+                                     string Title,
+                                     int CronjobsCount);
 
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
@@ -56,6 +59,7 @@ namespace Blitz.Web.Projects
         {
             public Guid Id { get; init; }
             public string Title { get; init; }
+            public TokenAuthDto Auth { get; init; }
             public List<CronjobListDto> Cronjobs { get; init; }
 
             [AutoMap(typeof(Cronjob))]
@@ -136,7 +140,7 @@ namespace Blitz.Web.Projects
 
             if (project == null)
             {
-                project = new Project(request.Title) {Version = request.Version};
+                project = new Project(request.Title) { Version = request.Version };
                 await _db.AddAsync(project, cancellationToken);
             }
 
@@ -170,6 +174,27 @@ namespace Blitz.Web.Projects
             }
 
             await tx.CommitAsync(cancellationToken);
+
+            return NoContent();
+        }
+
+        [AutoMap(typeof(Project), ReverseMap = true)]
+        public record ProjectUpdateDto(TokenAuthCreateDto Auth);
+
+        [HttpPatch("{id:guid}")]
+        public async Task<IActionResult> UpdateProjectDetails(Guid id, ProjectUpdateDto dto, CancellationToken cancellationToken)
+        {
+            var existing = await _db.Projects
+                .SingleOrDefaultAsync(
+                    p => p.Id == id, cancellationToken: cancellationToken
+                );
+            if (existing is null)
+            {
+                return NotFound();
+            }
+
+            _mapper.Map(dto, existing);
+            await _db.SaveChangesAsync(cancellationToken);
 
             return NoContent();
         }
