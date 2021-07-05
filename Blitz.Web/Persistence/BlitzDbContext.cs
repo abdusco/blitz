@@ -58,6 +58,7 @@ namespace Blitz.Web.Persistence
                 builder =>
                 {
                     builder.Property(e => e.ProjectId).IsRequired();
+                    builder.HasOne(e => e.Template).WithMany().OnDelete(DeleteBehavior.SetNull);
                     builder.Property(e => e.Cron)
                         .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
                     builder.Property(e => e.Auth)
@@ -69,6 +70,7 @@ namespace Blitz.Web.Persistence
             {
                 builder.HasIndex(p => p.Title).IsUnique();
                 builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
+                builder.HasOne(e => e.Template).WithMany().OnDelete(DeleteBehavior.SetNull);
                 builder.Property(e => e.Auth)
                     .HasJsonConversion(authComparer)
                     .HasColumnType("JSONB");
