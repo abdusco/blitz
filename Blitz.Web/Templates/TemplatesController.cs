@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,21 +45,21 @@ namespace Blitz.Web.Templates
 
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetTemplateDetails(Guid id)
+        public async Task<ActionResult<ConfigTemplateDto>> GetTemplateDetails(Guid id)
         {
             var template = await _dbContext.ConfigTemplates.FindAsync(id);
             return Ok(_mapper.Map<ConfigTemplateDto>(template));
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTemplateList(CancellationToken cancellationToken = default)
+        public async Task<ActionResult<List<ConfigTemplateDto>>> GetTemplateList(CancellationToken cancellationToken = default)
         {
             var templates = await _dbContext.ConfigTemplates.OrderBy(e => e.Title).ToListAsync(cancellationToken);
             return Ok(_mapper.Map<List<ConfigTemplateDto>>(templates));
         }
 
         [AutoMap(typeof(ConfigTemplate), ReverseMap = true)]
-        public record ConfigTemplateCreateDto(string Key, string Title, TokenAuthCreateDto Auth);
+        public record ConfigTemplateCreateDto([Required] string Key, string Title, TokenAuthCreateDto Auth);
 
 
         [HttpPost]
@@ -67,8 +68,9 @@ namespace Blitz.Web.Templates
             var templateExists = await _dbContext.ConfigTemplates.AnyAsync(e => e.Key == dto.Key, cancellationToken);
             if (templateExists)
             {
-                return BadRequest(new ProblemDetails{Detail = $"A template with key '{dto.Key}' already exists"});
+                return BadRequest(new ProblemDetails { Detail = $"A template with key '{dto.Key}' already exists" });
             }
+
             var template = _mapper.Map<ConfigTemplate>(dto);
             await _dbContext.AddAsync(template, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);

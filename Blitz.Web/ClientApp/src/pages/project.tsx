@@ -1,5 +1,12 @@
 import {
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
     Button,
+    Checkbox,
     FormControl,
     FormHelperText,
     FormLabel,
@@ -14,11 +21,13 @@ import {
     ModalOverlay,
     Radio,
     RadioGroup,
+    Select,
+    Spacer,
     Stack,
     useDisclosure,
 } from '@chakra-ui/react';
 import axios from 'axios';
-import React from 'react';
+import React, { ChangeEvent, PropsWithChildren, useCallback, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
@@ -27,8 +36,11 @@ import {
     createCronjob,
     CronjobCreateDto,
     CronJobOverviewDto,
+    deleteProject,
     fetchProject,
+    fetchTemplates,
     ProjectDetailsDto,
+    ProjectUpdateDto,
     TokenAuthCreateDto,
     updateProjectDetails,
 } from '../api';
@@ -47,6 +59,8 @@ import { useRequireProjectClaim } from '../lib/useRequireProjectClaim';
 export default function Project() {
     useRequireAuth('pm');
     const location = useLocation();
+    const history = useHistory();
+
     const {
         params: { id },
     } = useRouteMatch<{ id: string }>();
@@ -63,6 +77,17 @@ export default function Project() {
 
     const newCronjobDialog = useDisclosure();
     const projectEditDialog = useDisclosure();
+    const deleteProjectDialog = useDisclosure();
+
+    const queryClient = useQueryClient();
+    const deleteMutation = useMutation(() => deleteProject(id), {
+        onSuccess: () => {
+            queryClient.invalidateQueries(['projects'], { exact: true });
+            history.push('/projects');
+        },
+    });
+
+    const cancelRef = useRef<any>();
 
     return (
         <DefaultLayout>
@@ -74,8 +99,14 @@ export default function Project() {
                 <Hero.Title>{query.data?.title}</Hero.Title>
                 <Hero.Body>
                     <HStack spacing="2">
-                        <Button colorScheme='blue' onClick={newCronjobDialog.onOpen}>New Cronjob</Button>
+                        <Button colorScheme="blue" onClick={newCronjobDialog.onOpen}>
+                            New Cronjob
+                        </Button>
                         <Button onClick={projectEditDialog.onOpen}>Edit</Button>
+                        <Spacer />
+                        <Button colorScheme="red" onClick={deleteProjectDialog.onOpen}>
+                            Delete
+                        </Button>
                     </HStack>
                 </Hero.Body>
             </Hero>
@@ -89,7 +120,7 @@ export default function Project() {
                     />
                 )}
 
-                {!query.isPlaceholderData && query.data && (
+                {!query.isPlaceholderData && query.data && projectEditDialog.isOpen && (
                     <ProjectEditDialog
                         project={query.data}
                         isOpen={projectEditDialog.isOpen}
@@ -100,30 +131,78 @@ export default function Project() {
                 <QueryProgress query={query} />
                 {!query.isPlaceholderData && query.data && <ProjectDetail project={query.data} />}
                 {!query.isPlaceholderData && query.data && <CronjobList data={query.data} />}
+                {query.data && deleteProjectDialog.isOpen && (
+                    <AlertDialog
+                        isOpen={deleteProjectDialog.isOpen}
+                        leastDestructiveRef={cancelRef}
+                        onClose={deleteProjectDialog.onClose}
+                    >
+                        <AlertDialogOverlay>
+                            <AlertDialogContent>
+                                <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                                    Delete {query.data?.title}
+                                </AlertDialogHeader>
+
+                                <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+
+                                <AlertDialogFooter>
+                                    <Button ref={cancelRef} onClick={deleteProjectDialog.onClose}>
+                                        Cancel
+                                    </Button>
+                                    <Button colorScheme="red" onClick={() => deleteMutation.mutateAsync()} ml={3}>
+                                        Delete
+                                    </Button>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialogOverlay>
+                    </AlertDialog>
+                )}
             </Clamp>
         </DefaultLayout>
     );
 }
 
-const ProjectEditDialog: React.FC<{
-    project: ProjectDetailsDto;
-    isOpen: boolean;
-    onClose: () => void;
-}> = (props) => {
+function ProjectEditDialog(
+    props: PropsWithChildren<{
+        project: ProjectDetailsDto;
+        isOpen: boolean;
+        onClose: () => void;
+    }>
+) {
     const queryClient = useQueryClient();
+    console.log('props', props.project);
 
-    const mutation = useMutation(
-        async (data: TokenAuthCreateDto) => updateProjectDetails(props.project.id, { auth: data }),
-        {
-            onSuccess: () => {
-                queryClient.invalidateQueries(['projects', props.project.id]);
-            },
-        }
-    );
-    const onSubmit = async (data: TokenAuthCreateDto) => {
-        await mutation.mutateAsync(data);
+    const form = useForm<ProjectUpdateDto>({ defaultValues: props.project });
+    const [isAuthenticated, setIsAuthenticated] = useState(!!props.project.auth);
+
+    const { isDirty, isValid } = form.formState;
+
+    const editMutation = useMutation(async (data: ProjectUpdateDto) => updateProjectDetails(props.project.id, data), {
+        onSuccess: () => queryClient.invalidateQueries(['projects', props.project.id], { exact: true }),
+    });
+    const onSubmit = async (data: ProjectUpdateDto) => {
+        await editMutation.mutateAsync(data);
         props.onClose();
     };
+
+    const templatesQuery = useQuery(['templates'], fetchTemplates);
+
+    const onTemplateSelected = useCallback(
+        (e: ChangeEvent<HTMLSelectElement>) => {
+            const selectedId = e.target.value;
+            if (!selectedId) {
+                return;
+            }
+
+            const template = templatesQuery.data?.find((it) => it.id == selectedId);
+            if (!template) {
+                return;
+            }
+            form.setValue('auth', template.auth);
+        },
+        [form, templatesQuery]
+    );
+
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose} size="3xl">
             <ModalOverlay />
@@ -131,12 +210,111 @@ const ProjectEditDialog: React.FC<{
                 <ModalHeader>Editing {props.project.title}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <TokenAuthForm onSubmit={onSubmit} defaultValues={props.project.auth || {}} />
+                    <Stack spacing={4}>
+                        <FormControl id="authentication">
+                            <FormLabel>Authentication</FormLabel>
+                            <Checkbox
+                                defaultIsChecked
+                                isChecked={isAuthenticated}
+                                onChange={(e) => setIsAuthenticated(e.target.checked)}
+                            >
+                                Authenticate with token
+                            </Checkbox>
+                            <FormHelperText>
+                                When checked, requests will be authenticated with a bearer token using client
+                                credentials grant.
+                            </FormHelperText>
+                        </FormControl>
+
+                        {isAuthenticated && (
+                            <>
+                                {templatesQuery.data && (
+                                    <FormControl id="template">
+                                        <FormLabel>Fill from a template</FormLabel>
+                                        <Select placeholder="Pick a template" onChange={onTemplateSelected}>
+                                            {templatesQuery.data.map((it) => (
+                                                <option key={it.id} value={it.id}>
+                                                    {it.title}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                )}
+                                <form onSubmit={form.handleSubmit(onSubmit)} id="projectEditForm">
+                                    <Stack spacing={4}>
+                                        <FormControl id="tokenEndpoint" isRequired>
+                                            <FormLabel>Token Endpoint</FormLabel>
+                                            <Input
+                                                name="auth.tokenEndpoint"
+                                                ref={form.register}
+                                                required
+                                                type="url"
+                                                placeholder="https://id.server/connect/token"
+                                            />
+                                            <FormHelperText>
+                                                An endpoint that issues tokens for <code>client_credentials</code> grant
+                                                requests
+                                            </FormHelperText>
+                                        </FormControl>
+                                        <HStack spacing={2}>
+                                            <FormControl id="clientId" isRequired>
+                                                <FormLabel>Client ID</FormLabel>
+                                                <Input
+                                                    name="auth.clientId"
+                                                    ref={form.register}
+                                                    required
+                                                    type="text"
+                                                    placeholder="my_server_client"
+                                                />
+                                            </FormControl>
+                                            <FormControl id="clientSecret" isRequired>
+                                                <FormLabel>Client Secret</FormLabel>
+                                                <Input
+                                                    name="auth.clientSecret"
+                                                    ref={form.register}
+                                                    required
+                                                    type="text"
+                                                    placeholder="12345678-ABCD-WXYZ-1234567890AB"
+                                                />
+                                            </FormControl>
+                                        </HStack>
+
+                                        <HStack spacing={2} alignItems="flex-start">
+                                            <FormControl id="scope">
+                                                <FormLabel>Scopes to request</FormLabel>
+                                                <Input
+                                                    name="auth.scope"
+                                                    ref={form.register}
+                                                    type="text"
+                                                    placeholder="scope1 scope2"
+                                                />
+                                            </FormControl>
+                                            <FormControl id="grantType">
+                                                <FormLabel>Grant Type</FormLabel>
+                                                <Input type="text" readOnly value="client_credentials" disabled />
+                                            </FormControl>
+                                        </HStack>
+                                    </Stack>
+                                </form>
+                            </>
+                        )}
+                    </Stack>
                 </ModalBody>
+                <ModalFooter>
+                    <Button
+                        disabled={!isValid}
+                        colorScheme="blue"
+                        isLoading={editMutation.isLoading}
+                        type="submit"
+                        form="projectEditForm"
+                    >
+                        Save
+                    </Button>
+                </ModalFooter>
             </ModalContent>
         </Modal>
     );
-};
+}
 
 export const CreateCronjobForm: React.FC<{
     projectId: string;

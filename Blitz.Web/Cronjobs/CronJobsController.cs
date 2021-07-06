@@ -100,17 +100,6 @@ namespace Blitz.Web.Cronjobs
             cronjob.IsAuthenticated = request.IsAuthenticated;
             if (request.IsAuthenticated)
             {
-                if (request.TemplateId is { } templateId)
-                {
-                    var template = await _db.ConfigTemplates.FindAsync(new object[] { templateId }, cancellationToken: cancellationToken);
-                    if (template == null)
-                    {
-                        return NotFound(new ProblemDetails { Detail = "No such template" });
-                    }
-
-                    cronjob.Template = template;
-                }
-
                 cronjob.Auth = _mapper.Map<TokenAuth>(request.Auth);
             }
 
@@ -287,6 +276,7 @@ namespace Blitz.Web.Cronjobs
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; }
+        public bool IsAuthenticated { get; set; }
         public TokenAuthDto EffectiveAuth { get; set; }
     }
 

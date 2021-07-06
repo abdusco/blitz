@@ -52,6 +52,7 @@ export interface CronjobDetailDto {
     url: string;
     httpMethod: string;
     enabled: boolean;
+    isAuthenticated: boolean;
     effectiveAuth?: TokenAuthDto;
 }
 
@@ -63,6 +64,7 @@ export interface CronJobOverviewDto {
 }
 
 export interface CronjobUpdateDto {
+    isAuthenticated: boolean;
     auth?: TokenAuthDto;
 }
 
@@ -103,6 +105,7 @@ export interface ExecutionStatusUpdate {
 }
 
 export interface ConfigTemplateCreateDto {
+    key: string;
     title: string;
     auth: TokenAuthCreateDto;
 }
@@ -110,6 +113,7 @@ export interface ConfigTemplateCreateDto {
 export interface ConfigTemplateDto {
     id: string;
     title: string;
+    key: string;
     auth: TokenAuthCreateDto;
 }
 
@@ -130,7 +134,7 @@ export const updateCronjobDetails = async (id: string, payload: CronjobUpdateDto
     await sleep();
 };
 
-export const sleep = async (duration: number = 0) => {
+export const sleep = async (duration: number = 300) => {
     if (process.env.NODE_ENV === 'development') {
         return new Promise((resolve) => setTimeout(resolve, duration));
     }
@@ -172,6 +176,11 @@ export const fetchProject = async (id: string) => {
     const { data } = await axios.get<ProjectDetailsDto>(`/projects/${id}`);
     await sleep();
     return data;
+};
+
+export const deleteProject = async (id: string) => {
+    await axios.delete(`/projects/${id}`);
+    await sleep();
 };
 
 export const createProject = async (payload: ProjectCreateInput) => {
@@ -263,6 +272,11 @@ export const createTemplate = async (payload: ConfigTemplateCreateDto): Promise<
     const res = await axios.post<ConfigTemplateDto>(`/templates`, payload);
     await sleep();
     return res.data;
+};
+
+export const deleteTemplate = async (templateId: string): Promise<void> => {
+    const res = await axios.delete(`/templates/${templateId}`);
+    await sleep();
 };
 
 export const fetchTemplates = async (): Promise<ConfigTemplateDto[]> => {

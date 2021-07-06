@@ -18,15 +18,15 @@ namespace Blitz.Web.Hangfire
 {
     public class HttpRequestSender
     {
-        private readonly HttpClient _http;
+        private readonly IHttpClientFactory _clientFactory;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<HttpRequestSender> _logger;
 
-        public HttpRequestSender(HttpClient http, IServiceScopeFactory scopeFactory, ILogger<HttpRequestSender> logger)
+        public HttpRequestSender(IServiceScopeFactory scopeFactory, ILogger<HttpRequestSender> logger, IHttpClientFactory clientFactory)
         {
-            _http = http;
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _clientFactory = clientFactory;
         }
 
         public async Task SendRequestAsync(Guid cronjobId,
@@ -60,7 +60,7 @@ namespace Blitz.Web.Hangfire
                 await db.AddAsync(exec, cancellationToken);
             }
 
-            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title, cronjobId);
+            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title);
 
             exec.UpdateStatus(ExecutionState.Pending);
             await db.SaveChangesAsync(cancellationToken);
@@ -74,17 +74,19 @@ namespace Blitz.Web.Hangfire
 
             var timer = Stopwatch.StartNew();
 
+            var http = _clientFactory.CreateClient(nameof(HttpRequestSender));
+
             if (cronjob.IsAuthenticated)
             {
                 _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.EffectiveAuth.TokenEndpoint);
-                var tokenResult = await _http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                var tokenResult = await http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
                 {
                     Address = cronjob.EffectiveAuth.TokenEndpoint,
                     ClientId = cronjob.EffectiveAuth.ClientId,
                     ClientSecret = cronjob.EffectiveAuth.ClientSecret,
                     Scope = cronjob.EffectiveAuth.Scope,
                 }, cancellationToken: cancellationToken);
-                _http.SetBearerToken(tokenResult.AccessToken);
+                http.SetBearerToken(tokenResult.AccessToken);
             }
 
             try
@@ -94,7 +96,7 @@ namespace Blitz.Web.Hangfire
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("Execution-Id", exec.Id.ToString());
 
-                var response = await _http.SendAsync(req, cancellationToken);
+                var response = await http.SendAsync(req, cancellationToken);
 
                 timer.Stop();
                 exec.UpdateStatus(
