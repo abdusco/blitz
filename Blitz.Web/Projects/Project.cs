@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
+using Blitz.Web.Templates;
 
 namespace Blitz.Web.Projects
 {
@@ -13,7 +15,7 @@ namespace Blitz.Web.Projects
 
         public Project(string title)
         {
-            Title = title;
+            Title = title ?? throw new ArgumentNullException(nameof(title));
         }
 
         public string Title { get; set; }
@@ -23,6 +25,11 @@ namespace Blitz.Web.Projects
         /// Used to identify the latest version to ensure immutability of cronjobs that belong to a project
         /// </summary>
         public string Version { get; set; }
+
+        public ConfigTemplate Template { get; set; }
+
+
+        public TokenAuth Auth { get; set; }
 
         public UserClaim ToUserClaim(User user)
         {

@@ -20,9 +20,9 @@ namespace Blitz.Web.Hangfire
         public Task Add(Cronjob cronjob)
         {
             _logger.LogInformation("Registering cronjob '{CronjobTitle}' ({CronjobId}) with Hangfire", cronjob.Title, cronjob.Id);
-            _recurringJobManager.AddOrUpdate<HttpRequestJob>(
+            _recurringJobManager.AddOrUpdate<HttpRequestSender>(
                 cronjob.GetHangfireId(),
-                job => job.SendRequestAsync(cronjob.Id, default, null, default),
+                job => job.SendRequestAsync(cronjob.Id, default, default),
                 cronjob.Cron.ToString(),
                 TimeZoneInfo.Local
             );

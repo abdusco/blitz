@@ -56,7 +56,7 @@ const FailedQueryNotifier: React.FC = (props) => {
     const sameRequest = (current: AxiosRequestConfig, prev: AxiosRequestConfig | undefined): boolean => {
         return current?.url === prev?.url;
     };
-    
+
     useEffect(() => {
         history.listen((change) => {
             if (change.action == 'PUSH') {
@@ -70,6 +70,7 @@ const FailedQueryNotifier: React.FC = (props) => {
         axios.interceptors.response.use(
             (val) => val,
             (err: AxiosError) => {
+                // return;
                 if (err.response?.status === 401) {
                     const atHome = history.location.pathname === '/';
                     if (atHome) {
@@ -77,7 +78,7 @@ const FailedQueryNotifier: React.FC = (props) => {
                     }
 
                     console.log('Now at', history.location.pathname, 'but is unauthenticated');
-                    
+
                     // let user return back to where he was, unless he was already on unauthenticated page.
                     let next = history.location.state?.next || history.location.pathname;
                     history.push('/unauthenticated', { next });
@@ -152,7 +153,7 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
             }
             toast({
                 title: greetings,
-                duration: 1500,
+                duration: 1000,
                 status: 'info',
                 position: 'top',
             });
@@ -197,8 +198,9 @@ const theme = extendTheme({
         700: '#2a69ac',
     },
     fonts: {
-        body: 'Inter',
-        heading: 'Inter',
+        body:
+            'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif',
+        heading: 'Inter, sans-serif',
         mono: 'JetbrainsMono',
     },
     fontWeights: {
@@ -212,7 +214,7 @@ const theme = extendTheme({
                 },
                 th: {
                     padding: '1rem 0.5rem !important',
-                }
+                },
             },
         },
         Button: {

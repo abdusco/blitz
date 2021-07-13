@@ -6,10 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Http;
 using Blitz.Web.Identity;
 using Blitz.Web.Persistence;
+using Blitz.Web.Templates;
 using Lib.AspNetCore.Auth.Intranet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +40,9 @@ namespace Blitz.Web.Projects
         }
 
         [AutoMap(typeof(Project))]
-        public record ProjectListDto(Guid Id, string Title, int CronjobsCount);
+        public record ProjectListDto(Guid Id,
+                                     string Title,
+                                     int CronjobsCount);
 
         [HttpGet]
         public async Task<ActionResult<List<ProjectListDto>>> ListAllProjects(CancellationToken cancellationToken)
@@ -55,6 +59,7 @@ namespace Blitz.Web.Projects
         {
             public Guid Id { get; init; }
             public string Title { get; init; }
+            public TokenAuthDto Auth { get; init; }
             public List<CronjobListDto> Cronjobs { get; init; }
 
             [AutoMap(typeof(Cronjob))]
@@ -90,6 +95,12 @@ namespace Blitz.Web.Projects
             }
 
             await _db.AddAsync(project, cancellationToken);
+            if (User.GetIdClaim() is string userId)
+            {
+                var user = await _db.Users.FirstOrDefaultAsync(e => e.Id == Guid.Parse(userId), cancellationToken);
+                user.AddControlledEntity(project);
+            }
+
             await _db.SaveChangesAsync(cancellationToken);
 
             return project.Id;
@@ -100,6 +111,8 @@ namespace Blitz.Web.Projects
             [Required] public string Title { get; init; }
             public string Version { get; init; }
             public List<CronjobCreateDto> Cronjobs { get; init; } = new();
+            public TokenAuthCreateDto Auth { get; set; }
+            public string TemplateKey { get; set; }
 
             public record CronjobCreateDto([Required] string Title,
                                            string Description,
@@ -112,11 +125,6 @@ namespace Blitz.Web.Projects
         [HttpPost("batchcreate")]
         public async Task<ActionResult<Guid>> CreateProjectWithCronjobs(ProjectBatchCreateDto request, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var project = await _db.Projects
                 .Include(e => e.Cronjobs)
                 .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);
@@ -127,20 +135,40 @@ namespace Blitz.Web.Projects
                 return NoContent();
             }
 
-            if (project == null)
+            TokenAuth auth = null;
+            ConfigTemplate template = null;
+            if (request.TemplateKey != null)
             {
-                project = new Project(request.Title) {Version = request.Version};
-                await _db.AddAsync(project, cancellationToken);
+                template = await _db.ConfigTemplates.FirstOrDefaultAsync(e => e.Key == request.TemplateKey, cancellationToken);
             }
+
+            if (request.Auth != null)
+            {
+                auth = _mapper.Map<TokenAuth>(request.Auth);
+            }
+            else if (template != null)
+            {
+                auth = template.Auth;
+            }
+
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            _db.RemoveRange(project.Cronjobs);
-            foreach (var cronjob in project.Cronjobs)
-            {
-                await _cronjobRegistrationService.Remove(cronjob);
-            }
 
-            project.Cronjobs.Clear();
+            if (project == null)
+            {
+                project = new Project(request.Title) { Version = request.Version, Template = template, Auth = auth};
+                await _db.AddAsync(project, cancellationToken);
+            }
+            else
+            {
+                _db.RemoveRange(project.Cronjobs);
+                foreach (var cronjob in project.Cronjobs)
+                {
+                    await _cronjobRegistrationService.Remove(cronjob);
+                }
+
+                project.Cronjobs.Clear();
+            }
 
             var updatedCronjobs = request.Cronjobs.Select(e => new Cronjob(project)
             {
@@ -149,6 +177,7 @@ namespace Blitz.Web.Projects
                 Cron = new CronExpression(e.Cron),
                 Url = e.Url,
                 HttpMethod = e.HttpMethod,
+                IsAuthenticated = auth != null
             }).ToList();
             foreach (var cronjob in updatedCronjobs)
             {
@@ -163,6 +192,27 @@ namespace Blitz.Web.Projects
             }
 
             await tx.CommitAsync(cancellationToken);
+
+            return NoContent();
+        }
+
+        [AutoMap(typeof(Project), ReverseMap = true)]
+        public record ProjectUpdateDto(TokenAuthCreateDto Auth);
+
+        [HttpPatch("{id:guid}")]
+        public async Task<IActionResult> UpdateProjectDetails(Guid id, ProjectUpdateDto dto, CancellationToken cancellationToken)
+        {
+            var existing = await _db.Projects
+                .SingleOrDefaultAsync(
+                    p => p.Id == id, cancellationToken: cancellationToken
+                );
+            if (existing is null)
+            {
+                return NotFound();
+            }
+
+            _mapper.Map(dto, existing);
+            await _db.SaveChangesAsync(cancellationToken);
 
             return NoContent();
         }

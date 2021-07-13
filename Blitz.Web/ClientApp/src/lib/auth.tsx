@@ -167,8 +167,6 @@ export const AuthProvider: React.FC<{ options: JwtAuthOptions }> = (props) => {
 
     useEffect(() => {
         const initAuth = async () => {
-            let token = localStorage.getItem('token');
-            let jwtClaims = decodeToken(token);
             let user = await getUser();
             if (user) {
                 if (options.onUser) {

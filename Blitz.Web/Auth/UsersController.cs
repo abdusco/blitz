@@ -44,6 +44,7 @@ namespace Blitz.Web.Auth
         {
             var users = await _dbContext.Users
                 .Include(e => e.Roles)
+                .OrderBy(e => e.Name)
                 .ToListAsync(cancellationToken);
             return Ok(_mapper.Map<List<UserListDto>>(users));
         }

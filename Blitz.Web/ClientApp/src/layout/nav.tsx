@@ -16,7 +16,7 @@ export default function Nav() {
         { pathname: '/projects', text: 'Projects', roles: ['pm'] },
         { pathname: '/cronjobs', text: 'Cronjobs', roles: ['pm'] },
         { pathname: '/executions', text: 'Executions', roles: ['pm'] },
-        { pathname: '/users', text: 'Users', roles: ['admin'] },
+        { pathname: '/administration', text: 'Administration', roles: ['admin'] },
     ].filter((it) => user?.hasRole('admin', ...(it.roles || [])));
 
     return (

@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blitz.Web", "Blitz.Web\Blitz.Web.csproj", "{516D1DE2-D295-4299-94AC-C2D6180D81B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blitz.Tests", "Blitz.Tests\Blitz.Tests.csproj", "{D7E56328-3819-4ECB-8B1D-9CF2FE94882C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{516D1DE2-D295-4299-94AC-C2D6180D81B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{516D1DE2-D295-4299-94AC-C2D6180D81B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{516D1DE2-D295-4299-94AC-C2D6180D81B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7E56328-3819-4ECB-8B1D-9CF2FE94882C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7E56328-3819-4ECB-8B1D-9CF2FE94882C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7E56328-3819-4ECB-8B1D-9CF2FE94882C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7E56328-3819-4ECB-8B1D-9CF2FE94882C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

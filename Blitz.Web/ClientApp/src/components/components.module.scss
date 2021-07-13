@@ -2,6 +2,12 @@
     font-weight: 500;
 }
 
+.link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
 .link:hover {
     color: var(--c-primary);
 }

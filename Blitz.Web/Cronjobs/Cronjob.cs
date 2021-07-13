@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Ardalis.SmartEnum;
 using Blitz.Web.Persistence;
 using Blitz.Web.Projects;
+using Blitz.Web.Templates;
 
 namespace Blitz.Web.Cronjobs
 {
@@ -36,6 +37,11 @@ namespace Blitz.Web.Cronjobs
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public bool Enabled { get; set; } = true;
+
+        public TokenAuth Auth { get; set; }
+        public ConfigTemplate Template { get; set; }
+        public bool IsAuthenticated { get; set; }
+        public ITokenAuth EffectiveAuth => TokenAuth.Combine(new[] { Auth, Template?.Auth, Project?.Auth, Project?.Template?.Auth });
 
         private Cronjob()
         {
@@ -82,7 +88,7 @@ namespace Blitz.Web.Cronjobs
         }
 
         public void UpdateStatus(ExecutionState state, Dictionary<string, object> details) =>
-            UpdateStatus(new ExecutionStatus(this, state) {Details = details});
+            UpdateStatus(new ExecutionStatus(this, state) { Details = details });
 
         public void UpdateStatus(ExecutionState state) => UpdateStatus(new ExecutionStatus(this, state));
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -7,9 +8,12 @@ using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Identity;
 using Blitz.Web.Projects;
+using Blitz.Web.Templates;
 using Hangfire.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Blitz.Web.Persistence
 {
@@ -17,6 +21,7 @@ namespace Blitz.Web.Persistence
     {
         public DbSet<Project> Projects { get; set; }
         public DbSet<Cronjob> Cronjobs { get; set; }
+        public DbSet<ConfigTemplate> ConfigTemplates { get; set; }
         public DbSet<Execution> Executions { get; set; }
         public DbSet<ExecutionStatus> StatusUpdates { get; set; }
 
@@ -47,31 +52,52 @@ namespace Blitz.Web.Persistence
         {
             // add hangfire models
             modelBuilder.OnHangfireModelCreating();
+            var authComparer = new ValueComparer<TokenAuth>((a, b) => a != b, auth => auth.GetHashCode());
 
             modelBuilder.Entity<Cronjob>(
                 builder =>
                 {
                     builder.Property(e => e.ProjectId).IsRequired();
+                    builder.HasOne(e => e.Template).WithMany().OnDelete(DeleteBehavior.SetNull);
                     builder.Property(e => e.Cron)
                         .HasConversion(val => val.Cron, dbVal => new CronExpression(dbVal));
+                    builder.Property(e => e.Auth)
+                        .HasJsonConversion(authComparer)
+                        .HasColumnType("JSONB");
                 }
             );
             modelBuilder.Entity<Project>(builder =>
             {
                 builder.HasIndex(p => p.Title).IsUnique();
-                builder.HasIndex(e => new {e.Title, e.Version}).IsUnique();
+                builder.HasIndex(e => new { e.Title, e.Version }).IsUnique();
+                builder.HasOne(e => e.Template).WithMany().OnDelete(DeleteBehavior.SetNull);
+                builder.Property(e => e.Auth)
+                    .HasJsonConversion(authComparer)
+                    .HasColumnType("JSONB");
+            });
+            modelBuilder.Entity<ConfigTemplate>(builder =>
+            {
+                builder.ToTable("config_templates");
+                builder.HasIndex(e => e.Key).IsUnique();
+                builder.Property(e => e.Auth)
+                    .HasJsonConversion(authComparer)
+                    .HasColumnType("JSONB");
             });
             modelBuilder.Entity<ExecutionStatus>(
                 builder =>
                 {
-                    builder.Property(e => e.Details).HasConversion(
-                        val => JsonSerializer.Serialize(val, null),
-                        dbVal => JsonSerializer.Deserialize<Dictionary<string, object>>(dbVal, null)
+                    var comparer = new ValueComparer<Dictionary<string, object>>(
+                        (d1, d2) => d1.SequenceEqual(d2),
+                        d => d.Aggregate(0, (agg, val) => HashCode.Combine(agg, val.GetHashCode())),
+                        d => d
                     );
-                    builder.Property(e => e.State).HasConversion(
-                        val => val.Name,
-                        dbValue => ExecutionState.FromName(dbValue, true)
-                    );
+                    builder.Property(e => e.Details)
+                        .HasJsonConversion(comparer);
+                    builder.Property(e => e.State)
+                        .HasConversion(
+                            val => val.Name,
+                            dbValue => ExecutionState.FromName(dbValue, true)
+                        );
                 }
             );
             modelBuilder.Entity<User>(builder =>
@@ -85,8 +111,8 @@ namespace Blitz.Web.Persistence
                     .WithMany(r => r.Users)
                     .UsingEntity<Dictionary<string, object>>(
                         "UserRole",
-                        m2m => m2m.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
-                        m2m => m2m.HasOne<User>().WithMany().HasForeignKey("UserId")
+                        lookup => lookup.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+                        lookup => lookup.HasOne<User>().WithMany().HasForeignKey("UserId")
                     );
                 builder.HasMany<UserClaim>(e => e.Claims).WithOne(e => e.User);
             });
@@ -110,6 +136,18 @@ namespace Blitz.Web.Persistence
         }
     }
 
+    internal static class PropertyBuilderExtensions
+    {
+        public static PropertyBuilder<T> HasJsonConversion<T>(this PropertyBuilder<T> builder, ValueComparer<T> valueComparer = null)
+        {
+            return builder.HasConversion<string>(
+                it => JsonSerializer.Serialize(it, null),
+                s => JsonSerializer.Deserialize<T>(s, null),
+                valueComparer: valueComparer
+            );
+        }
+    }
+
     internal static class ModelBuilderExtensions
     {
         public static void ConfigureTimestamps(this ModelBuilder modelBuilder)
@@ -119,7 +157,7 @@ namespace Blitz.Web.Persistence
                 if (entityType.FindProperty(nameof(ITimestamped.CreatedAt)) is IMutableProperty createdAt)
                 {
                     createdAt.SetDefaultValueSql("current_timestamp");
-                    entityType.AddIndex(new[] {createdAt});
+                    entityType.AddIndex(new[] { createdAt });
                 }
             }
         }

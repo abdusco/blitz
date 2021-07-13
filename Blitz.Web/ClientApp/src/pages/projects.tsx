@@ -68,6 +68,8 @@ const CreateProjectDialog: React.FC<{
     const onSubmit = async (data: ProjectCreateInput) => {
         await mutation.mutateAsync(data);
     };
+    
+    const {isValid, isDirty} = form.formState
 
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
@@ -77,7 +79,7 @@ const CreateProjectDialog: React.FC<{
                 <ModalCloseButton />
                 <ModalBody pb={6}>
                     <form onSubmit={form.handleSubmit(onSubmit)} id="createProjectForm">
-                        <FormControl>
+                        <FormControl isRequired>
                             <FormLabel>Title</FormLabel>
                             <Input name="title" ref={form.register} placeholder="project title" required />
                         </FormControl>
@@ -87,6 +89,7 @@ const CreateProjectDialog: React.FC<{
                 <ModalFooter>
                     <Button
                         form="createProjectForm"
+                        disabled={isDirty && !isValid}
                         isLoading={mutation.isLoading}
                         colorScheme="blue"
                         type="submit"

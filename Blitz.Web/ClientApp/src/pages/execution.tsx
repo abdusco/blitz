@@ -71,7 +71,11 @@ const ExecutionSummary: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                 <Tr>
                     <Th>Cronjob</Th>
                     <Td>
-                        <LinkWithState pathname={`/cronjobs/${data.cronjob.id}`} state={{ title: data.cronjob.title }} isEmphasized>
+                        <LinkWithState
+                            pathname={`/cronjobs/${data.cronjob.id}`}
+                            state={{ title: data.cronjob.title }}
+                            isEmphasized
+                        >
                             {data.cronjob.title}
                         </LinkWithState>
                     </Td>
@@ -135,18 +139,24 @@ const StatusUpdates: React.FC<{ data: ExecutionDetailDto }> = ({ data }) => {
                             </Tr>
                         </Thead>
                         <Tbody>
-                            {Object.entries(flattenObject(row.original.details)).map(([k, v]) => (
-                                <Tr key={k}>
-                                    <Td className={styles.updateKey}>
-                                        <b>{k}</b>
-                                    </Td>
-                                    <Td>
-                                        <pre className={styles.updateValue}>
-                                            <code>{v}</code>
-                                        </pre>
-                                    </Td>
-                                </Tr>
-                            ))}
+                            {Object.entries(flattenObject(row.original.details)).map(([k, v]) => {
+                                const isJson = typeof v === 'string' && v.startsWith('{') && v.endsWith('}');
+                                if (isJson) {
+                                    v = JSON.stringify(JSON.parse(v), null, 2);
+                                }
+                                return (
+                                    <Tr key={k}>
+                                        <Td className={styles.updateKey}>
+                                            <b>{k}</b>
+                                        </Td>
+                                        <Td>
+                                            <pre className={styles.updateValue}>
+                                                <code>{v}</code>
+                                            </pre>
+                                        </Td>
+                                    </Tr>
+                                );
+                            })}
                         </Tbody>
                     </Table>
                 )}

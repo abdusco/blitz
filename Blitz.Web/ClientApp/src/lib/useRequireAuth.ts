@@ -5,6 +5,7 @@ import { useAuth } from './auth';
 export const useRequireAuth = (...anyOfRoles: string[]) => {
     const { ready, user } = useAuth();
     const router = useHistory();
+    return;
 
     useEffect(() => {
         if (ready && !user) {

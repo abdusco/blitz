@@ -1,6 +1,4 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Threading.Tasks;
 using Blitz.Web.Auth;
 using Blitz.Web.Cronjobs;
@@ -10,7 +8,6 @@ using Blitz.Web.Identity;
 using Blitz.Web.Maintenance;
 using Blitz.Web.Persistence;
 using Hangfire;
-using IdentityModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -21,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
@@ -46,17 +44,21 @@ namespace Blitz.Web
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
             services.AddHangfire((provider, configuration) =>
                 {
-                    configuration.UseFilter(new AutomaticRetryAttribute {Attempts = 2});
+                    configuration.UseFilter(new AutomaticRetryAttribute { Attempts = 2 });
                     configuration.UseInMemoryStorage();
                     // configuration.UseEFCoreStorage(() => provider.CreateScope().ServiceProvider.GetRequiredService<BlitzDbContext>(),
                     //     new EFCoreStorageOptions());
                 }
             );
-            services.AddHangfireServer(options => options.ServerName = Environment.ApplicationName);
+            services.AddHangfireServer(options =>
+            {
+                options.ServerName = Environment.ApplicationName;
+                options.WorkerCount = 4;
+            });
             services.AddGarbageCollector();
-            services.AddHttpClient<HttpRequestJob>(
-                (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); }
-            );
+            services.AddHttpClient(nameof(HttpRequestSender), (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); });
+            services.AddTransient<TokenCache>();
+            services.AddMemoryCache();
 
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddDbContext<BlitzDbContext>(builder =>
@@ -91,7 +93,7 @@ namespace Blitz.Web
                 options =>
                 {
                     options.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
-                    options.SwaggerDoc("v1", new OpenApiInfo {Title = "Blitz", Version = "v1"});
+                    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Blitz", Version = "v1" });
                     options.OperationFilter<PopulateMethodMetadataOperationFilter>();
                     options.AddSecurityDefinition("token", new OpenApiSecurityScheme
                     {
@@ -155,21 +157,13 @@ namespace Blitz.Web
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         AuthenticationType = JwtBearerDefaults.AuthenticationScheme,
-                        ValidateIssuer = true,
-                        ValidIssuer = Environment.ApplicationName,
-                        ValidateAudience = true,
-                        ValidAudience = Environment.ApplicationName,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = jwtOptions.SigningCredentials.Key,
                     };
-                    // dont map jwt metadata claims
-                    var validator = options.SecurityTokenValidators.Cast<JwtSecurityTokenHandler>().First();
-                    validator.InboundClaimFilter.Add(JwtClaimTypes.Issuer);
-                    validator.InboundClaimFilter.Add(JwtClaimTypes.Expiration);
-                    validator.InboundClaimFilter.Add(JwtClaimTypes.NotBefore);
-                    validator.InboundClaimFilter.Add(JwtClaimTypes.IssuedAt);
-                    validator.InboundClaimFilter.Add(JwtClaimTypes.Audience);
                 });
+            IdentityModelEventSource.ShowPII = Environment.IsDevelopment();
 
 
             services.AddScoped<IAuthorizationHandler, ProjectManagerRequirement>();

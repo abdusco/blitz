@@ -15,9 +15,9 @@ namespace Blitz.Web.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .UseIdentityByDefaultColumns()
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.2");
+                .HasAnnotation("ProductVersion", "5.0.7")
+                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("Blitz.Web.Cronjobs.Cronjob", b =>
                 {
@@ -25,6 +25,10 @@ namespace Blitz.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("Auth")
+                        .HasColumnType("JSONB")
+                        .HasColumnName("auth");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -48,9 +52,17 @@ namespace Blitz.Web.Migrations
                         .HasColumnType("text")
                         .HasColumnName("http_method");
 
+                    b.Property<bool>("IsAuthenticated")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_authenticated");
+
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")
                         .HasColumnName("project_id");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -72,6 +84,9 @@ namespace Blitz.Web.Migrations
 
                     b.HasIndex("ProjectId")
                         .HasDatabaseName("ix_cronjobs_project_id");
+
+                    b.HasIndex("TemplateId")
+                        .HasDatabaseName("ix_cronjobs_template_id");
 
                     b.ToTable("cronjobs");
                 });
@@ -163,6 +178,7 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("name");
 
                     b.Property<string>("Title")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("title");
 
@@ -264,11 +280,19 @@ namespace Blitz.Web.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Auth")
+                        .HasColumnType("JSONB")
+                        .HasColumnName("auth");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("current_timestamp");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -288,6 +312,9 @@ namespace Blitz.Web.Migrations
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("ix_projects_created_at");
 
+                    b.HasIndex("TemplateId")
+                        .HasDatabaseName("ix_projects_template_id");
+
                     b.HasIndex("Title")
                         .IsUnique()
                         .HasDatabaseName("ix_projects_title");
@@ -299,13 +326,55 @@ namespace Blitz.Web.Migrations
                     b.ToTable("projects");
                 });
 
+            modelBuilder.Entity("Blitz.Web.Templates.ConfigTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Auth")
+                        .HasColumnType("JSONB")
+                        .HasColumnName("auth");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("current_timestamp");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("text")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_config_templates");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_config_templates_created_at");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_config_templates_key");
+
+                    b.ToTable("config_templates");
+                });
+
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireCounter", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id")
-                        .UseIdentityByDefaultColumn();
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<DateTime?>("ExpireAt")
                         .HasColumnType("timestamp without time zone")
@@ -313,8 +382,8 @@ namespace Blitz.Web.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("key");
 
                     b.Property<long>("Value")
@@ -336,13 +405,13 @@ namespace Blitz.Web.Migrations
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireHash", b =>
                 {
                     b.Property<string>("Key")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("key");
 
                     b.Property<string>("Field")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("field");
 
                     b.Property<DateTime?>("ExpireAt")
@@ -368,7 +437,7 @@ namespace Blitz.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id")
-                        .UseIdentityByDefaultColumn();
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -390,8 +459,8 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("state_id");
 
                     b.Property<string>("StateName")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("state_name");
 
                     b.HasKey("Id")
@@ -419,8 +488,8 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("job_id");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("name");
 
                     b.Property<string>("Value")
@@ -436,8 +505,8 @@ namespace Blitz.Web.Migrations
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireList", b =>
                 {
                     b.Property<string>("Key")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("key");
 
                     b.Property<int>("Position")
@@ -464,8 +533,8 @@ namespace Blitz.Web.Migrations
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireLock", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("AcquiredAt")
@@ -484,7 +553,7 @@ namespace Blitz.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id")
-                        .UseIdentityByDefaultColumn();
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<DateTime?>("FetchedAt")
                         .IsConcurrencyToken()
@@ -497,8 +566,8 @@ namespace Blitz.Web.Migrations
 
                     b.Property<string>("Queue")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("queue");
 
                     b.HasKey("Id")
@@ -516,8 +585,8 @@ namespace Blitz.Web.Migrations
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireServer", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("Heartbeat")
@@ -554,8 +623,8 @@ namespace Blitz.Web.Migrations
                         .HasColumnName("key");
 
                     b.Property<string>("Value")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("value");
 
                     b.Property<DateTime?>("ExpireAt")
@@ -584,7 +653,7 @@ namespace Blitz.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id")
-                        .UseIdentityByDefaultColumn();
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -603,13 +672,12 @@ namespace Blitz.Web.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("name");
 
                     b.Property<string>("Reason")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasColumnType("text")
                         .HasColumnName("reason");
 
                     b.HasKey("Id")
@@ -652,7 +720,15 @@ namespace Blitz.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Blitz.Web.Templates.ConfigTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .HasConstraintName("fk_cronjobs_config_templates_template_id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Project");
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Blitz.Web.Cronjobs.Execution", b =>
@@ -689,6 +765,17 @@ namespace Blitz.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Blitz.Web.Projects.Project", b =>
+                {
+                    b.HasOne("Blitz.Web.Templates.ConfigTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .HasConstraintName("fk_projects_config_templates_template_id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Hangfire.EntityFrameworkCore.HangfireJob", b =>

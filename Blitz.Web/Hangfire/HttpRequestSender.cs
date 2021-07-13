@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -9,43 +10,47 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Blitz.Web.Persistence;
-using Hangfire.Server;
+using IdentityModel.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Blitz.Web.Hangfire
 {
-    public class HttpRequestJob
+    public class HttpRequestSender
     {
-        private readonly HttpClient _http;
+        private readonly IHttpClientFactory _clientFactory;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<HttpRequestJob> _logger;
+        private readonly ILogger<HttpRequestSender> _logger;
+        private readonly TokenCache _tokenCache;
 
-        public HttpRequestJob(HttpClient http, IServiceScopeFactory scopeFactory, ILogger<HttpRequestJob> logger)
+        public HttpRequestSender(IServiceScopeFactory scopeFactory,
+                                   ILogger<HttpRequestSender> logger,
+                                   IHttpClientFactory clientFactory,
+                                   TokenCache tokenCache)
         {
-            _http = http;
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _clientFactory = clientFactory;
+            _tokenCache = tokenCache;
         }
 
         public async Task SendRequestAsync(Guid cronjobId,
                                            Guid executionId = default,
-                                           PerformContext context = null,
                                            CancellationToken cancellationToken = default)
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<BlitzDbContext>();
-            var cronjob = await db.Cronjobs.SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
+            var cronjob = await db.Cronjobs.Include(e => e.Project).SingleOrDefaultAsync(c => c.Id == cronjobId, cancellationToken);
             if (cronjob is null)
             {
-                _logger.LogInformation("Cannot find a cronjob record with id={CronjobId}", cronjobId);
+                _logger.LogError("Cannot find a cronjob record with id={CronjobId}", cronjobId);
                 return;
             }
 
             // make sure execution is saved to db
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
-            
+            await Task.Delay(TimeSpan.FromSeconds(1.5), cancellationToken);
+
             var exec = await db.Executions
                 .Include(e => e.Updates.OrderByDescending(u => u.CreatedAt).Take(1))
                 .SingleOrDefaultAsync(e => e.Id == executionId, cancellationToken);
@@ -57,11 +62,11 @@ namespace Blitz.Web.Hangfire
                     executionId = Guid.NewGuid();
                 }
 
-                exec = new Execution(cronjob) {Id = executionId};
+                exec = new Execution(cronjob) { Id = executionId };
                 await db.AddAsync(exec, cancellationToken);
             }
 
-            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title, cronjobId);
+            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title);
 
             exec.UpdateStatus(ExecutionState.Pending);
             await db.SaveChangesAsync(cancellationToken);
@@ -74,6 +79,28 @@ namespace Blitz.Web.Hangfire
             };
 
             var timer = Stopwatch.StartNew();
+
+            var http = _clientFactory.CreateClient(nameof(HttpRequestSender));
+
+            if (cronjob.IsAuthenticated && cronjob.EffectiveAuth != null)
+            {
+                var auth = cronjob.EffectiveAuth;
+                var key = $"{auth.TokenEndpoint}:{auth.ClientId}:{auth.Scope}";
+                var token = await _tokenCache.GetOrCreateAsync(key, async () =>
+                {
+                    _logger.LogInformation("Requesting access token from {TokenEndpoint}", cronjob.EffectiveAuth.TokenEndpoint);
+                    var tokenResult = await http.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                    {
+                        Address = cronjob.EffectiveAuth.TokenEndpoint,
+                        ClientId = cronjob.EffectiveAuth.ClientId,
+                        ClientSecret = cronjob.EffectiveAuth.ClientSecret,
+                        Scope = cronjob.EffectiveAuth.Scope,
+                    }, cancellationToken: cancellationToken);
+                    return tokenResult.AccessToken;
+                });
+                http.SetBearerToken(token);
+            }
+
             try
             {
                 var now = DateTime.UtcNow;
@@ -81,7 +108,7 @@ namespace Blitz.Web.Hangfire
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("Execution-Id", exec.Id.ToString());
 
-                var response = await _http.SendAsync(req, cancellationToken);
+                var response = await http.SendAsync(req, cancellationToken);
 
                 timer.Stop();
                 exec.UpdateStatus(
@@ -99,6 +126,21 @@ namespace Blitz.Web.Hangfire
                         }
                     }
                 );
+                if (!response.IsSuccessStatusCode)
+                {
+                    exec.UpdateStatus(
+                        new ExecutionStatus(exec, ExecutionState.Failed)
+                        {
+                            CreatedAt = DateTime.UtcNow,
+                            Details = new Dictionary<string, object>
+                            {
+                                ["StatusCode"] = response.StatusCode,
+                                ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
+                                ["Elapsed"] = timer.ElapsedMilliseconds,
+                            }
+                        }
+                    );
+                }
             }
             catch (Exception e)
             {
