@@ -13,8 +13,7 @@ export default function Home() {
         { text: 'Projects', pathname: '/projects', icon: <ProjectsIcon />, roles: ['pm'] },
         { text: 'Cronjobs', pathname: '/cronjobs', icon: <CronjobsIcon />, roles: ['pm'] },
         { text: 'Executions', pathname: '/executions', icon: <ExecutionsIcon /> },
-        { text: 'Users', pathname: '/users', icon: <UsersIcon />, roles: ['admin'] },
-        { text: 'Administration', pathname: '/administration', icon: <SettingsIcon /> },
+        { text: 'Administration', pathname: '/administration', icon: <SettingsIcon />, roles: ['admin'] },
     ].filter((it) => (it.roles ? user?.hasRole('admin', ...(it.roles || [])) : true));
 
     return (
@@ -23,9 +22,6 @@ export default function Home() {
                 <Heading size={'xl'} fontWeight="bold" className={styles.homeTitle} color="purple.500">
                     <Flex alignItems="center" justifyContent="center">
                         <Logo />
-                        <Badge ml={4} backgroundColor="purple.50" color="purple.600">
-                            Beta
-                        </Badge>
                     </Flex>
                 </Heading>
                 {links.length > 0 && (
