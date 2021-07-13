@@ -25,7 +25,7 @@ namespace Blitz.Web.Hangfire
             _options = options.Value;
         }
 
-        public async Task<string> GetOrCreateAsync(string key, Func<Task<JwtSecurityToken>> tokenFactory)
+        public async Task<string> GetOrCreateAsync(string key, Func<Task<string>> tokenFactory)
         {
             string jwt;
             if (_cache.TryGetValue(key, out jwt))
@@ -35,8 +35,8 @@ namespace Blitz.Web.Hangfire
             }
 
             _logger.LogDebug("Cache miss: {Key}", key);
-            var token = await tokenFactory();
-            jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            jwt = await tokenFactory();
+            var token = new JwtSecurityToken(jwt);
             _cache.Set(key, jwt, token.ValidTo - _options.ClockSkew);
             return jwt;
         }

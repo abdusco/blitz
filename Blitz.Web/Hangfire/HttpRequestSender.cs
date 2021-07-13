@@ -96,7 +96,7 @@ namespace Blitz.Web.Hangfire
                         ClientSecret = cronjob.EffectiveAuth.ClientSecret,
                         Scope = cronjob.EffectiveAuth.Scope,
                     }, cancellationToken: cancellationToken);
-                    return new JwtSecurityToken(tokenResult.AccessToken);
+                    return tokenResult.AccessToken;
                 });
                 http.SetBearerToken(token);
             }
