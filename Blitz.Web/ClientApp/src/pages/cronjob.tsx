@@ -21,6 +21,7 @@ import {
     Tbody,
     Td,
     Th,
+    Tooltip,
     Tr,
     useDisclosure,
     useToast,
@@ -173,8 +174,12 @@ const CronjobDetails: React.FC<{ data: CronjobDetailDto }> = (props) => {
                         </Td>
                     </Tr>
                     <Tr>
-                        <Th>Authentication</Th>
-                        <Td>{data.isAuthenticated ? <LockIcon color="green.400" /> : <UnlockIcon color="gray" />}</Td>
+                        <Th>Auth</Th>
+                        <Td>
+                            <Tooltip label={data.isAuthenticated ? 'Authenticated' : 'Unauthenticated'}>
+                                {data.isAuthenticated ? <LockIcon color="green.400" /> : <UnlockIcon color="gray" />}
+                            </Tooltip>
+                        </Td>
                     </Tr>
                     <Tr>
                         <Th>Enabled</Th>

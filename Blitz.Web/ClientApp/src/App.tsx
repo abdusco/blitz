@@ -153,7 +153,7 @@ const LoadingApp: React.FC<{ timeout?: number }> = (props) => {
             }
             toast({
                 title: greetings,
-                duration: 1500,
+                duration: 1000,
                 status: 'info',
                 position: 'top',
             });

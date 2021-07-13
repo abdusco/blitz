@@ -82,7 +82,7 @@ const TemplatesSection = () => {
     const columns = useMemo(
         () =>
             [
-                { accessor: 'key', Header: 'Key' },
+                { accessor: 'key', Header: 'Key', Cell: ({row}) => (<code>{row.original.key}</code>) },
                 { accessor: 'title', Header: 'Title' },
                 {
                     Header: '',
