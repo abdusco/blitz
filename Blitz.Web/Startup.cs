@@ -57,7 +57,9 @@ namespace Blitz.Web
             });
             services.AddGarbageCollector();
             services.AddHttpClient(nameof(HttpRequestSender), (provider, client) => { client.Timeout = TimeSpan.FromSeconds(20); });
-            
+            services.AddTransient<TokenCache>();
+            services.AddMemoryCache();
+
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddDbContext<BlitzDbContext>(builder =>
             {
