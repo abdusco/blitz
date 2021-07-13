@@ -111,6 +111,8 @@ namespace Blitz.Web.Projects
             [Required] public string Title { get; init; }
             public string Version { get; init; }
             public List<CronjobCreateDto> Cronjobs { get; init; } = new();
+            public TokenAuthCreateDto Auth { get; set; }
+            public string TemplateKey { get; set; }
 
             public record CronjobCreateDto([Required] string Title,
                                            string Description,
@@ -123,11 +125,6 @@ namespace Blitz.Web.Projects
         [HttpPost("batchcreate")]
         public async Task<ActionResult<Guid>> CreateProjectWithCronjobs(ProjectBatchCreateDto request, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var project = await _db.Projects
                 .Include(e => e.Cronjobs)
                 .FirstOrDefaultAsync(e => e.Title == request.Title, cancellationToken: cancellationToken);
@@ -138,20 +135,40 @@ namespace Blitz.Web.Projects
                 return NoContent();
             }
 
-            if (project == null)
+            TokenAuth auth = null;
+            ConfigTemplate template = null;
+            if (request.TemplateKey != null)
             {
-                project = new Project(request.Title) { Version = request.Version };
-                await _db.AddAsync(project, cancellationToken);
+                template = await _db.ConfigTemplates.FirstOrDefaultAsync(e => e.Key == request.TemplateKey, cancellationToken);
             }
+
+            if (request.Auth != null)
+            {
+                auth = _mapper.Map<TokenAuth>(request.Auth);
+            }
+            else if (template != null)
+            {
+                auth = template.Auth;
+            }
+
 
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            _db.RemoveRange(project.Cronjobs);
-            foreach (var cronjob in project.Cronjobs)
-            {
-                await _cronjobRegistrationService.Remove(cronjob);
-            }
 
-            project.Cronjobs.Clear();
+            if (project == null)
+            {
+                project = new Project(request.Title) { Version = request.Version, Template = template, Auth = auth};
+                await _db.AddAsync(project, cancellationToken);
+            }
+            else
+            {
+                _db.RemoveRange(project.Cronjobs);
+                foreach (var cronjob in project.Cronjobs)
+                {
+                    await _cronjobRegistrationService.Remove(cronjob);
+                }
+
+                project.Cronjobs.Clear();
+            }
 
             var updatedCronjobs = request.Cronjobs.Select(e => new Cronjob(project)
             {
@@ -160,6 +177,7 @@ namespace Blitz.Web.Projects
                 Cron = new CronExpression(e.Cron),
                 Url = e.Url,
                 HttpMethod = e.HttpMethod,
+                IsAuthenticated = auth != null
             }).ToList();
             foreach (var cronjob in updatedCronjobs)
             {
