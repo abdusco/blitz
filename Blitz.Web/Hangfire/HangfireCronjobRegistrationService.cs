@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Blitz.Web.Cronjobs;
 using Hangfire;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Blitz.Web.Hangfire
 {
@@ -10,11 +11,15 @@ namespace Blitz.Web.Hangfire
     {
         private readonly IRecurringJobManager _recurringJobManager;
         private readonly ILogger<HangfireCronjobRegistrationService> _logger;
+        private readonly HangfireSettings _hangfireSettings;
 
-        public HangfireCronjobRegistrationService(IRecurringJobManager recurringJobManager, ILogger<HangfireCronjobRegistrationService> logger)
+        public HangfireCronjobRegistrationService(IRecurringJobManager recurringJobManager,
+                                                  ILogger<HangfireCronjobRegistrationService> logger,
+                                                  IOptions<HangfireSettings> hangfireSettings)
         {
             _recurringJobManager = recurringJobManager;
             _logger = logger;
+            _hangfireSettings = hangfireSettings.Value;
         }
 
         public Task Add(Cronjob cronjob)
@@ -24,7 +29,7 @@ namespace Blitz.Web.Hangfire
                 cronjob.GetHangfireId(),
                 job => job.SendRequestAsync(cronjob.Id, default, default),
                 cronjob.Cron.ToString(),
-                TimeZoneInfo.Local
+                _hangfireSettings.TimeZone
             );
             return Task.CompletedTask;
         }
