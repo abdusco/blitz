@@ -25,9 +25,9 @@ namespace Blitz.Web.Hangfire
         private readonly TokenCache _tokenCache;
 
         public HttpRequestSender(IServiceScopeFactory scopeFactory,
-                                   ILogger<HttpRequestSender> logger,
-                                   IHttpClientFactory clientFactory,
-                                   TokenCache tokenCache)
+                                 ILogger<HttpRequestSender> logger,
+                                 IHttpClientFactory clientFactory,
+                                 TokenCache tokenCache)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
@@ -48,6 +48,8 @@ namespace Blitz.Web.Hangfire
                 return;
             }
 
+            using var _ = _logger.BeginScope("Running cronjob={CronjobTitle}", cronjob.Title);
+
             // make sure execution is saved to db
             await Task.Delay(TimeSpan.FromSeconds(1.5), cancellationToken);
 
@@ -66,7 +68,7 @@ namespace Blitz.Web.Hangfire
                 await db.AddAsync(exec, cancellationToken);
             }
 
-            _logger.LogInformation("Executing id={ExecutionId} for {CronjobTitle}", exec.Id, cronjob.Title);
+            _logger.LogInformation("Executing id={ExecutionId}", exec.Id);
 
             exec.UpdateStatus(ExecutionState.Pending);
             await db.SaveChangesAsync(cancellationToken);
@@ -131,12 +133,10 @@ namespace Blitz.Web.Hangfire
                     exec.UpdateStatus(
                         new ExecutionStatus(exec, ExecutionState.Failed)
                         {
-                            CreatedAt = DateTime.UtcNow,
                             Details = new Dictionary<string, object>
                             {
                                 ["StatusCode"] = response.StatusCode,
-                                ["Headers"] = response.Headers.ToDictionary(h => h.Key, h => h.Value.FirstOrDefault()),
-                                ["Elapsed"] = timer.ElapsedMilliseconds,
+                                ["Message"] = "Response did not return a success status code"
                             }
                         }
                     );
