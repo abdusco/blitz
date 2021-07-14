@@ -1,5 +1,11 @@
 import { InfoOutlineIcon, LockIcon, UnlockIcon } from '@chakra-ui/icons';
 import {
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
     Box,
     Button,
     Checkbox,
@@ -16,6 +22,7 @@ import {
     ModalHeader,
     ModalOverlay,
     Select,
+    Spacer,
     Stack,
     Table,
     Tbody,
@@ -26,7 +33,7 @@ import {
     useDisclosure,
     useToast,
 } from '@chakra-ui/react';
-import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom';
@@ -35,6 +42,7 @@ import {
     CronjobDetailDto,
     CronjobExecutionsListDto,
     CronjobUpdateDto,
+    deleteCronjob,
     fetchCronjob,
     fetchCronjobExecutions,
     fetchTemplates,
@@ -95,6 +103,16 @@ export default function Cronjob() {
 
     const editDialog = useDisclosure();
 
+    const cancelRef = useRef<any>();
+    const deleteDialog = useDisclosure();
+    const queryClient = useQueryClient();
+    const deleteMutation = useMutation(() => deleteCronjob(id), {
+        onSuccess: () => {
+            queryClient.invalidateQueries(['cronjobs'], { exact: true });
+            history.push(`/projects/${cronjobQuery.data?.projectId}`);
+        },
+    });
+
     return (
         <DefaultLayout>
             <Head>
@@ -113,6 +131,10 @@ export default function Cronjob() {
                             Trigger
                         </Button>
                         <Button onClick={editDialog.onOpen}>Edit</Button>
+                        <Spacer />
+                        <Button colorScheme="red" onClick={deleteDialog.onOpen}>
+                            Delete
+                        </Button>
                     </HStack>
                     {!cronjobQuery.isPlaceholderData && cronjobQuery.data && editDialog.isOpen && (
                         <CronjobEditDialog
@@ -120,6 +142,35 @@ export default function Cronjob() {
                             onClose={editDialog.onClose}
                             isOpen={editDialog.isOpen}
                         />
+                    )}
+
+                    {cronjobQuery.data && deleteDialog.isOpen && (
+                        <AlertDialog
+                            isOpen={deleteDialog.isOpen}
+                            leastDestructiveRef={cancelRef}
+                            onClose={deleteDialog.onClose}
+                        >
+                            <AlertDialogOverlay>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                                        Delete {cronjobQuery.data?.title}
+                                    </AlertDialogHeader>
+
+                                    <AlertDialogBody>
+                                        Are you sure? You can't undo this action afterwards.
+                                    </AlertDialogBody>
+
+                                    <AlertDialogFooter>
+                                        <Button ref={cancelRef} onClick={deleteDialog.onClose}>
+                                            Cancel
+                                        </Button>
+                                        <Button colorScheme="red" onClick={() => deleteMutation.mutateAsync()} ml={3}>
+                                            Delete
+                                        </Button>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialogOverlay>
+                        </AlertDialog>
                     )}
                 </Hero.Body>
             </Hero>

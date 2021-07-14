@@ -42,6 +42,7 @@ namespace Blitz.Web
         {
             services.AddTransient<ICronjobTriggerer, HangfireCronjobTriggerer>();
             services.AddTransient<ICronjobRegistrationService, HangfireCronjobRegistrationService>();
+            services.Configure<HangfireSettings>(Configuration.GetSection("Hangfire"));
             services.AddHangfire((provider, configuration) =>
                 {
                     configuration.UseFilter(new AutomaticRetryAttribute { Attempts = 2 });
