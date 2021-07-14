@@ -133,7 +133,6 @@ namespace Blitz.Web.Hangfire
                     exec.UpdateStatus(
                         new ExecutionStatus(exec, ExecutionState.Failed)
                         {
-                            CreatedAt = DateTime.UtcNow,
                             Details = new Dictionary<string, object>
                             {
                                 ["StatusCode"] = response.StatusCode,

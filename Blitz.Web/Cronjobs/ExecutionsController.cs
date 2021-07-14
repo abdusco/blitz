@@ -132,7 +132,7 @@ namespace Blitz.Web.Cronjobs
     public class ExecutionStatusListDto
     {
         public Guid Id { get; set; }
-        public string CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
         public string State { get; set; }
         public Dictionary<string, object> Details { get; set; }
     }
