@@ -129,6 +129,11 @@ export const triggerCronjob = async (id: string) => {
     return data;
 };
 
+export const deleteCronjob = async (id: string) => {
+    await axios.delete(`/cronjobs/${id}`);
+    await sleep();
+};
+
 export const updateCronjobDetails = async (id: string, payload: CronjobUpdateDto): Promise<void> => {
     await axios.patch(`/cronjobs/${id}`, payload);
     await sleep();
