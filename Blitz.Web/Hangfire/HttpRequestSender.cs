@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -109,6 +108,7 @@ namespace Blitz.Web.Hangfire
 
                 var req = new HttpRequestMessage(method, cronjob.Url);
                 req.Headers.Add("Execution-Id", exec.Id.ToString());
+                // TODO: send a "Report-To" header with URL to update execution status
 
                 var response = await http.SendAsync(req, cancellationToken);
 
@@ -150,19 +150,25 @@ namespace Blitz.Web.Hangfire
                 {
                     TaskCanceledException => ExecutionState.TimedOut,
                     WebException => ExecutionState.TimedOut,
+                    TimeoutException => ExecutionState.TimedOut,
                     _ => ExecutionState.Failed
                 };
                 exec.UpdateStatus(
                     state,
                     new Dictionary<string, object>
                     {
+                        ["ExceptionType"] = e.GetType().FullName,
                         ["ExceptionMessage"] = e.Message,
                         ["ExceptionSource"] = e.Source,
                         ["ExceptionStackTrace"] = e.StackTrace,
                         ["Elapsed"] = timer.ElapsedMilliseconds
                     }
                 );
-                throw;
+                // we don't care about timed out requests, they're the responsibility of the remote API
+                if (state != ExecutionState.TimedOut)
+                {
+                    throw;
+                }
             }
             finally
             {
